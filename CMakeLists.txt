@@ -84,8 +84,8 @@ find_package(QGIS_CORE)
 include(FindAnyProject)
 find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network)
 
-set(LIB_SOURCES lib.cpp)
-set(LIB_PUBLIC_HEADERS lib.h)
+set(LIB_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp)
+set(LIB_PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/lib.h)
 
 add_library(${LIB_NAME} ${LIB_SOURCES})
 
@@ -106,6 +106,7 @@ target_compile_definitions (${LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMP
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 add_subdirectory(app)
+add_subdirectory(bindings)
 
 # Export package ===============================================================
 
@@ -144,7 +145,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   # Install the export set for use with the install-tree
   install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
 
-  install(FILES ${LIB_PUBLIC_HEADERS} DESTINATION include/headless_render)
+  install(FILES ${LIB_PUBLIC_HEADERS} DESTINATION include)
 endif()
 
 # Archiving ====================================================================

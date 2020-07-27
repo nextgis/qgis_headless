@@ -18,29 +18,33 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <QApplication>
-#include <QFile>
-#include <iostream>
-
 #include <lib.h>
+#include <pybind11.h>
+#include <stl.h>
+#include <numpy.h>
 
-int main(int argc, char **argv)
-{
-    if (argc < 4) {
-        std::cout << "Usage: ./qgis filepath_to_geodata filepath_to_style output_path\n";
-        return 1;
-    }
+PYBIND11_MODULE(qgis_headless_py, m) {
 
-    HeadlessRender::init(argc, argv);
+    pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>(m, "Image")
+            .def(pybind11::init<>())
+            .def("size", &HeadlessRender::Image::getSize)
+            .def("data",[](std::shared_ptr<HeadlessRender::Image> img) {
+                return reinterpret_cast<uint64_t>(img->getData());
+            });
 
-    QFile styleFile(argv[2]);
-    styleFile.open(QIODevice::ReadOnly);
+    m.def("init", [](const std::vector<std::string> &args) {
+        std::vector<char *> v;
+        v.reserve(args.size());
+        for (auto &s : args)
+            v.push_back(const_cast<char *>(s.c_str()));
+        return HeadlessRender::init(v.size(), v.data());
+    }, "Library initialization");
 
-    auto image = HeadlessRender::renderVector( argv[1], styleFile.readAll().data(), 800, 600, 4326 );
+    m.def("deinit", &HeadlessRender::deinit, "Library deinitialization");
 
-    QFile outFile(argv[3] + QString("/result.png"));
-    if (outFile.open(QIODevice::WriteOnly)) {
-        outFile.write(reinterpret_cast<const char *>( image->getData() ), image->getSize());
-        outFile.close();
-    }
+    m.def("renderVector", &HeadlessRender::renderVector, "Render vector layer");
+
+    m.def("rasterVector", &HeadlessRender::renderVector, "Render raster layer");
+
+    m.def("getVersion", &HeadlessRender::getVersion, "Get library version");
 }

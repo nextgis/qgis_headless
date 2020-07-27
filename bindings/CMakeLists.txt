@@ -24,11 +24,38 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-set(APP_NAME ${PROJECT_NAME}_app)
+set(PY_LIB_NAME ${PROJECT_NAME}_py)
 
-add_executable(${APP_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/app.cpp)
-target_link_libraries(${APP_NAME} ${LIB_NAME})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/cmake ${CMAKE_MODULE_PATH})
+
+include(pybind11Tools)
+pybind11_add_module(${PY_LIB_NAME}
+  ${CMAKE_CURRENT_SOURCE_DIR}/pylib.cpp
+  ${LIB_SOURCES}
+)
+
+target_compile_definitions (${PY_LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
+target_compile_definitions (${PY_LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
+
+target_include_directories(${PY_LIB_NAME} PRIVATE
+  ".."
+  ${PYTHON_INCLUDE_DIRS}
+  ${QGIS_CORE_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/include
+)
+
+target_link_libraries(${PY_LIB_NAME} PRIVATE
+  Qt5::Core
+  Qt5::Xml
+  Qt5::Gui
+  Qt5::Widgets
+  Qt5::Network
+  ${PYTHON_LIBRARY}
+  ${QGIS_CORE_LIBRARIES}
+)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-  install(TARGETS ${APP_NAME} RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+  install(TARGETS ${PY_LIB_NAME}
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+  )
 endif()
