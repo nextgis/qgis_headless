@@ -44,9 +44,9 @@ namespace HeadlessRender
 
     QGIS_HEADLESS_EXPORT void deinit();
 
-    QGIS_HEADLESS_EXPORT std::shared_ptr<Image> renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
+    QGIS_HEADLESS_EXPORT std::shared_ptr<Image> renderVector(const char *uri, const char *qmlString, int width, int height, int epsg, int quality = -1);
 
-    QGIS_HEADLESS_EXPORT std::shared_ptr<Image> renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg);
+    QGIS_HEADLESS_EXPORT std::shared_ptr<Image> renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg, int quality = -1);
 
     QGIS_HEADLESS_EXPORT const char *getVersion();
 }

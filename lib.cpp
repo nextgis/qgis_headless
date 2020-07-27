@@ -31,7 +31,7 @@
 
 #include <QApplication>
 
-std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image);
+std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality);
 
 QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg);
 
@@ -55,16 +55,16 @@ const char * HeadlessRender::getVersion()
     return QGIS_HEADLESS_LIB_VERSION_STRING;
 }
 
-std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg)
+std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg, int quality)
 {
     QPointer<QgsMapLayer> layer = new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" ));
-    return imageData( renderLayer( layer, qmlString, width, height, epsg ) );
+    return imageData( renderLayer( layer, qmlString, width, height, epsg ), quality );
 }
 
-std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg)
+std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg, int quality)
 {
     QPointer<QgsMapLayer> layer = new QgsRasterLayer( uri );
-    return imageData( renderLayer( layer, qmlString, width, height, epsg ) );
+    return imageData( renderLayer( layer, qmlString, width, height, epsg ), quality );
 }
 
 QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg)
@@ -90,13 +90,13 @@ QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, in
     return job->renderedImage();
 }
 
-std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image)
+std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality)
 {
     QByteArray bytes;
     QBuffer buffer( &bytes );
 
     buffer.open( QIODevice::WriteOnly );
-    image.save( &buffer, "PNG" );
+    image.save( &buffer, "PNG", quality );
     buffer.close();
 
     const int size = bytes.size();
