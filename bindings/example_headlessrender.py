@@ -27,14 +27,19 @@ qgis_headless_py.init([os.path.dirname(os.path.abspath(__file__))])
 
 layer_path = str(sys.argv[1])
 style_path = sys.argv[2]
-width = int(sys.argv[3])
-height = int(sys.argv[4])
-output_path = sys.argv[5]
+output_path = sys.argv[3]
+minx = float(sys.argv[4])
+miny = float(sys.argv[5])
+maxx = float(sys.argv[6])
+maxy = float(sys.argv[7])
+width = int(sys.argv[8])
+height = int(sys.argv[9])
+quality = int(sys.argv[10])
 
 with open(style_path, 'r') as file:
     qmlString = file.read()
 
-image = qgis_headless_py.renderVector(layer_path, qmlString, width, height, 4326)
+image = qgis_headless_py.renderVector(layer_path, qmlString, minx, miny, maxx, maxy, width, height, epsg, quality)
 
 res = (ctypes.c_char * image.size()).from_address(image.data())
 

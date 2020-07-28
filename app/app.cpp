@@ -21,13 +21,26 @@
 #include <QApplication>
 #include <QFile>
 #include <iostream>
+#include <sstream>
 
 #include <lib.h>
 
+template<typename T>
+T stringToNum(const char *str)
+{
+    std::stringstream sstream;
+    T val;
+
+    sstream << str;
+    sstream >> val;
+
+    return val;
+}
+
 int main(int argc, char **argv)
 {
-    if (argc < 4) {
-        std::cout << "Usage: ./qgis filepath_to_geodata filepath_to_style output_path\n";
+    if (argc < 11) {
+        std::cout << "Usage: ./qgis filepath_to_geodata filepath_to_style output_path minx miny maxx maxy width height epsg quality\n";
         return 1;
     }
 
@@ -36,9 +49,19 @@ int main(int argc, char **argv)
     QFile styleFile(argv[2]);
     styleFile.open(QIODevice::ReadOnly);
 
-    auto image = HeadlessRender::renderVector( argv[1], styleFile.readAll().data(), 800, 600, 4326 );
+    auto image = HeadlessRender::renderVector( argv[1],
+            styleFile.readAll().data(),
+            stringToNum<double>(argv[4]), // minx
+            stringToNum<double>(argv[5]), // miny
+            stringToNum<double>(argv[6]), // maxx
+            stringToNum<double>(argv[7]), // maxy
+            stringToNum<int>(argv[8]),    // width
+            stringToNum<int>(argv[9]),    // height
+            stringToNum<int>(argv[10]),   // epsg
+            stringToNum<int>(argv[11])    // quality
+    );
 
-    QFile outFile(argv[3] + QString("/result.png"));
+    QFile outFile(argv[3] + QString(".png"));
     if (outFile.open(QIODevice::WriteOnly)) {
         outFile.write(reinterpret_cast<const char *>( image->getData() ), image->getSize());
         outFile.close();

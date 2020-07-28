@@ -33,7 +33,7 @@
 
 std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality);
 
-QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg);
+QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, double minx, double miny, double maxx, double maxy, int width, int height, int epsg);
 
 static QApplication *app = nullptr;
 
@@ -55,19 +55,25 @@ const char * HeadlessRender::getVersion()
     return QGIS_HEADLESS_LIB_VERSION_STRING;
 }
 
-std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg, int quality)
+std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *uri, const char *qmlString,
+                                                                    double minx, double miny, double maxx, double maxy,
+                                                                    int width, int height, int epsg, int quality)
 {
     QPointer<QgsMapLayer> layer = new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" ));
-    return imageData( renderLayer( layer, qmlString, width, height, epsg ), quality );
+    return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
 }
 
-std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg, int quality)
+std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *uri, const char *qmlString,
+                                                                    double minx, double miny, double maxx, double maxy,
+                                                                    int width, int height, int epsg, int quality)
 {
     QPointer<QgsMapLayer> layer = new QgsRasterLayer( uri );
-    return imageData( renderLayer( layer, qmlString, width, height, epsg ), quality );
+    return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
 }
 
-QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg)
+QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString,
+                   double minx, double miny, double maxx, double maxy,
+                   int width, int height, int epsg)
 {
     QString readStyleError;
     QDomDocument domDocument;
@@ -80,7 +86,7 @@ QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, in
     settings.setOutputSize( { width, height } );
     settings.setDestinationCrs( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) );
     settings.setLayers( QList<QgsMapLayer *>() << layer );
-    settings.setExtent( settings.fullExtent() );
+    settings.setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
     QPointer<QgsMapRendererParallelJob> job = new QgsMapRendererParallelJob( settings );
 
