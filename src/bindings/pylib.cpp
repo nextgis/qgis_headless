@@ -18,10 +18,11 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <lib.h>
 #include <pybind11.h>
 #include <stl.h>
 #include <numpy.h>
+
+#include <lib.h>
 
 PYBIND11_MODULE(qgis_headless_py, m) {
 

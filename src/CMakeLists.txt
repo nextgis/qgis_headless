@@ -18,11 +18,6 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-set(APP_NAME ${PROJECT_NAME}_app)
-
-add_executable(${APP_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/app.cpp)
-target_link_libraries(${APP_NAME} ${LIB_NAME})
-
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-  install(TARGETS ${APP_NAME} RUNTIME DESTINATION ${INSTALL_BIN_DIR})
-endif()
+add_subdirectory(app)
+add_subdirectory(bindings)
+add_subdirectory(lib)

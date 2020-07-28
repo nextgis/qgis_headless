@@ -78,37 +78,11 @@ find_package(QGIS_CORE)
 include(FindAnyProject)
 find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network)
 
-set(LIB_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp)
-set(LIB_PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/lib.h)
-
-add_library(${LIB_NAME} ${LIB_SOURCES})
-
-target_include_directories(${LIB_NAME} PRIVATE ${QGIS_CORE_INCLUDE_DIRS})
-
-target_link_libraries(${LIB_NAME}
-  Qt5::Core
-  Qt5::Xml
-  Qt5::Gui
-  Qt5::Widgets
-  Qt5::Network
-  ${QGIS_CORE_LIBRARIES}
-)
-
-target_compile_definitions (${LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
-target_compile_definitions (${LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
+add_subdirectory(src)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-add_subdirectory(app)
-add_subdirectory(bindings)
-
 # Export package ===============================================================
-
-# Add path to includes to build-tree export
-target_include_directories(${TARGETS} PUBLIC
- $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
- $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-)
 
 # Add all targets to the build-tree export set
 export(TARGETS ${TARGETS}
@@ -138,8 +112,6 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
 
   # Install the export set for use with the install-tree
   install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
-
-  install(FILES ${LIB_PUBLIC_HEADERS} DESTINATION include)
 endif()
 
 # Archiving ====================================================================

@@ -28,7 +28,7 @@ function(check_version major minor patch)
 
     # parse the version number from gdal_version.h and include in
     # major, minor and rev parameters
-    set(VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/version.h)
+    set(VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/version.h)
     file(READ ${VERSION_FILE} VERSION_H_CONTENTS)
 
     string(REGEX MATCH "QGIS_HEADLESS_LIB_MAJOR_VERSION[ \t]+([0-9]+)"
