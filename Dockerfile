@@ -12,5 +12,6 @@ COPY . /root/qgis_headless/
 
 WORKDIR /root/qgis_headless/build
 
-RUN cmake .. -DCMAKE_INSTALL_PREFIX=install && \
-    cmake --build . --target install --config Release
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON -DENABLE_TESTS=ON && \
+    cmake --build . --target install --config Release && \
+    ctest --config Release

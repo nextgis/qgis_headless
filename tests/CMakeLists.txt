@@ -25,8 +25,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 string(SUBSTRING ${QT5_VERSION} 0 1 Qt5Core_VERSION_MAJOR)
 
-enable_testing()
-
 add_executable(${TESTNAME} main.cpp testlib.cpp)
 target_include_directories(${TESTNAME} PRIVATE "${CMAKE_SOURCE_DIR}/src/lib")
 target_link_libraries(${TESTNAME} Qt5::Test ${LIB_NAME})
@@ -34,4 +32,4 @@ target_link_libraries(${TESTNAME} Qt5::Test ${LIB_NAME})
 target_compile_definitions (${TESTNAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${TESTNAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
 
-add_test(${TESTNAME} ${CMAKE_BINARY_DIR}/${TESTNAME})
+add_test(${TESTNAME} ${TESTNAME})

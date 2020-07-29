@@ -34,32 +34,15 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # set path to additional CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
-  message(FATAL_ERROR "Only OSX_FRAMEWORK key or any or both BUILD_SHARED_LIBS
-                       and BUILD_STATIC_LIBS keys are permitted")
-endif()
+include(GNUInstallDirs)
 
-if(OSX_FRAMEWORK)
-    set(INSTALL_BIN_DIR "bin" CACHE INTERNAL "Installation directory for executables" FORCE)
-    set(INSTALL_LIB_DIR "Library/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_CMAKECONF_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}.framework/Resources/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
-    set(INSTALL_INC_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}.framework/Headers CACHE INTERNAL "Installation directory for headers" FORCE)
-    set(SKIP_INSTALL_HEADERS ON)
-    set(SKIP_INSTALL_EXECUTABLES ON)
-    set(SKIP_INSTALL_FILES ON)
-    set(SKIP_INSTALL_EXPORT ON)
-    set(CMAKE_MACOSX_RPATH ON)
-else()
-    include(GNUInstallDirs)
+set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
+set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE INTERNAL "Installation directory for headers" FORCE)
+set(INSTALL_PKGCONFIG_DIR "${INSTALL_LIB_DIR}/pkgconfig" CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
+set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 
-    set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
-    set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE INTERNAL "Installation directory for headers" FORCE)
-    set(INSTALL_PKGCONFIG_DIR "${INSTALL_LIB_DIR}/pkgconfig" CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
-    set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
-endif()
-
-set(ENABLE_TESTS TRUE CACHE BOOL "Build unit tests?")
+option(ENABLE_TESTS "Build unit tests?" OFF)
 
 set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
@@ -75,13 +58,15 @@ report_version(${PROJECT_NAME} ${VERSION})
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-find_package(QGIS_CORE)
 
 include(FindAnyProject)
 find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network Test)
+# TODO: Switch to find_anyproject
+find_package(QGIS_CORE)
 
 add_subdirectory(src)
 if (ENABLE_TESTS)
+  enable_testing()
   add_subdirectory(tests)
 endif()
 
@@ -89,34 +74,10 @@ add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_D
 
 # Export package ===============================================================
 
-# Add all targets to the build-tree export set
-export(TARGETS ${TARGETS}
-  FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
-
 if(REGISTER_PACKAGE)
   # Export the package for use from the build-tree
   # (this registers the build-tree with a global CMake-registry)
   export(PACKAGE ${PACKAGE_UPPER_NAME})
-endif()
-
-# Create the PackageConfig.cmake file
-configure_file(cmake/PackageConfig.cmake.in
-   ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
-
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-  # Install the <Package>Config.cmake
-  install(FILES
-    ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake
-    DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
-
-  install(TARGETS ${LIB_NAME}
-    EXPORT ${PACKAGE_UPPER_NAME}Targets
-    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-    INCLUDES DESTINATION ${INSTALL_INC_DIR}
-  )
-
-  # Install the export set for use with the install-tree
-  install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
 endif()
 
 # Archiving ====================================================================

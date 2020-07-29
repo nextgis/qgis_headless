@@ -37,6 +37,39 @@ target_link_libraries(${LIB_NAME}
 target_compile_definitions (${LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
 
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-  install(FILES ${LIB_PUBLIC_HEADERS} DESTINATION include)
+# Add path to includes to build-tree export
+target_include_directories(${LIB_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+)
+
+if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
+    install(FILES ${HHEADERS} DESTINATION "${INSTALL_INC_DIR}" COMPONENT headers)
 endif()
+
+if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+  install(TARGETS ${LIB_NAME}
+    EXPORT ${PACKAGE_UPPER_NAME}Targets
+    RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT libraries
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
+    INCLUDES DESTINATION ${INSTALL_INC_DIR}
+  )
+
+  # Add all targets to the build-tree export set
+  export(TARGETS ${LIB_NAME}
+      FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
+
+  # Create the <Package>Config.cmake file
+  configure_file(${PROJECT_SOURCE_DIR}/cmake/PackageConfig.cmake.in
+      ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
+
+  # Install the <Package>Config.cmake
+  install(FILES
+    ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake
+    DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+
+  # Install the export set for use with the install-tree
+  install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+endif()
+
