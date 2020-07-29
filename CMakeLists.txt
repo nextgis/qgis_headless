@@ -59,6 +59,8 @@ else()
     set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 endif()
 
+set(ENABLE_TESTS TRUE CACHE BOOL "Build unit tests?")
+
 set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
@@ -76,9 +78,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(QGIS_CORE)
 
 include(FindAnyProject)
-find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network)
+find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network Test)
 
 add_subdirectory(src)
+if (ENABLE_TESTS)
+  add_subdirectory(tests)
+endif()
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
