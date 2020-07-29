@@ -30,6 +30,13 @@ void TestLib::testRenderVector()
     QVERIFY(image->getSize() > 0);
 }
 
+void TestLib::testRenderRaster()
+{
+    auto image = HeadlessRender::renderRaster("", "", 0.0, 0.0, 100.0, 100.0, 800, 600, 4326);
+    QVERIFY(image->getData() != nullptr);
+    QVERIFY(image->getSize() > 0);
+}
+
 void TestLib::cleanupTestCase()
 {
     HeadlessRender::deinit();

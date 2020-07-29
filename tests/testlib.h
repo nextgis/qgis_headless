@@ -12,6 +12,7 @@ private slots:
     void initTestCase();
     void testGetVersion();
     void testRenderVector();
+    void testRenderRaster();
     void cleanupTestCase();
 
 private:
