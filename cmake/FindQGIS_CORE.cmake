@@ -50,7 +50,7 @@ IF(WIN32)
   ENDIF (MINGW)
 
   IF (MSVC)
-    FIND_PATH(QGIS_INCLUDE_DIRS
+    FIND_PATH(QGIS_CORE_INCLUDE_DIRS
       NAMES qgsapplication.h
       PATHS
         "$ENV{INCLUDE}"

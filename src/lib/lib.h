@@ -25,11 +25,13 @@
 
 namespace HeadlessRender
 {
-    class Image
+    class QGIS_HEADLESS_EXPORT Image
     {
     public:
         Image() = default;
         Image(unsigned char *data, int size);
+        Image(const Image &) = delete;
+        Image &operator=(const Image &) = delete;
         ~Image();
 
         unsigned char *getData() { return mData; }

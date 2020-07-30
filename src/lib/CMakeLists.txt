@@ -37,6 +37,8 @@ target_link_libraries(${LIB_NAME}
 target_compile_definitions (${LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
 
+add_definitions(-D_USE_MATH_DEFINES)
+
 # Add path to includes to build-tree export
 target_include_directories(${LIB_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

@@ -64,6 +64,9 @@ find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network Test)
 # TODO: Switch to find_anyproject
 find_package(QGIS_CORE)
 
+set (DLLEXPORT "__declspec(dllexport)")
+set (DLLIMPORT "__declspec(dllimport)")
+
 add_subdirectory(src)
 if (ENABLE_TESTS)
   enable_testing()

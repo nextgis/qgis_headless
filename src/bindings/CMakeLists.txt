@@ -28,9 +28,6 @@ pybind11_add_module(${PY_LIB_NAME}
   ${LIB_SOURCES}
 )
 
-target_compile_definitions (${PY_LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
-target_compile_definitions (${PY_LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
-
 target_include_directories(${PY_LIB_NAME} PRIVATE
   ${CMAKE_SOURCE_DIR}/src/lib
   ${PYTHON_INCLUDE_DIRS}
@@ -46,6 +43,7 @@ target_link_libraries(${PY_LIB_NAME} PRIVATE
   Qt5::Network
   ${PYTHON_LIBRARY}
   ${QGIS_CORE_LIBRARIES}
+  ${LIB_NAME}
 )
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
