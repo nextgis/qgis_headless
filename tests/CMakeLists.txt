@@ -23,8 +23,6 @@ set(TESTNAME tests)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-string(SUBSTRING ${QT5_VERSION} 0 1 Qt5Core_VERSION_MAJOR)
-
 add_executable(${TESTNAME} main.cpp testlib.cpp)
 target_include_directories(${TESTNAME} PRIVATE "${CMAKE_SOURCE_DIR}/src/lib")
 target_link_libraries(${TESTNAME} Qt5::Test ${LIB_NAME})
@@ -33,3 +31,11 @@ target_compile_definitions (${TESTNAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPOR
 target_compile_definitions (${TESTNAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")
 
 add_test(${TESTNAME} ${TESTNAME})
+
+set(TEST_DATA_URL "https://raw.githubusercontent.com/nextgis/testdata/master")
+
+file(DOWNLOAD ${TEST_DATA_URL}/vector/geojson/linez.geojson ${CMAKE_CURRENT_BINARY_DIR}/data/linez.geojson)
+file(DOWNLOAD ${TEST_DATA_URL}/raster/geotiff/rgbsmall.tif ${CMAKE_CURRENT_BINARY_DIR}/data/rgbsmall.tif)
+file(DOWNLOAD ${TEST_DATA_URL}/style/rgbsmall.qml ${CMAKE_CURRENT_BINARY_DIR}/data/rgbsmall.qml)
+
+add_definitions(-DTEST_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/data/")

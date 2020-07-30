@@ -45,14 +45,30 @@ void TestLib::testGetVersion()
 
 void TestLib::testRenderVector()
 {
-    auto image = HeadlessRender::renderVector("", "", 0.0, 0.0, 100.0, 100.0, 800, 600, 4326);
+    QFile styleFile(QString("%1/rgbsmall.qml").arg(TEST_DATA_DIR));
+    styleFile.open(QIODevice::ReadOnly);
+
+    QString vectorFilePath = QString("%1/bld.shp").arg(TEST_DATA_DIR);
+
+    auto image = HeadlessRender::renderVector(vectorFilePath.toStdString().c_str(),
+                                              styleFile.readAll().data(),
+                                              5.0, 10.0, 45.0, 40.0, 800, 600, 4326);
+
     QVERIFY(image->getData() != nullptr);
     QVERIFY(image->getSize() > 0);
 }
 
 void TestLib::testRenderRaster()
 {
-    auto image = HeadlessRender::renderRaster("", "", 0.0, 0.0, 100.0, 100.0, 800, 600, 4326);
+    QFile styleFile(QString("%1/rgbsmall.qml").arg(TEST_DATA_DIR));
+    styleFile.open(QIODevice::ReadOnly);
+
+    QString rasterFilePath = QString("%1/rgbsmall.tif").arg(TEST_DATA_DIR);
+
+    auto image = HeadlessRender::renderRaster(rasterFilePath.toStdString().c_str(),
+                                              styleFile.readAll().data(),
+                                              -44.84, -23.10, -44.66, -22.93, 800, 600, 4326);
+
     QVERIFY(image->getData() != nullptr);
     QVERIFY(image->getSize() > 0);
 }

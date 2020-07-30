@@ -61,6 +61,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 include(FindAnyProject)
 find_anyproject(Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets Network Test)
+string(SUBSTRING ${QT5_VERSION} 0 1 Qt5Core_VERSION_MAJOR)
+
 # TODO: Switch to find_anyproject
 find_package(QGIS_CORE)
 
