@@ -12,6 +12,8 @@ COPY . /root/qgis_headless/
 
 WORKDIR /root/qgis_headless/build
 
-RUN cmake .. -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON -DENABLE_TESTS=ON && \
+RUN /bin/bash -c "echo \"export QT_QPA_PLATFORM='offscreen'\" | tee /etc/profile.d/QT_QPA.sh && \
+    source /etc/profile && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=ON -DENABLE_TESTS=ON && \
     cmake --build . --target install --config Release && \
-    ctest --config Release
+    ctest --config Release"
