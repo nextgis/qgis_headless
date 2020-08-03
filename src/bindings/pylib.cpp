@@ -29,8 +29,12 @@ PYBIND11_MODULE(qgis_headless_py, m) {
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>(m, "Image")
             .def(pybind11::init<>())
             .def("size", &HeadlessRender::Image::getSize)
-            .def("data",[](std::shared_ptr<HeadlessRender::Image> img) {
+            .def("data", [](std::shared_ptr<HeadlessRender::Image> img) {
                 return reinterpret_cast<uint64_t>(img->getData());
+            })
+            .def("to_string", [](std::shared_ptr<HeadlessRender::Image> img) {
+                std::string buf((const char *)img->getData(), img->getSize());
+                return pybind11::bytes(buf);
             });
 
     m.def("init", [](const std::vector<std::string> &args) {
@@ -45,7 +49,7 @@ PYBIND11_MODULE(qgis_headless_py, m) {
 
     m.def("renderVector", &HeadlessRender::renderVector, "Render vector layer");
 
-    m.def("rasterVector", &HeadlessRender::renderVector, "Render raster layer");
+    m.def("renderRaster", &HeadlessRender::renderRaster, "Render raster layer");
 
     m.def("getVersion", &HeadlessRender::getVersion, "Get library version");
 }
