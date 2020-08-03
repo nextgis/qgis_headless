@@ -47,8 +47,7 @@ void HeadlessRender::init(int argc, char **argv)
 
 void HeadlessRender::deinit()
 {
-    if (app)
-        app->deleteLater();
+    delete app;
 }
 
 const char * HeadlessRender::getVersion()
