@@ -26,7 +26,7 @@
 #include "qgsrasterlayer.h"
 #include "qgsmapsettings.h"
 #include "qgsnetworkaccessmanager.h"
-#include "qgsmaprendererparalleljob.h"
+#include "qgsmaprenderersequentialjob.h"
 #include "qgscoordinatereferencesystem.h"
 
 #include <QApplication>
@@ -87,8 +87,9 @@ QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString,
     settings.setDestinationCrs( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) );
     settings.setLayers( QList<QgsMapLayer *>() << layer );
     settings.setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+    settings.setBackgroundColor( Qt::transparent );
 
-    QPointer<QgsMapRendererParallelJob> job = new QgsMapRendererParallelJob( settings );
+    QPointer<QgsMapRendererSequentialJob> job = new QgsMapRendererSequentialJob( settings );
 
     job->start();
     job->waitForFinished();
