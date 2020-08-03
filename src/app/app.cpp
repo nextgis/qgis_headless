@@ -66,4 +66,6 @@ int main(int argc, char **argv)
         outFile.write(reinterpret_cast<const char *>( image->getData() ), image->getSize());
         outFile.close();
     }
+
+    HeadlessRender::deinit();
 }
