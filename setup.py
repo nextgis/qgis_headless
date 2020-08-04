@@ -60,8 +60,16 @@ setup(
     ext_modules=[CMakeExtension('_qgis_headless')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
-    tests_require=[
-        'pytest',
-        'requests',
-    ]
+    extras_require={
+        'test': [
+            'pytest',
+            'requests',
+            'pillow',
+        ]
+    },
+    entry_points = {
+        'console_scripts': [
+            'qgis_headless = qgis_headless.script:main'
+        ]
+    }
 )
