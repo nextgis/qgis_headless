@@ -59,7 +59,7 @@ std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *
                                                                     double minx, double miny, double maxx, double maxy,
                                                                     int width, int height, int epsg, int quality)
 {
-    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" )), &QObject::deleteLater );
+    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" )));
     return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
 }
 
