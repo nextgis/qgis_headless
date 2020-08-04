@@ -83,6 +83,7 @@ QImage renderLayer(const QgsMapLayerPtr &layer, const char *qmlString,
     layer->readStyle(domDocument.firstChild(), readStyleError, context);
 
     QgsMapSettings settings;
+    settings.setOutputDpi(96);
     settings.setOutputSize( { width, height } );
     settings.setDestinationCrs( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) );
     settings.setLayers( QList<QgsMapLayer *>() << layer.data() );

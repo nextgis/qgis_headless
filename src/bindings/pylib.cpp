@@ -24,7 +24,7 @@
 
 #include <lib.h>
 
-PYBIND11_MODULE(qgis_headless_py, m) {
+PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>(m, "Image")
             .def(pybind11::init<>())
