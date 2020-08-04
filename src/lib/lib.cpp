@@ -67,7 +67,7 @@ std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *
                                                                     double minx, double miny, double maxx, double maxy,
                                                                     int width, int height, int epsg, int quality)
 {
-    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsRasterLayer( uri ), &QObject::deleteLater );
+    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsRasterLayer( uri ));
     return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
 }
 
