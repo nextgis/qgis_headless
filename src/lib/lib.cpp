@@ -31,9 +31,10 @@
 
 #include <QApplication>
 
-std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality);
+typedef QSharedPointer<QgsMapLayer> QgsMapLayerPtr;
 
-QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, double minx, double miny, double maxx, double maxy, int width, int height, int epsg);
+static std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality);
+static QImage renderLayer(const QgsMapLayerPtr &layer, const char *qmlString, double minx, double miny, double maxx, double maxy, int width, int height, int epsg);
 
 static QApplication *app = nullptr;
 
@@ -59,7 +60,7 @@ std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *
                                                                     double minx, double miny, double maxx, double maxy,
                                                                     int width, int height, int epsg, int quality)
 {
-    QPointer<QgsMapLayer> layer = new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" ));
+    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" )), &QObject::deleteLater );
     return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
 }
 
@@ -67,11 +68,11 @@ std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *
                                                                     double minx, double miny, double maxx, double maxy,
                                                                     int width, int height, int epsg, int quality)
 {
-    QPointer<QgsMapLayer> layer = new QgsRasterLayer( uri );
+    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsRasterLayer( uri ), &QObject::deleteLater );
     return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
 }
 
-QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString,
+QImage renderLayer(const QgsMapLayerPtr &layer, const char *qmlString,
                    double minx, double miny, double maxx, double maxy,
                    int width, int height, int epsg)
 {
@@ -86,16 +87,16 @@ QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString,
     settings.setOutputDpi(96);
     settings.setOutputSize( { width, height } );
     settings.setDestinationCrs( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) );
-    settings.setLayers( QList<QgsMapLayer *>() << layer );
+    settings.setLayers( QList<QgsMapLayer *>() << layer.data() );
     settings.setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
     settings.setBackgroundColor( Qt::transparent );
 
-    QPointer<QgsMapRendererSequentialJob> job = new QgsMapRendererSequentialJob( settings );
+    QgsMapRendererSequentialJob job(settings);
 
-    job->start();
-    job->waitForFinished();
+    job.start();
+    job.waitForFinished();
 
-    return job->renderedImage();
+    return job.renderedImage();
 }
 
 std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality)
