@@ -1,0 +1,10 @@
+build/*
+env*
+
+*.egg-info/
+**/__pycache__
+**/*.pyc
+**/*.so
+**/.pytest_cache
+
+Dockerfile*

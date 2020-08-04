@@ -61,8 +61,9 @@ setup(
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     extras_require={
-        'test': [
+        'tests': [
             'pytest',
+            'pytest-datadir',
             'requests',
             'pillow',
         ]
