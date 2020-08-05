@@ -3,13 +3,28 @@ import ctypes
 import pytest
 from PIL import Image
 
-import qgis_headless
+from qgis_headless import MapRequest, CRS, Layer, Style
 from qgis_headless.util import image_stat
 
 
-def render_vector(data, style, extent, size):
-    image = qgis_headless.renderVector(str(data), style, *(extent + size + (3857, -1)))
-    return Image.open(BytesIO(image.to_string()))
+def render_vector(data, qml, extent, size):
+    req = MapRequest()
+    req.set_dpi(96)
+
+    crs = CRS()
+    crs.from_epsg(3857)
+    req.set_crs(crs)
+
+    layer = Layer()
+    layer.from_ogr(str(data))
+
+    style = Style()
+    style.from_string(qml)
+
+    req.add_layer(layer, style)
+
+    image = req.render_image(extent, size)
+    return Image.open(BytesIO(image.to_bytes()))
 
 
 def test_contour(fetch, shared_datadir):
