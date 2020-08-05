@@ -28,11 +28,11 @@ namespace HeadlessRender
     class QGIS_HEADLESS_EXPORT Style
     {
     public:
-        void fromString( const std::string &string );
-        void fromFile( const std::string &filePath );
+        static Style fromString( const std::string &string );
+        static Style fromFile( const std::string &filePath );
         std::string data() const;
     private:
-         std::string mData;
+        std::string mData;
     };
 }
 

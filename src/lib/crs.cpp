@@ -21,9 +21,11 @@
 #include "crs.h"
 #include "qgscoordinatereferencesystem.h"
 
-void HeadlessRender::CRS::fromEPSG( int epsg )
+HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( int epsg )
 {
-    mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) ) );
+    CRS crs;
+    crs.mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) ) );
+    return crs;
 }
 
 HeadlessRender::QgsCoordinateReferenceSystemPtr HeadlessRender::CRS::qgsCoordinateReferenceSystem() const

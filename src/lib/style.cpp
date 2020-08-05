@@ -22,18 +22,24 @@
 #include <QFile>
 #include <QString>
 
-void HeadlessRender::Style::fromString( const std::string &string )
+HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string )
 {
-    mData = string;
+    Style style;
+    style.mData = string;
+    return style;
 }
 
-void HeadlessRender::Style::fromFile( const std::string &filePath )
+HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath )
 {
+    Style style;
+
     QFile file( QString::fromStdString( filePath) );
     if ( file.open( QIODevice::ReadOnly ) ) {
         QByteArray byteArray = file.readAll();
-        mData = std::string( byteArray.constData(), byteArray.length() );
+        style.mData = std::string( byteArray.constData(), byteArray.length() );
     }
+
+    return style;
 }
 
 std::string HeadlessRender::Style::data() const

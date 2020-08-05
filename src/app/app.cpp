@@ -46,14 +46,9 @@ int main( int argc, char **argv )
 
     HeadlessRender::init(argc, argv);
 
-    HeadlessRender::CRS crs;
-    crs.fromEPSG( stringToNum<int>( argv[10] ) );
-
-    HeadlessRender::Layer layer;
-    layer.fromOgr( argv[1] );
-
-    HeadlessRender::Style style;
-    style.fromFile( argv[2] );
+    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( stringToNum<int>( argv[10] ) );
+    HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );
+    HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );
 
     HeadlessRender::MapRequest request;
     request.addLayer( layer, style );

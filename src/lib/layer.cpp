@@ -22,14 +22,18 @@
 #include "qgsvectorlayer.h"
 #include "qgsrasterlayer.h"
 
-void HeadlessRender::Layer::fromOgr( const std::string &uri )
+HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 {
-    mLayer = QgsMapLayerPtr( new QgsVectorLayer( QString::fromStdString( uri ), "layername", QStringLiteral( "ogr" ) ) );
+    Layer layer;
+    layer.mLayer = QgsMapLayerPtr( new QgsVectorLayer( QString::fromStdString( uri ), "layername", QStringLiteral( "ogr" ) ) );
+    return layer;
 }
 
-void HeadlessRender::Layer::fromGdal( const std::string &uri )
+HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
-    mLayer = QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "layername" ) );
+    Layer layer;
+    layer.mLayer = QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "layername" ) );
+    return layer;
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
