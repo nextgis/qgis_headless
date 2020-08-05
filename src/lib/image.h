@@ -18,13 +18,31 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <QApplication>
-#include <QTest>
+#ifndef QGIS_HEADLESS_IMAGE_H
+#define QGIS_HEADLESS_IMAGE_H
 
-#include "testlib.h"
+#include <memory>
 
-int main(int argc, char **argv)
+namespace HeadlessRender
 {
-    QApplication(argc, argv);
-    QTest::qExec(new TestLib(argc, argv), argc, argv);
+    class QGIS_HEADLESS_EXPORT Image
+    {
+    public:
+        Image() = default;
+        Image( unsigned char *data, int size );
+        Image( const Image & ) = delete;
+        Image &operator=( const Image & ) = delete;
+        ~Image();
+
+        unsigned char *getData();
+        int getSize() const;
+
+    private:
+        unsigned char *mData = nullptr;
+        int mSize = 0;
+    };
+
+    typedef std::shared_ptr<Image> ImagePtr;
 }
+
+#endif // QGIS_HEADLESS_IMAGE_H

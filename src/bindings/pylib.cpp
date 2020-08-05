@@ -26,30 +26,46 @@
 
 PYBIND11_MODULE(_qgis_headless, m) {
 
-    pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>(m, "Image")
-            .def(pybind11::init<>())
-            .def("size", &HeadlessRender::Image::getSize)
-            .def("data", [](std::shared_ptr<HeadlessRender::Image> img) {
-                return reinterpret_cast<uint64_t>(img->getData());
+    pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
+            .def( pybind11::init<>() )
+            .def( "from_epsg", &HeadlessRender::CRS::fromEPSG );
+
+    pybind11::class_<HeadlessRender::Style>( m, "Style" )
+            .def( pybind11::init<>()  )
+            .def( "from_file", &HeadlessRender::Style::fromFile );
+
+    pybind11::class_<HeadlessRender::Layer>( m, "Layer" )
+            .def( pybind11::init<>() )
+            .def( "from_ogr", &HeadlessRender::Layer::fromOgr )
+            .def( "from_gdal", &HeadlessRender::Layer::fromGdal );
+
+    pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
+            .def( pybind11::init<>() )
+            .def( "size", &HeadlessRender::Image::getSize )
+            .def( "data", []( std::shared_ptr<HeadlessRender::Image> img ) {
+                return reinterpret_cast<uint64_t>( img->getData() );
             })
-            .def("to_string", [](std::shared_ptr<HeadlessRender::Image> img) {
-                std::string buf((const char *)img->getData(), img->getSize());
-                return pybind11::bytes(buf);
+            .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
+                std::string buf( (const char *)img->getData(), img->getSize() );
+                return pybind11::bytes( buf );
             });
 
-    m.def("init", [](const std::vector<std::string> &args) {
+    pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
+            .def( pybind11::init<>() )
+            .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
+            .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
+            .def( "add_layer", &HeadlessRender::MapRequest::addLayer )
+            .def( "render_image", &HeadlessRender::MapRequest::renderImage );
+
+    m.def("init", []( const std::vector<std::string> &args ) {
         std::vector<char *> v;
-        v.reserve(args.size());
-        for (auto &s : args)
-            v.push_back(const_cast<char *>(s.c_str()));
-        return HeadlessRender::init(v.size(), v.data());
+        v.reserve( args.size() );
+        for ( auto &s : args )
+            v.push_back( const_cast<char *>( s.c_str() ) );
+        return HeadlessRender::init( v.size(), v.data() );
     }, "Library initialization");
 
     m.def("deinit", &HeadlessRender::deinit, "Library deinitialization");
-
-    m.def("render_vector", &HeadlessRender::renderVector, "Render vector layer");
-
-    m.def("render_raster", &HeadlessRender::renderRaster, "Render raster layer");
 
     m.def("get_version", &HeadlessRender::getVersion, "Get library version");
 }

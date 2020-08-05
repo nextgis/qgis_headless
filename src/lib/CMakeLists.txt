@@ -18,8 +18,20 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-set(LIB_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp)
-set(LIB_PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/lib.h)
+set(LIB_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/crs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/layer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/style.cpp
+)
+set(LIB_PUBLIC_HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/crs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/image.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/layer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/style.h
+)
 
 add_library(${LIB_NAME} ${LIB_SOURCES})
 

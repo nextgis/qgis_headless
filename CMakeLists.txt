@@ -42,8 +42,6 @@ set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE INTERNAL "Installation dir
 set(INSTALL_PKGCONFIG_DIR "${INSTALL_LIB_DIR}/pkgconfig" CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
 set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 
-option(ENABLE_TESTS "Build unit tests?" OFF)
-
 set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
@@ -72,10 +70,6 @@ if (WIN32)
 endif()
 
 add_subdirectory(src)
-if (ENABLE_TESTS)
-  enable_testing()
-  add_subdirectory(tests)
-endif()
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 

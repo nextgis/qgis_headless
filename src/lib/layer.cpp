@@ -18,27 +18,21 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef TEST_LIB_H
-#define TEST_LIB_H
+#include "layer.h"
+#include "qgsvectorlayer.h"
+#include "qgsrasterlayer.h"
 
-#include <QObject>
-
-class TestLib : public QObject
+void HeadlessRender::Layer::fromOgr( const std::string &uri )
 {
-    Q_OBJECT
-public:
-    TestLib(int argc, char **argv, QObject *parent = nullptr);
+    mLayer = QgsMapLayerPtr( new QgsVectorLayer( QString::fromStdString( uri ), "layername", QStringLiteral( "ogr" ) ) );
+}
 
-private slots:
-    void initTestCase();
-    void testGetVersion();
-    void testRenderVector();
-    void testRenderRaster();
-    void cleanupTestCase();
+void HeadlessRender::Layer::fromGdal( const std::string &uri )
+{
+    mLayer = QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "layername" ) );
+}
 
-private:
-    int mArgc;
-    char **mArgv;
-};
-
-#endif // TEST_LIB_H
+HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
+{
+    return mLayer;
+}

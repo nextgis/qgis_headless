@@ -26,7 +26,7 @@
 #include <lib.h>
 
 template<typename T>
-T stringToNum(const char *str)
+T stringToNum( const char *str )
 {
     std::stringstream sstream;
     T val;
@@ -37,33 +37,44 @@ T stringToNum(const char *str)
     return val;
 }
 
-int main(int argc, char **argv)
+int main( int argc, char **argv )
 {
-    if (argc < 11) {
-        std::cout << "Usage: ./qgis filepath_to_geodata filepath_to_style output_path minx miny maxx maxy width height epsg quality\n";
+    if ( argc < 10 ) {
+        std::cout << "Usage: ./qgis filepath_to_geodata filepath_to_style output_path minx miny maxx maxy width height epsg \n";
         return 1;
     }
 
     HeadlessRender::init(argc, argv);
 
-    QFile styleFile(argv[2]);
-    styleFile.open(QIODevice::ReadOnly);
+    HeadlessRender::CRS crs;
+    crs.fromEPSG( stringToNum<int>( argv[10] ) );
 
-    auto image = HeadlessRender::renderVector( argv[1],
-            styleFile.readAll().data(),
-            stringToNum<double>(argv[4]), // minx
-            stringToNum<double>(argv[5]), // miny
-            stringToNum<double>(argv[6]), // maxx
-            stringToNum<double>(argv[7]), // maxy
-            stringToNum<int>(argv[8]),    // width
-            stringToNum<int>(argv[9]),    // height
-            stringToNum<int>(argv[10]),   // epsg
-            stringToNum<int>(argv[11])    // quality
-    );
+    HeadlessRender::Layer layer;
+    layer.fromOgr( argv[1] );
 
-    QFile outFile(argv[3] + QString(".png"));
-    if (outFile.open(QIODevice::WriteOnly)) {
-        outFile.write(reinterpret_cast<const char *>( image->getData() ), image->getSize());
+    HeadlessRender::Style style;
+    style.fromFile( argv[2] );
+
+    HeadlessRender::MapRequest request;
+    request.addLayer( layer, style );
+
+    HeadlessRender::Extent extent = std::make_tuple(
+                stringToNum<double>( argv[4] ), // minx
+                stringToNum<double>( argv[5] ), // miny
+                stringToNum<double>( argv[6] ), // maxx
+                stringToNum<double>( argv[7] ) // maxy
+            );
+
+    HeadlessRender::Size size = std::make_tuple(
+                stringToNum<int>( argv[8] ), // width
+                stringToNum<int>( argv[9] )  // height
+            );
+
+    auto image = request.renderImage( {}, size );
+
+    QFile outFile( argv[3] + QString( ".png" ) );
+    if (outFile.open( QIODevice::WriteOnly )) {
+        outFile.write( reinterpret_cast<const char *>( image->getData() ), image->getSize() );
         outFile.close();
     }
 

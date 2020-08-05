@@ -18,54 +18,27 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef QGIS_HEADLESS_H
-#define QGIS_HEADLESS_H
+#ifndef QGIS_HEADLESS_LAYER_H
+#define QGIS_HEADLESS_LAYER_H
 
-#include <memory>
 #include <string>
-#include <vector>
+#include <memory>
 
-#include "crs.h"
-#include "layer.h"
-#include "style.h"
-#include "image.h"
-
-#include <tuple>
-
-class QImage;
-class QgsMapSettings;
+class QgsMapLayer;
 
 namespace HeadlessRender
 {
-    typedef std::shared_ptr<QgsMapSettings> QgsMapSettingsPtr;
-    typedef std::tuple<double, double, double, double> Extent;
-    typedef std::tuple<int, int> Size;
+    typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
-    class QGIS_HEADLESS_EXPORT MapRequest
+    class QGIS_HEADLESS_EXPORT Layer
     {
     public:
-        explicit MapRequest();
-
-        void setDpi( int dpi );
-        void setSvgPaths( const std::vector< std::string > &paths ); //TODO
-        void setCrs( const CRS &crs );
-        void addLayer( Layer layer, const Style &style );
-
-        ImagePtr renderImage( const Extent &extent, const Size &size );
-        void renderLegend( const Size &size ); //TODO
-
+        void fromOgr( const std::string &uri );
+        void fromGdal( const std::string &uri );
+        QgsMapLayerPtr qgsMapLayer() const;
     private:
-        ImagePtr imageData( const QImage &image, int quality = -1 );
-
-        QgsMapSettingsPtr mSettings;
-        std::vector<QgsMapLayerPtr> mLayers;
+        QgsMapLayerPtr mLayer;
     };
-
-    QGIS_HEADLESS_EXPORT void init( int argc, char **argv );
-
-    QGIS_HEADLESS_EXPORT void deinit();
-
-    QGIS_HEADLESS_EXPORT const char *getVersion();
 }
 
-#endif // QGIS_HEADLESS_H
+#endif // QGIS_HEADLESS_LAYER_H

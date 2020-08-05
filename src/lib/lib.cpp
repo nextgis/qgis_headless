@@ -21,26 +21,16 @@
 #include "lib.h"
 
 #include "version.h"
-#include "qgsmaplayer.h"
-#include "qgsvectorlayer.h"
-#include "qgsrasterlayer.h"
-#include "qgsmapsettings.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsmaprenderersequentialjob.h"
-#include "qgscoordinatereferencesystem.h"
 
 #include <QApplication>
 
-typedef QSharedPointer<QgsMapLayer> QgsMapLayerPtr;
-
-static std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality);
-static QImage renderLayer(const QgsMapLayerPtr &layer, const char *qmlString, double minx, double miny, double maxx, double maxy, int width, int height, int epsg);
-
 static QApplication *app = nullptr;
 
-void HeadlessRender::init(int argc, char **argv)
+void HeadlessRender::init( int argc, char **argv )
 {
-    app = new QApplication(argc, argv);
+    app = new QApplication( argc, argv );
 
     QgsNetworkAccessManager::instance();
 }
@@ -55,50 +45,72 @@ const char * HeadlessRender::getVersion()
     return QGIS_HEADLESS_LIB_VERSION_STRING;
 }
 
-std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *uri, const char *qmlString,
-                                                                    double minx, double miny, double maxx, double maxy,
-                                                                    int width, int height, int epsg, int quality)
+HeadlessRender::MapRequest::MapRequest()
+    : mSettings( new QgsMapSettings )
 {
-    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" )));
-    return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
+    mSettings->setBackgroundColor( Qt::transparent );
 }
 
-std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *uri, const char *qmlString,
-                                                                    double minx, double miny, double maxx, double maxy,
-                                                                    int width, int height, int epsg, int quality)
+void HeadlessRender::MapRequest::setDpi( int dpi )
 {
-    QgsMapLayerPtr layer = QgsMapLayerPtr( new QgsRasterLayer( uri ));
-    return imageData( renderLayer( layer, qmlString, minx, miny, maxx, maxy, width, height, epsg ), quality );
+    mSettings->setOutputDpi( dpi );
 }
 
-QImage renderLayer(const QgsMapLayerPtr &layer, const char *qmlString,
-                   double minx, double miny, double maxx, double maxy,
-                   int width, int height, int epsg)
+void HeadlessRender::MapRequest::setSvgPaths( const std::vector<std::string> &paths )
+{
+    // NOT IMPLEMENTED
+}
+
+void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
+{
+    mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
+}
+
+void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style )
 {
     QString readStyleError;
     QDomDocument domDocument;
-    domDocument.setContent( QString(qmlString) );
+    domDocument.setContent( QString::fromStdString( style.data() ) );
     QgsReadWriteContext context;
 
-    layer->readStyle(domDocument.firstChild(), readStyleError, context);
+    QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
+    qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context );
 
-    QgsMapSettings settings;
-    settings.setOutputDpi(96);
-    settings.setOutputSize( { width, height } );
-    settings.setDestinationCrs( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) );
-    settings.setLayers( QList<QgsMapLayer *>() << layer.data() );
-    settings.setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-    settings.setBackgroundColor( Qt::transparent );
+    mLayers.push_back( qgsMapLayer );
+}
 
-    QgsMapRendererSequentialJob job(settings);
+HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
+{
+    double minx = std::get<0>( extent );
+    double miny = std::get<1>( extent );
+    double maxx = std::get<2>( extent );
+    double maxy = std::get<3>( extent );
+
+    int width = std::get<0>( size );
+    int height = std::get<1>( size );
+
+    QList<QgsMapLayer *> qgsMapLayers;
+    for ( const QgsMapLayerPtr &layer : mLayers )
+        qgsMapLayers.push_back( layer.get() );
+
+    mSettings->setOutputSize( { width, height } );
+    mSettings->setLayers( qgsMapLayers );
+    mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+
+    QgsMapRendererSequentialJob job( *mSettings );
 
     job.start();
     job.waitForFinished();
 
-    return job.renderedImage();
+    return imageData( job.renderedImage() );
 }
 
-std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int quality)
+void HeadlessRender::MapRequest::renderLegend( const Size &size )
+{
+    // NOT IMPLEMENTED
+}
+
+HeadlessRender::ImagePtr HeadlessRender::MapRequest::imageData( const QImage &image, int quality )
 {
     QByteArray bytes;
     QBuffer buffer( &bytes );
@@ -112,16 +124,4 @@ std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image, int qualit
     memcpy( data, reinterpret_cast<unsigned char *>(bytes.data()), size );
 
     return std::make_shared<HeadlessRender::Image>( data, size );
-}
-
-HeadlessRender::Image::Image(unsigned char *data, int size)
-    : mData(data)
-    , mSize(size)
-{
-
-}
-
-HeadlessRender::Image::~Image()
-{
-    free(mData);
 }
