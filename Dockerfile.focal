@@ -5,8 +5,8 @@ RUN set -ex; export DEBIAN_FRONTEND=noninteractive; \
     apt-get update; \
     apt-get --yes -qq install --no-install-recommends  \
         curl ca-certificates gnupg software-properties-common; \
-    # apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51F523511C7028C3; \
-    # add-apt-repository --yes --no-update "deb https://qgis.org/ubuntu-ltr focal main"; \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51F523511C7028C3; \
+    add-apt-repository --yes --no-update "deb https://qgis.org/ubuntu-ltr focal main"; \
     apt-get update; \
     apt-get --yes -qq install --no-install-recommends  \
         build-essential cmake libqgis-dev \
