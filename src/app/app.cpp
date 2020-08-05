@@ -70,7 +70,7 @@ int main( int argc, char **argv )
                 stringToNum<int>( argv[9] )  // height
             );
 
-    auto image = request.renderImage( {}, size );
+    auto image = request.renderImage( extent, size );
 
     QFile outFile( argv[3] + QString( ".png" ) );
     if (outFile.open( QIODevice::WriteOnly )) {
