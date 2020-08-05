@@ -47,9 +47,9 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     m.def("deinit", &HeadlessRender::deinit, "Library deinitialization");
 
-    m.def("renderVector", &HeadlessRender::renderVector, "Render vector layer");
+    m.def("render_vector", &HeadlessRender::renderVector, "Render vector layer");
 
-    m.def("renderRaster", &HeadlessRender::renderRaster, "Render raster layer");
+    m.def("render_raster", &HeadlessRender::renderRaster, "Render raster layer");
 
-    m.def("getVersion", &HeadlessRender::getVersion, "Get library version");
+    m.def("get_version", &HeadlessRender::getVersion, "Get library version");
 }
