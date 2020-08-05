@@ -25,11 +25,14 @@
 #include "qgsmaprenderersequentialjob.h"
 
 #include <QApplication>
+#include <cstdlib>
 
 static QApplication *app = nullptr;
 
 void HeadlessRender::init( int argc, char **argv )
 {
+    setenv("QT_QPA_PLATFORM", "offscreen", true);
+
     app = new QApplication( argc, argv );
 
     QgsNetworkAccessManager::instance();
