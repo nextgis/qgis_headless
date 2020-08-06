@@ -10,18 +10,11 @@ from qgis_headless.util import image_stat
 def render_vector(data, qml, extent, size):
     req = MapRequest()
     req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
 
-    crs = CRS()
-    crs.from_epsg(3857)
-    req.set_crs(crs)
-
-    layer = Layer()
-    layer.from_ogr(str(data))
-
-    style = Style()
-    style.from_string(qml)
-
-    req.add_layer(layer, style)
+    req.add_layer(
+        Layer.from_ogr(str(data)),
+        Style.from_string(qml))
 
     image = req.render_image(extent, size)
     return Image.open(BytesIO(image.to_bytes()))
