@@ -32,6 +32,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
             .def( pybind11::init<>()  )
+            .def( "from_string", &HeadlessRender::Style::fromString )
             .def( "from_file", &HeadlessRender::Style::fromFile );
 
     pybind11::class_<HeadlessRender::Layer>( m, "Layer" )
