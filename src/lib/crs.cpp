@@ -20,11 +20,25 @@
 
 #include "crs.h"
 #include "qgscoordinatereferencesystem.h"
+#include <QString>
 
-HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( int epsg )
+static const QString EPSG_3857 = "PROJ: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
+static const QString EPSG_4326 = "PROJ: +proj=longlat +datum=WGS84 +no_def";
+
+HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( EPSG epsg )
 {
     CRS crs;
-    crs.mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( QgsCoordinateReferenceSystem::fromEpsgId( epsg ) ) );
+
+    switch ( epsg )
+    {
+    case EPSG::EPSG_3857:
+        crs.mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( EPSG_3857 ) );
+        break;
+    case EPSG::EPSG_4326:
+        crs.mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( EPSG_4326 ) );
+        break;
+    }
+
     return crs;
 }
 

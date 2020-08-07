@@ -39,14 +39,21 @@ T stringToNum( const char *str )
 
 int main( int argc, char **argv )
 {
-    if ( argc < 10 ) {
+    if ( argc < 11 ) {
         std::cout << "Usage: ./qgis filepath_to_geodata filepath_to_style output_path minx miny maxx maxy width height epsg \n";
-        return 1;
+        return EXIT_FAILURE;
+    }
+
+    int epsg = stringToNum<int>( argv[10] );
+
+    if (epsg != 3857 || epsg != 4326) {
+        std::cout << "Unknown epsg\n";
+        return EXIT_FAILURE;
     }
 
     HeadlessRender::init(argc, argv);
 
-    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( stringToNum<int>( argv[10] ) );
+    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg  == 3857 ? HeadlessRender::CRS::EPSG::EPSG_3857 : HeadlessRender::CRS::EPSG::EPSG_4326 );
     HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );
     HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );
 

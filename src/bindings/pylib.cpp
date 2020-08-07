@@ -26,9 +26,15 @@
 
 PYBIND11_MODULE(_qgis_headless, m) {
 
-    pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
-            .def( pybind11::init<>() )
-            .def( "from_epsg", &HeadlessRender::CRS::fromEPSG );
+    pybind11::class_<HeadlessRender::CRS> crs( m, "CRS" );
+
+    crs.def( pybind11::init<>() )
+       .def( "from_epsg", &HeadlessRender::CRS::fromEPSG );
+
+    pybind11::enum_<HeadlessRender::CRS::EPSG>(crs, "EPSG")
+        .value( "EPSG_3857", HeadlessRender::CRS::EPSG::EPSG_3857 )
+        .value( "EPSG_4326", HeadlessRender::CRS::EPSG::EPSG_4326 )
+        .export_values();
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
             .def( pybind11::init<>()  )

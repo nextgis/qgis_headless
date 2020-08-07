@@ -32,7 +32,13 @@ namespace HeadlessRender
     class QGIS_HEADLESS_EXPORT CRS
     {
     public:
-        static CRS fromEPSG( int epsg );
+        enum class EPSG
+        {
+            EPSG_3857,
+            EPSG_4326
+        };
+
+        static CRS fromEPSG( EPSG epsg );
         QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
     private:
         QgsCoordinateReferenceSystemPtr mCRS;

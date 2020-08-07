@@ -10,7 +10,7 @@ from qgis_headless.util import image_stat
 def render_vector(data, qml, extent, size):
     req = MapRequest()
     req.set_dpi(96)
-    req.set_crs(CRS.from_epsg(3857))
+    req.set_crs(CRS.from_epsg(CRS.EPSG.EPSG_3857))
 
     req.add_layer(
         Layer.from_ogr(str(data)),
