@@ -119,7 +119,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::imageData( const QImage &im
     QBuffer buffer( &bytes );
 
     buffer.open( QIODevice::WriteOnly );
-    image.save( &buffer, "PNG", quality );
+    image.save( &buffer, "TIFF", quality );
     buffer.close();
 
     const int size = bytes.size();
