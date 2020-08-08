@@ -46,7 +46,7 @@ int main( int argc, char **argv )
 
     int epsg = stringToNum<int>( argv[10] );
 
-    if (epsg != 3857 || epsg != 4326) {
+    if (epsg != 3857 && epsg != 4326) {
         std::cout << "Unknown epsg\n";
         return EXIT_FAILURE;
     }
