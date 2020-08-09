@@ -22,24 +22,22 @@
 #define QGIS_HEADLESS_IMAGE_H
 
 #include <memory>
+#include <string>
+
+class QImage;
 
 namespace HeadlessRender
 {
+    typedef std::shared_ptr<QImage> QImagePtr;
+
     class QGIS_HEADLESS_EXPORT Image
     {
     public:
         Image() = default;
-        Image( unsigned char *data, int size );
-        Image( const Image & ) = delete;
-        Image &operator=( const Image & ) = delete;
-        ~Image();
-
-        unsigned char *getData();
-        int getSize() const;
-
+        Image(const QImage &qimage);
+        std::string toString() const;
     private:
-        unsigned char *mData = nullptr;
-        int mSize = 0;
+        std::shared_ptr<QImage> mQImage;
     };
 
     typedef std::shared_ptr<Image> ImagePtr;

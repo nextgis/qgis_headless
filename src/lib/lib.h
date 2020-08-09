@@ -55,8 +55,6 @@ namespace HeadlessRender
         void renderLegend( const Size &size ); //TODO
 
     private:
-        ImagePtr imageData( const QImage &image, int quality = -1 );
-
         QgsMapSettingsPtr mSettings;
         std::vector<QgsMapLayerPtr> mLayers;
     };

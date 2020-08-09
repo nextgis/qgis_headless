@@ -48,13 +48,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
             .def( pybind11::init<>() )
-            .def( "size", &HeadlessRender::Image::getSize )
-            .def( "data", []( std::shared_ptr<HeadlessRender::Image> img ) {
-                return reinterpret_cast<uint64_t>( img->getData() );
-            })
             .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
-                std::string buf( (const char *)img->getData(), img->getSize() );
-                return pybind11::bytes( buf );
+                return pybind11::bytes( img->toString() );
             });
 
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )

@@ -105,26 +105,10 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     job.start();
     job.waitForFinished();
 
-    return imageData( job.renderedImage() );
+    return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }
 
 void HeadlessRender::MapRequest::renderLegend( const Size &size )
 {
     // NOT IMPLEMENTED
-}
-
-HeadlessRender::ImagePtr HeadlessRender::MapRequest::imageData( const QImage &image, int quality )
-{
-    QByteArray bytes;
-    QBuffer buffer( &bytes );
-
-    buffer.open( QIODevice::WriteOnly );
-    image.save( &buffer, "TIFF", quality );
-    buffer.close();
-
-    const int size = bytes.size();
-    unsigned char *data = (unsigned char *) malloc( size );
-    memcpy( data, reinterpret_cast<unsigned char *>(bytes.data()), size );
-
-    return std::make_shared<HeadlessRender::Image>( data, size );
 }

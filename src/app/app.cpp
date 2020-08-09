@@ -76,7 +76,7 @@ int main( int argc, char **argv )
 
     QFile outFile( argv[3] + QString( ".png" ) );
     if (outFile.open( QIODevice::WriteOnly )) {
-        outFile.write( reinterpret_cast<const char *>( image->getData() ), image->getSize() );
+        outFile.write( image->toString().data() );
         outFile.close();
     }
 

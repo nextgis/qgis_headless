@@ -32,10 +32,10 @@ HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( EPSG epsg )
     switch ( epsg )
     {
     case EPSG::EPSG_3857:
-        crs.mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( EPSG_3857 ) );
+        crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_3857 );
         break;
     case EPSG::EPSG_4326:
-        crs.mCRS = QgsCoordinateReferenceSystemPtr( new QgsCoordinateReferenceSystem( EPSG_4326 ) );
+        crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_4326 );
         break;
     }
 

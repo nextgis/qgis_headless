@@ -19,26 +19,32 @@
 ******************************************************************************/
 
 #include "image.h"
+
 #include <cstdlib>
+#include <QByteArray>
+#include <QBuffer>
+#include <QImage>
 
-HeadlessRender::Image::Image( unsigned char *data, int size )
-    : mData( data )
-    , mSize( size )
+HeadlessRender::Image::Image(const QImage &qimage)
 {
-
+    mQImage = std::make_shared<QImage>( qimage );
 }
 
-HeadlessRender::Image::~Image()
+std::string HeadlessRender::Image::toString() const
 {
-    free( mData );
-}
+    static std::string data;
 
-unsigned char *HeadlessRender::Image::getData()
-{
-    return mData;
-}
+    if ( data.empty() )
+    {
+        QByteArray bytes;
+        QBuffer buffer( &bytes );
 
-int HeadlessRender::Image::getSize() const
-{
-    return mSize;
+        buffer.open( QIODevice::WriteOnly );
+        mQImage->save( &buffer, "TIFF" );
+        buffer.close();
+
+        data = std::string( bytes.constData(), bytes.length() );
+    }
+
+    return data;
 }
