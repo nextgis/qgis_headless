@@ -52,7 +52,6 @@ setup(
     description='QGIS headless rendering library',
     version='0.1',
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4',
-    url=None,
     author='NextGIS',
     author_email='info@nextgis.com',
     license='GPL',
@@ -64,6 +63,7 @@ setup(
         'tests': [
             'pytest',
             'pytest-datadir',
+            'pytest-benchmark',
             'requests',
             'pillow',
         ]
