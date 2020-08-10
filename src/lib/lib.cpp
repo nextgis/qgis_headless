@@ -72,7 +72,10 @@ void HeadlessRender::MapRequest::setDpi( int dpi )
 
 void HeadlessRender::MapRequest::setSvgPaths( const std::vector<std::string> &paths )
 {
-    // NOT IMPLEMENTED
+    QStringList svgPaths;
+    for (const std::string &path : paths)
+        svgPaths.push_back( QString::fromStdString( path ) );
+    QgsApplication::instance()->setDefaultSvgPaths( svgPaths );
 }
 
 void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
