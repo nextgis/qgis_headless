@@ -25,16 +25,14 @@
 #include <QBuffer>
 #include <QImage>
 
-HeadlessRender::Image::Image(const QImage &qimage)
+HeadlessRender::Image::Image( const QImage &qimage )
 {
     mQImage = std::make_shared<QImage>( qimage );
 }
 
-std::string HeadlessRender::Image::toString() const
+std::string HeadlessRender::Image::toString()
 {
-    static std::string data;
-
-    if ( data.empty() )
+    if ( mData.empty() )
     {
         QByteArray bytes;
         QBuffer buffer( &bytes );
@@ -43,8 +41,8 @@ std::string HeadlessRender::Image::toString() const
         mQImage->save( &buffer, "TIFF" );
         buffer.close();
 
-        data = std::string( bytes.constData(), bytes.length() );
+        mData = std::string( bytes.constData(), bytes.length() );
     }
 
-    return data;
+    return mData;
 }

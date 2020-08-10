@@ -34,10 +34,11 @@ namespace HeadlessRender
     {
     public:
         Image() = default;
-        Image(const QImage &qimage);
-        std::string toString() const;
+        Image( const QImage &qimage );
+        std::string toString();
     private:
         QImagePtr mQImage;
+        std::string mData;
     };
 
     typedef std::shared_ptr<Image> ImagePtr;
