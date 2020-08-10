@@ -55,9 +55,11 @@ PYBIND11_MODULE(_qgis_headless, m) {
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
             .def( pybind11::init<>() )
             .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
+            .def( "set_svg_paths", &HeadlessRender::MapRequest::setSvgPaths )
             .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
             .def( "add_layer", &HeadlessRender::MapRequest::addLayer )
-            .def( "render_image", &HeadlessRender::MapRequest::renderImage );
+            .def( "render_image", &HeadlessRender::MapRequest::renderImage )
+            .def( "render_legend", &HeadlessRender::MapRequest::renderLegend );
 
     m.def("init", []( const std::vector<std::string> &args ) {
         std::vector<char *> v;
