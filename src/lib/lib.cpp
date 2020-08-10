@@ -23,8 +23,15 @@
 #include "version.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsmaprendererparalleljob.h"
+#include "qgslegendrenderer.h"
+#include "qgslegendsettings.h"
+#include "qgslayertreemodel.h"
+#include "qgslayertree.h"
+#include "qgsrendercontext.h"
+#include "qgsapplication.h"
 
 #include <QApplication>
+#include <QSizeF>
 #include <cstdlib>
 
 static QApplication *app = nullptr;
@@ -33,12 +40,12 @@ void HeadlessRender::init( int argc, char **argv )
 {
     setenv("QT_QPA_PLATFORM", "offscreen", true);
 
-    app = new QApplication( argc, argv );
+    app = new QgsApplication( argc, argv, false );
 
     QgsNetworkAccessManager::instance();
 
-    qRegisterMetaType<QgsNetworkRequestParameters>("QgsNetworkRequestParameters");
-    qRegisterMetaType<QgsNetworkReplyContent>("QgsNetworkReplyContent");
+    qRegisterMetaType<QgsNetworkRequestParameters>( "QgsNetworkRequestParameters" );
+    qRegisterMetaType<QgsNetworkReplyContent>( "QgsNetworkReplyContent" );
 }
 
 void HeadlessRender::deinit()
@@ -53,6 +60,7 @@ const char * HeadlessRender::getVersion()
 
 HeadlessRender::MapRequest::MapRequest()
     : mSettings( new QgsMapSettings )
+    , mQgsLayerTree( new QgsLayerTree )
 {
     mSettings->setBackgroundColor( Qt::transparent );
 }
@@ -83,6 +91,13 @@ void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const St
     qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context );
 
     mLayers.push_back( qgsMapLayer );
+
+    QList<QgsMapLayer *> qgsMapLayers;
+    for ( const QgsMapLayerPtr &layer : mLayers )
+        qgsMapLayers.push_back( layer.get() );
+    mSettings->setLayers( qgsMapLayers );
+
+    mQgsLayerTree->addLayer( qgsMapLayer.get() );
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
@@ -95,12 +110,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     int width = std::get<0>( size );
     int height = std::get<1>( size );
 
-    QList<QgsMapLayer *> qgsMapLayers;
-    for ( const QgsMapLayerPtr &layer : mLayers )
-        qgsMapLayers.push_back( layer.get() );
-
     mSettings->setOutputSize( { width, height } );
-    mSettings->setLayers( qgsMapLayers );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
     QgsMapRendererParallelJob job( *mSettings );
@@ -111,7 +121,27 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }
 
-void HeadlessRender::MapRequest::renderLegend( const Size &size )
+HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size )
 {
-    // NOT IMPLEMENTED
+    int width = std::get<0>( size );
+    int height = std::get<1>( size );
+
+    QgsLayerTreeModel legendModel( mQgsLayerTree.get() );
+    QgsLegendRenderer legendRenderer( &legendModel, QgsLegendSettings() );
+
+    QImage img( QSize( width, height ), QImage::Format_ARGB32_Premultiplied );
+    img.fill( Qt::white );
+
+    QPainter painter( &img );
+    painter.setRenderHint( QPainter::Antialiasing, true );
+    QgsRenderContext context = QgsRenderContext::fromQPainter( &painter );
+
+    int dpi = 96;
+    qreal dpmm = dpi / 25.4;
+    context.painter()->scale( dpmm, dpmm );
+
+    legendRenderer.drawLegend( context );
+    painter.end();
+
+    return std::make_shared<HeadlessRender::Image>( img );
 }
