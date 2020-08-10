@@ -22,7 +22,7 @@
 
 #include "version.h"
 #include "qgsnetworkaccessmanager.h"
-#include "qgsmaprenderersequentialjob.h"
+#include "qgsmaprendererparalleljob.h"
 
 #include <QApplication>
 #include <cstdlib>
@@ -36,6 +36,9 @@ void HeadlessRender::init( int argc, char **argv )
     app = new QApplication( argc, argv );
 
     QgsNetworkAccessManager::instance();
+
+    qRegisterMetaType<QgsNetworkRequestParameters>("QgsNetworkRequestParameters");
+    qRegisterMetaType<QgsNetworkReplyContent>("QgsNetworkReplyContent");
 }
 
 void HeadlessRender::deinit()
@@ -100,7 +103,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     mSettings->setLayers( qgsMapLayers );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
-    QgsMapRendererSequentialJob job( *mSettings );
+    QgsMapRendererParallelJob job( *mSettings );
 
     job.start();
     job.waitForFinished();

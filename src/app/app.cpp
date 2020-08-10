@@ -18,7 +18,6 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <QApplication>
 #include <QFile>
 #include <iostream>
 #include <sstream>
@@ -58,6 +57,8 @@ int main( int argc, char **argv )
     HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );
 
     HeadlessRender::MapRequest request;
+    request.setDpi( 96 );
+    request.setCrs( crs );
     request.addLayer( layer, style );
 
     HeadlessRender::Extent extent = std::make_tuple(
@@ -74,9 +75,9 @@ int main( int argc, char **argv )
 
     auto image = request.renderImage( extent, size );
 
-    QFile outFile( argv[3] + QString( ".png" ) );
+    QFile outFile( argv[3] + QString( ".tiff" ) );
     if (outFile.open( QIODevice::WriteOnly )) {
-        outFile.write( image->toString().data() );
+        outFile.write( image->toString().data(), image->toString().size() );
         outFile.close();
     }
 

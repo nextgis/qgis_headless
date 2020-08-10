@@ -37,7 +37,7 @@ namespace HeadlessRender
         Image(const QImage &qimage);
         std::string toString() const;
     private:
-        std::shared_ptr<QImage> mQImage;
+        QImagePtr mQImage;
     };
 
     typedef std::shared_ptr<Image> ImagePtr;
