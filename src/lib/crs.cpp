@@ -25,17 +25,20 @@
 static const QString EPSG_3857 = "PROJ: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
 static const QString EPSG_4326 = "PROJ: +proj=longlat +datum=WGS84 +no_def";
 
-HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( EPSG epsg )
+HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( long epsg )
 {
     CRS crs;
 
     switch ( epsg )
     {
-    case EPSG::EPSG_3857:
+    case 3857:
         crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_3857 );
         break;
-    case EPSG::EPSG_4326:
+    case 4326:
         crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_4326 );
+        break;
+    default:
+        throw std::invalid_argument( "Invalid epsg code" );
         break;
     }
 

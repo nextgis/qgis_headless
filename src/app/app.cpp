@@ -45,14 +45,9 @@ int main( int argc, char **argv )
 
     int epsg = stringToNum<int>( argv[10] );
 
-    if (epsg != 3857 && epsg != 4326) {
-        std::cout << "Unknown epsg\n";
-        return EXIT_FAILURE;
-    }
-
     HeadlessRender::init(argc, argv);
 
-    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg  == 3857 ? HeadlessRender::CRS::EPSG::EPSG_3857 : HeadlessRender::CRS::EPSG::EPSG_4326 );
+    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg );
     HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );
     HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );
 
