@@ -2,8 +2,8 @@
 <qgis labelsEnabled="1" version="3.10.4-A Coruña" styleCategories="Symbology|Labeling">
   <renderer-v2 enableorderby="0" type="RuleRenderer" symbollevels="0" forceraster="0">
     <rules key="{48052a94-2f68-4c87-be9b-f50c00f9e377}">
-      <rule label="primary" filter=" &quot;level&quot;  % 500 = 0" key="{14aedb1a-97d4-40ba-9434-4b3181c6d1d6}" symbol="0"/>
-      <rule label="secondary" scalemaxdenom="250000" filter=" &quot;level&quot;  % 500 != 0" key="{25777e41-db14-4165-a2d8-a22eb0b41796}" scalemindenom="1" symbol="1"/>
+      <rule label="primary horizontals" filter=" &quot;level&quot;  % 500 = 0" key="{14aedb1a-97d4-40ba-9434-4b3181c6d1d6}" symbol="0"/>
+      <rule label="secondary horizontals" scalemaxdenom="250000" filter=" &quot;level&quot;  % 500 != 0" key="{25777e41-db14-4165-a2d8-a22eb0b41796}" scalemindenom="1" symbol="1"/>
     </rules>
     <symbols>
       <symbol alpha="1" type="line" force_rhr="0" name="0" clip_to_extent="1">

@@ -10,10 +10,10 @@ SIZES = (256, 362, 512, 724, 1024)
 def test_empty(size, benchmark):
     mreq = MapRequest()
     mreq.set_dpi(96)
-    mreq.set_crs(CRS.from_epsg(CRS.EPSG_3857))
+    mreq.set_crs(CRS.from_epsg(3857))
 
     def _render_image():
-        mreq.render_image((-1, -1, 1, 1), (size, size))     
+        mreq.render_image((-1, -1, 1, 1), (size, size)).to_bytes()
 
     benchmark(_render_image)
 
@@ -27,10 +27,10 @@ def test_contour(size, benchmark, shared_datadir):
 
     mreq = MapRequest()
     mreq.set_dpi(96)
-    mreq.set_crs(CRS.from_epsg(CRS.EPSG_3857))
+    mreq.set_crs(CRS.from_epsg(3857))
     mreq.add_layer(Layer.from_ogr(str(data)), Style.from_string(style))
 
     def _render_image():
-        mreq.render_image(extent, (size, size))
+        mreq.render_image(extent, (size, size)).to_bytes()
 
     benchmark(_render_image)
