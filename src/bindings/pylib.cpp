@@ -26,15 +26,9 @@
 
 PYBIND11_MODULE(_qgis_headless, m) {
 
-    pybind11::class_<HeadlessRender::CRS> crs( m, "CRS" );
-
-    crs.def( pybind11::init<>() )
-       .def( "from_epsg", &HeadlessRender::CRS::fromEPSG );
-
-    pybind11::enum_<HeadlessRender::CRS::EPSG>(crs, "EPSG")
-        .value( "EPSG_3857", HeadlessRender::CRS::EPSG::EPSG_3857 )
-        .value( "EPSG_4326", HeadlessRender::CRS::EPSG::EPSG_4326 )
-        .export_values();
+    pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
+            .def( pybind11::init<>() )
+            .def( "from_epsg", &HeadlessRender::CRS::fromEPSG );
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
             .def( pybind11::init<>()  )
@@ -48,21 +42,18 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
             .def( pybind11::init<>() )
-            .def( "size", &HeadlessRender::Image::getSize )
-            .def( "data", []( std::shared_ptr<HeadlessRender::Image> img ) {
-                return reinterpret_cast<uint64_t>( img->getData() );
-            })
             .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
-                std::string buf( (const char *)img->getData(), img->getSize() );
-                return pybind11::bytes( buf );
+                return pybind11::bytes( img->toString() );
             });
 
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
             .def( pybind11::init<>() )
             .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
+            .def( "set_svg_paths", &HeadlessRender::MapRequest::setSvgPaths )
             .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
-            .def( "add_layer", &HeadlessRender::MapRequest::addLayer )
-            .def( "render_image", &HeadlessRender::MapRequest::renderImage );
+            .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
+            .def( "render_image", &HeadlessRender::MapRequest::renderImage )
+            .def( "render_legend", &HeadlessRender::MapRequest::renderLegend );
 
     m.def("init", []( const std::vector<std::string> &args ) {
         std::vector<char *> v;

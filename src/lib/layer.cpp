@@ -25,14 +25,14 @@
 HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 {
     Layer layer;
-    layer.mLayer = QgsMapLayerPtr( new QgsVectorLayer( QString::fromStdString( uri ), "layername", QStringLiteral( "ogr" ) ) );
+    layer.mLayer = QgsMapLayerPtr( new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ) ) );
     return layer;
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
     Layer layer;
-    layer.mLayer = QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "layername" ) );
+    layer.mLayer = QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "" ) );
     return layer;
 }
 

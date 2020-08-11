@@ -18,7 +18,6 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <QApplication>
 #include <QFile>
 #include <iostream>
 #include <sstream>
@@ -46,19 +45,16 @@ int main( int argc, char **argv )
 
     int epsg = stringToNum<int>( argv[10] );
 
-    if (epsg != 3857 && epsg != 4326) {
-        std::cout << "Unknown epsg\n";
-        return EXIT_FAILURE;
-    }
-
     HeadlessRender::init(argc, argv);
 
-    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg  == 3857 ? HeadlessRender::CRS::EPSG::EPSG_3857 : HeadlessRender::CRS::EPSG::EPSG_4326 );
+    HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg );
     HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );
     HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );
 
     HeadlessRender::MapRequest request;
-    request.addLayer( layer, style );
+    request.setDpi( 96 );
+    request.setCrs( crs );
+    request.addLayer( layer, style, "layername" );
 
     HeadlessRender::Extent extent = std::make_tuple(
                 stringToNum<double>( argv[4] ), // minx
@@ -74,9 +70,9 @@ int main( int argc, char **argv )
 
     auto image = request.renderImage( extent, size );
 
-    QFile outFile( argv[3] + QString( ".png" ) );
+    QFile outFile( argv[3] + QString( ".tiff" ) );
     if (outFile.open( QIODevice::WriteOnly )) {
-        outFile.write( reinterpret_cast<const char *>( image->getData() ), image->getSize() );
+        outFile.write( image->toString().data(), image->toString().size() );
         outFile.close();
     }
 

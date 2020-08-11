@@ -34,10 +34,12 @@
 
 class QImage;
 class QgsMapSettings;
+class QgsLayerTree;
 
 namespace HeadlessRender
 {
     typedef std::shared_ptr<QgsMapSettings> QgsMapSettingsPtr;
+    typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
     typedef std::tuple<double, double, double, double> Extent;
     typedef std::tuple<int, int> Size;
 
@@ -47,17 +49,16 @@ namespace HeadlessRender
         explicit MapRequest();
 
         void setDpi( int dpi );
-        void setSvgPaths( const std::vector< std::string > &paths ); //TODO
+        void setSvgPaths( const std::vector< std::string > &paths );
         void setCrs( const CRS &crs );
-        void addLayer( Layer layer, const Style &style );
+        void addLayer( Layer layer, const Style &style, const std::string &label = "" );
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
-        void renderLegend( const Size &size ); //TODO
+        ImagePtr renderLegend( const Size &size = Size() );
 
     private:
-        ImagePtr imageData( const QImage &image, int quality = -1 );
-
         QgsMapSettingsPtr mSettings;
+        QgsLayerTreePtr mQgsLayerTree;
         std::vector<QgsMapLayerPtr> mLayers;
     };
 

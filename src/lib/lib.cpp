@@ -22,9 +22,16 @@
 
 #include "version.h"
 #include "qgsnetworkaccessmanager.h"
-#include "qgsmaprenderersequentialjob.h"
+#include "qgsmaprendererparalleljob.h"
+#include "qgslegendrenderer.h"
+#include "qgslegendsettings.h"
+#include "qgslayertreemodel.h"
+#include "qgslayertree.h"
+#include "qgsrendercontext.h"
+#include "qgsapplication.h"
 
 #include <QApplication>
+#include <QSizeF>
 #include <cstdlib>
 
 static QApplication *app = nullptr;
@@ -33,9 +40,12 @@ void HeadlessRender::init( int argc, char **argv )
 {
     setenv("QT_QPA_PLATFORM", "offscreen", true);
 
-    app = new QApplication( argc, argv );
+    app = new QgsApplication( argc, argv, false );
 
     QgsNetworkAccessManager::instance();
+
+    qRegisterMetaType<QgsNetworkRequestParameters>( "QgsNetworkRequestParameters" );
+    qRegisterMetaType<QgsNetworkReplyContent>( "QgsNetworkReplyContent" );
 }
 
 void HeadlessRender::deinit()
@@ -50,6 +60,7 @@ const char * HeadlessRender::getVersion()
 
 HeadlessRender::MapRequest::MapRequest()
     : mSettings( new QgsMapSettings )
+    , mQgsLayerTree( new QgsLayerTree )
 {
     mSettings->setBackgroundColor( Qt::transparent );
 }
@@ -61,7 +72,10 @@ void HeadlessRender::MapRequest::setDpi( int dpi )
 
 void HeadlessRender::MapRequest::setSvgPaths( const std::vector<std::string> &paths )
 {
-    // NOT IMPLEMENTED
+    QStringList svgPaths;
+    for (const std::string &path : paths)
+        svgPaths.push_back( QString::fromStdString( path ) );
+    QgsApplication::instance()->setDefaultSvgPaths( svgPaths );
 }
 
 void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
@@ -69,7 +83,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style )
+void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style, const std::string &label /* = "" */ )
 {
     QString readStyleError;
     QDomDocument domDocument;
@@ -78,8 +92,16 @@ void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const St
 
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context );
+    qgsMapLayer->setName( QString::fromStdString( label ) );
 
     mLayers.push_back( qgsMapLayer );
+
+    QList<QgsMapLayer *> qgsMapLayers;
+    for ( const QgsMapLayerPtr &layer : mLayers )
+        qgsMapLayers.push_back( layer.get() );
+    mSettings->setLayers( qgsMapLayers );
+
+    mQgsLayerTree->addLayer( qgsMapLayer.get() );
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
@@ -92,39 +114,50 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     int width = std::get<0>( size );
     int height = std::get<1>( size );
 
-    QList<QgsMapLayer *> qgsMapLayers;
-    for ( const QgsMapLayerPtr &layer : mLayers )
-        qgsMapLayers.push_back( layer.get() );
-
     mSettings->setOutputSize( { width, height } );
-    mSettings->setLayers( qgsMapLayers );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
-    QgsMapRendererSequentialJob job( *mSettings );
+    QgsMapRendererParallelJob job( *mSettings );
 
     job.start();
     job.waitForFinished();
 
-    return imageData( job.renderedImage() );
+    return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }
 
-void HeadlessRender::MapRequest::renderLegend( const Size &size )
+HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size /* = Size() */ )
 {
-    // NOT IMPLEMENTED
-}
+    int width = std::get<0>( size );
+    int height = std::get<1>( size );
 
-HeadlessRender::ImagePtr HeadlessRender::MapRequest::imageData( const QImage &image, int quality )
-{
-    QByteArray bytes;
-    QBuffer buffer( &bytes );
+    QgsLayerTreeModel legendModel( mQgsLayerTree.get() );
+    QgsLegendRenderer legendRenderer( &legendModel, QgsLegendSettings() );
 
-    buffer.open( QIODevice::WriteOnly );
-    image.save( &buffer, "TIFF", quality );
-    buffer.close();
 
-    const int size = bytes.size();
-    unsigned char *data = (unsigned char *) malloc( size );
-    memcpy( data, reinterpret_cast<unsigned char *>(bytes.data()), size );
+    int dpi = 96;
+    qreal dpmm = dpi / 25.4;
+    QImage img;
 
-    return std::make_shared<HeadlessRender::Image>( data, size );
+    if ( !width || !height )
+    {
+        QSizeF minSize = legendRenderer.minimumSize();
+        img = QImage( QSize( minSize.width() * dpmm, minSize.height() * dpmm ), QImage::Format_ARGB32_Premultiplied );
+    }
+    else
+    {
+        img = QImage( width, height, QImage::Format_ARGB32_Premultiplied );
+    }
+
+    img.fill( Qt::transparent );
+
+    QPainter painter( &img );
+    painter.setRenderHint( QPainter::Antialiasing, true );
+    QgsRenderContext context = QgsRenderContext::fromQPainter( &painter );
+
+    context.painter()->scale( dpmm, dpmm );
+
+    legendRenderer.drawLegend( context );
+    painter.end();
+
+    return std::make_shared<HeadlessRender::Image>( img );
 }
