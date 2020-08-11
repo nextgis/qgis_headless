@@ -92,6 +92,7 @@ ELSE(WIN32)
         ${QGIS_MAC_PATH}/Frameworks
         ${QGIS_MAC_PATH}/lib
         ${QGIS_PREFIX_PATH}/lib/
+        /usr/lib/x86_64-linux-gnu
         /usr/lib64
         /usr/lib
         /usr/local/lib
