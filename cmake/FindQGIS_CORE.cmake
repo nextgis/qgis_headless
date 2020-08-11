@@ -86,7 +86,7 @@ ELSE(WIN32)
         "$ENV{LIB_DIR}/include/qgis"
     )
     FIND_LIBRARY(QGIS_CORE_LIBRARIES
-      NAMES qgis_core
+      NAMES ngqgis_core
       PATHS
         ${QGIS_BUILD_PATH}/output/lib
         ${QGIS_MAC_PATH}/Frameworks
