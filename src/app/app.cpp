@@ -54,7 +54,7 @@ int main( int argc, char **argv )
     HeadlessRender::MapRequest request;
     request.setDpi( 96 );
     request.setCrs( crs );
-    request.addLayer( layer, style );
+    request.addLayer( layer, style, "layername" );
 
     HeadlessRender::Extent extent = std::make_tuple(
                 stringToNum<double>( argv[4] ), // minx

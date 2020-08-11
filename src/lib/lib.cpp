@@ -83,7 +83,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style )
+void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style, const std::string &label )
 {
     QString readStyleError;
     QDomDocument domDocument;
@@ -92,6 +92,7 @@ void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const St
 
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context );
+    qgsMapLayer->setName( QString::fromStdString( label ) );
 
     mLayers.push_back( qgsMapLayer );
 
@@ -124,7 +125,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }
 
-HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size )
+HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size /* = Size() */ )
 {
     int width = std::get<0>( size );
     int height = std::get<1>( size );
@@ -132,15 +133,27 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     QgsLayerTreeModel legendModel( mQgsLayerTree.get() );
     QgsLegendRenderer legendRenderer( &legendModel, QgsLegendSettings() );
 
-    QImage img( QSize( width, height ), QImage::Format_ARGB32_Premultiplied );
-    img.fill( Qt::white );
+
+    int dpi = 96;
+    qreal dpmm = dpi / 25.4;
+    QImage img;
+
+    if ( !width || !height )
+    {
+        QSizeF minSize = legendRenderer.minimumSize();
+        img = QImage( QSize( minSize.width() * dpmm, minSize.height() * dpmm ), QImage::Format_ARGB32_Premultiplied );
+    }
+    else
+    {
+        img = QImage( width, height, QImage::Format_ARGB32_Premultiplied );
+    }
+
+    img.fill( Qt::transparent );
 
     QPainter painter( &img );
     painter.setRenderHint( QPainter::Antialiasing, true );
     QgsRenderContext context = QgsRenderContext::fromQPainter( &painter );
 
-    int dpi = 96;
-    qreal dpmm = dpi / 25.4;
     context.painter()->scale( dpmm, dpmm );
 
     legendRenderer.drawLegend( context );
