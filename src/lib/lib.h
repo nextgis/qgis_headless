@@ -51,7 +51,7 @@ namespace HeadlessRender
         void setDpi( int dpi );
         void setSvgPaths( const std::vector< std::string > &paths );
         void setCrs( const CRS &crs );
-        void addLayer( Layer layer, const Style &style, const std::string &label );
+        void addLayer( Layer layer, const Style &style, const std::string &label = "" );
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );

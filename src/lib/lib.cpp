@@ -83,7 +83,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style, const std::string &label )
+void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style, const std::string &label /* = "" */ )
 {
     QString readStyleError;
     QDomDocument domDocument;
