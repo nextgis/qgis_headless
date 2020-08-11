@@ -78,6 +78,8 @@ ELSE(WIN32)
         ${QGIS_BUILD_PATH}/output/lib/qgis_core.framework/Headers
         ${QGIS_MAC_PATH}/Frameworks/qgis_core.framework/Headers
         {QGIS_PREFIX_PATH}/include/qgis
+        /usr/include/ngqgis
+        /usr/local/include/ngqgis
         /usr/include/qgis
         /usr/local/include/qgis
         /Library/Frameworks/qgis_core.framework/Headers
