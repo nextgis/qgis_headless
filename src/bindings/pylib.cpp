@@ -53,7 +53,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
             .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
             .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
             .def( "render_image", &HeadlessRender::MapRequest::renderImage )
-            .def( "render_legend", &HeadlessRender::MapRequest::renderLegend );
+            .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() );
 
     m.def("init", []( const std::vector<std::string> &args ) {
         std::vector<char *> v;

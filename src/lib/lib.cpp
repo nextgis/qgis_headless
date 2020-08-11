@@ -134,7 +134,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     QgsLegendRenderer legendRenderer( &legendModel, QgsLegendSettings() );
 
 
-    int dpi = 96;
+    int dpi = mSettings->outputDpi();
     qreal dpmm = dpi / 25.4;
     QImage img;
 
