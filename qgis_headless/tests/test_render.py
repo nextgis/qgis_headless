@@ -64,16 +64,26 @@ def test_legend(fetch, shared_datadir):
 
     req.add_layer(
         Layer.from_ogr(str(data)),
-        Style.from_string(style))
+        Style.from_string(style),
+        label="Contour")
 
-    img = Image.open(BytesIO(req.render_legend((240, 120)).to_bytes()))
+    img = Image.open(BytesIO(req.render_legend().to_bytes()))
     # img.save('test_legend.png')
 
-    stat = image_stat(img)
+    assert img.size == (223, 92), "Expected size is 223 x 92"
 
-    assert 240 < stat.red.mean < 245
-    assert 240 < stat.green.mean < 245
-    assert 240 < stat.blue.mean < 245
+    stat = image_stat(img)
+    assert stat.green.max == 255, "Primary lines aren't visible"
+    assert stat.blue.max == 255, "Primary lines aren't visible"
+    assert stat.red.mean == 0
+    assert 1 < stat.green.mean < 3
+    assert 1 < stat.blue.mean < 3
+
+    req.set_dpi(2 * 96)
+    hdpi_img = Image.open(BytesIO(req.render_legend().to_bytes()))
+
+    assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
+        "Higher DPI should produce bigger legend"
 
 
 def test_marker_simple(fetch, shared_datadir):
