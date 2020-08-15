@@ -28,17 +28,17 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
             .def( pybind11::init<>() )
-            .def( "from_epsg", &HeadlessRender::CRS::fromEPSG );
+            .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG );
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
             .def( pybind11::init<>()  )
-            .def( "from_string", &HeadlessRender::Style::fromString )
-            .def( "from_file", &HeadlessRender::Style::fromFile );
+            .def_static( "from_string", &HeadlessRender::Style::fromString )
+            .def_static( "from_file", &HeadlessRender::Style::fromFile );
 
     pybind11::class_<HeadlessRender::Layer>( m, "Layer" )
             .def( pybind11::init<>() )
-            .def( "from_ogr", &HeadlessRender::Layer::fromOgr )
-            .def( "from_gdal", &HeadlessRender::Layer::fromGdal );
+            .def_static( "from_ogr", &HeadlessRender::Layer::fromOgr )
+            .def_static( "from_gdal", &HeadlessRender::Layer::fromGdal );
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
             .def( pybind11::init<>() )
