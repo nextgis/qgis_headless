@@ -1,5 +1,7 @@
-from io import BytesIO
 import ctypes
+import json
+from io import BytesIO
+
 import pytest
 from PIL import Image
 
@@ -53,11 +55,6 @@ def test_legend(fetch, shared_datadir):
     data = (shared_datadir / 'contour.geojson').read_text()
     style = (shared_datadir / 'contour-rgb.qml').read_text()
 
-    extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
-
-    base = 1024
-    size = (base, int(base * (extent[3] - extent[1]) / (extent[2] - extent[0])))
-
     req = MapRequest()
     req.set_dpi(96)
     req.set_crs(CRS.from_epsg(3857))
@@ -84,6 +81,29 @@ def test_legend(fetch, shared_datadir):
 
     assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
         "Higher DPI should produce bigger legend"
+
+
+def test_legend_empty(fetch, shared_datadir):
+    data = (shared_datadir / 'contour.geojson').read_text()
+    style = (shared_datadir / 'contour-rgb.qml').read_text()
+
+    # Remove all features from data
+    data_obj = json.loads(data)
+    data_obj['features'] = []
+    data = json.dumps(data_obj)
+
+    req = MapRequest()
+    req.set_dpi(96)
+
+    req.add_layer(
+        Layer.from_ogr(str(data)),
+        Style.from_string(style),
+        label="Contour")
+
+    img = Image.open(BytesIO(req.render_legend().to_bytes()))
+    # img.save('test_legend_empty.png')
+
+    assert img.size == (223, 92), "Expected size is 223 x 92"
 
 
 def test_marker_simple(fetch, shared_datadir):
