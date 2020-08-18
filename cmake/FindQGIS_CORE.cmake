@@ -1,5 +1,5 @@
 ###############################################################################
-# CMake module to search for PROJ.4 library
+# CMake module to search for QGIS core library
 #
 # On success, the macro sets the following variables:
 # QGIS_CORE_FOUND        = if the library found
@@ -7,7 +7,7 @@
 # QGIS_CORE_INCLUDE_DIRS = where to find the library headers
 # QGIS_CORE_VERSION      = version as defined in qgsconfig.h, as major.minor.patch
 #
-# Copyright (c) 2015 NextGIS <info@nextgis.com>
+# Copyright (c) 2020 NextGIS <info@nextgis.com>
 #
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
@@ -86,7 +86,9 @@ ELSE(WIN32)
         "$ENV{LIB_DIR}/include/qgis"
     )
     FIND_LIBRARY(QGIS_CORE_LIBRARIES
-      NAMES ngqgis_core
+      NAMES 
+        ngqgis_core
+	qgis_core
       PATHS
         ${QGIS_BUILD_PATH}/output/lib
         ${QGIS_MAC_PATH}/Frameworks
@@ -94,6 +96,7 @@ ELSE(WIN32)
         ${QGIS_PREFIX_PATH}/lib/
         /usr/lib/x86_64-linux-gnu
         /usr/lib64
+        /usr/lib32
         /usr/lib
         /usr/local/lib
         /Library/Frameworks
