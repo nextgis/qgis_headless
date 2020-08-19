@@ -83,14 +83,17 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-void HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer layer, const Style &style, const std::string &label /* = "" */ )
+void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
 {
+    QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
+    if ( !qgsMapLayer )
+        return;
+
     QString readStyleError;
     QDomDocument domDocument;
     domDocument.setContent( QString::fromStdString( style.data() ) );
     QgsReadWriteContext context;
 
-    QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context );
     qgsMapLayer->setName( QString::fromStdString( label ) );
 

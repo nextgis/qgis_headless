@@ -33,6 +33,7 @@ namespace HeadlessRender
     class QGIS_HEADLESS_EXPORT Layer
     {
     public:
+        Layer() = default;
         static Layer fromOgr( const std::string &uri );
         static Layer fromGdal( const std::string &uri );
         QgsMapLayerPtr qgsMapLayer() const;
