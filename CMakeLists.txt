@@ -19,7 +19,7 @@
 ###############################################################################
 
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
-project(qgis-headless)
+project(qgis_headless)
 
 if(NOT DEFINED PACKAGE_VENDOR)
     set(PACKAGE_VENDOR NextGIS)
