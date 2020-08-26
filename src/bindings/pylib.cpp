@@ -20,6 +20,7 @@
 
 #include <pybind11.h>
 #include <stl.h>
+#include <functional.h>
 #include <numpy.h>
 
 #include <lib.h>
@@ -51,7 +52,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
             .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
             .def( "set_svg_paths", &HeadlessRender::MapRequest::setSvgPaths )
             .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
-            .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
+            .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "", pybind11::arg("svgResolverCallback") = nullptr )
             .def( "render_image", &HeadlessRender::MapRequest::renderImage )
             .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() );
 
