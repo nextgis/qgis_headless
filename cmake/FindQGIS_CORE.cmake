@@ -77,6 +77,7 @@ ELSE(WIN32)
       PATHS
         ${QGIS_BUILD_PATH}/output/lib/qgis_core.framework/Headers
         ${QGIS_MAC_PATH}/Frameworks/qgis_core.framework/Headers
+        {QGIS_PREFIX_PATH}/include/ngqgis
         {QGIS_PREFIX_PATH}/include/qgis
         /usr/include/ngqgis
         /usr/local/include/ngqgis
@@ -88,7 +89,7 @@ ELSE(WIN32)
     FIND_LIBRARY(QGIS_CORE_LIBRARIES
       NAMES 
         ngqgis_core
-	qgis_core
+        qgis_core
       PATHS
         ${QGIS_BUILD_PATH}/output/lib
         ${QGIS_MAC_PATH}/Frameworks
