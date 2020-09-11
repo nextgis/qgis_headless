@@ -19,17 +19,27 @@
 ******************************************************************************/
 
 #include "style.h"
+
+#include "layer.h"
+#include "qgsvectorlayer.h"
+#include "qgsrenderer.h"
+#include "qgsrendercontext.h"
+#include "qgsmarkersymbollayer.h"
 #include <QFile>
 #include <QString>
 
-HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string )
+HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
 {
     Style style;
     style.mData = string;
+
+    if (svgResolverCallback)
+        style.mData = resolveSvgPaths( style.mData, svgResolverCallback );
+
     return style;
 }
 
-HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath )
+HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
 {
     Style style;
 
@@ -39,10 +49,42 @@ HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePa
         style.mData = std::string( byteArray.constData(), byteArray.length() );
     }
 
+    if (svgResolverCallback)
+        style.mData = resolveSvgPaths( style.mData, svgResolverCallback );
+
     return style;
 }
 
 std::string HeadlessRender::Style::data() const
 {
     return mData;
+}
+
+std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, const HeadlessRender::SvgResolverCallback &svgResolverCallback)
+{
+    QDomDocument domDocument;
+    QString errorMessage;
+    QgsReadWriteContext context;
+
+    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::make_unique<QgsVectorLayer>();
+    domDocument.setContent( QString::fromStdString( data ) );
+    qgsVectorLayer->readStyle( domDocument.firstChild(), errorMessage, context );
+
+    QString dataWithResolvedPaths = QString::fromStdString( data );
+
+    QgsRenderContext renderContext;
+    for ( const auto &symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
+    {
+        for ( const auto &symbolLayer : symbol->symbolLayers() )
+        {
+            if ( symbolLayer->layerType() == "SvgMarker" )
+            {
+                QgsSvgMarkerSymbolLayer *svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>( symbolLayer );
+                std::string resolvedPath = svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
+                dataWithResolvedPaths.replace( svgMarkerSymbolLayer->path(), QString::fromStdString( resolvedPath ) );
+            }
+        }
+    }
+
+    return dataWithResolvedPaths.toStdString();
 }

@@ -22,17 +22,24 @@
 #define QGIS_HEADLESS_STYLE_H
 
 #include <string>
+#include <functional>
 
 namespace HeadlessRender
 {
+    class Layer;
+    typedef std::function<std::string(const std::string &)> SvgResolverCallback;
+
     class QGIS_HEADLESS_EXPORT Style
     {
     public:
         Style() = default;
-        static Style fromString( const std::string &string );
-        static Style fromFile( const std::string &filePath );
+        static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr  );
+        static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr  );
         std::string data() const;
+
     private:
+        static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );
+
         std::string mData;
     };
 }

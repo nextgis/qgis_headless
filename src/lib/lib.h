@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#include <functional>
 
 #include "crs.h"
 #include "layer.h"
@@ -42,7 +41,6 @@ namespace HeadlessRender
     typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
     typedef std::tuple<double, double, double, double> Extent;
     typedef std::tuple<int, int> Size;
-    typedef std::function<void(std::string)> SvgResolverCallback;
 
     class QGIS_HEADLESS_EXPORT MapRequest
     {
@@ -52,14 +50,12 @@ namespace HeadlessRender
         void setDpi( int dpi );
         void setSvgPaths( const std::vector< std::string > &paths );
         void setCrs( const CRS &crs );
-        void addLayer( const Layer &layer, const Style &style, const std::string &label = "", const SvgResolverCallback &svgResolverCallback = nullptr );
+        void addLayer( const Layer &layer, const Style &style, const std::string &label = "");
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );
 
     private:
-        void resolveSvgPaths( const Layer &layer, const SvgResolverCallback &svgResolverCallback );
-
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;
         std::vector<QgsMapLayerPtr> mLayers;

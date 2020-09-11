@@ -30,9 +30,6 @@
 #include "qgsrendercontext.h"
 #include "qgsapplication.h"
 #include "qgsvectorlayer.h"
-#include "qgsrenderer.h"
-#include "qgsrendercontext.h"
-#include "qgsmarkersymbollayer.h"
 
 #include <QApplication>
 #include <QSizeF>
@@ -87,7 +84,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
+void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
@@ -109,9 +106,6 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
     mSettings->setLayers( qgsMapLayers );
 
     mQgsLayerTree->addLayer( qgsMapLayer.get() );
-
-    if (svgResolverCallback)
-        resolveSvgPaths( layer, svgResolverCallback );
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
@@ -170,23 +164,4 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     painter.end();
 
     return std::make_shared<HeadlessRender::Image>( img );
-}
-
-void HeadlessRender::MapRequest::resolveSvgPaths(const HeadlessRender::Layer &layer, const HeadlessRender::SvgResolverCallback &svgResolverCallback)
-{
-    QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
-
-    if ( qgsMapLayer->type() != QgsMapLayerType::VectorLayer )
-        return;
-
-    QgsVectorLayer *qgsVectorLayer = dynamic_cast<QgsVectorLayer *>( qgsMapLayer.get() );
-    QgsRenderContext renderContext;
-
-    for ( const auto &symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
-        for ( const auto &symbolLayer : symbol->symbolLayers() )
-            if ( symbolLayer->layerType() == "SvgMarker" )
-            {
-                const auto svgMarkerSymbolLayer = dynamic_cast<const QgsSvgMarkerSymbolLayer *>( symbolLayer );
-                svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
-            }
 }
