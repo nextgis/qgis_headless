@@ -66,7 +66,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     QString errorMessage;
     QgsReadWriteContext context;
 
-    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>();
+    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>( new QgsVectorLayer );
     domDocument.setContent( QString::fromStdString( data ) );
     qgsVectorLayer->readStyle( domDocument.firstChild(), errorMessage, context );
 
