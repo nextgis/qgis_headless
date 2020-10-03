@@ -13,6 +13,11 @@ def setup():
 
 
 @pytest.fixture()
+def reset_svg_paths():
+    _qgis_headless.set_svg_paths([])
+
+
+@pytest.fixture()
 def fetch(cache):
     cache_path = cache.makedir('fetch')
 

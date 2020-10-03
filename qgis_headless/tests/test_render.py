@@ -5,33 +5,35 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
-from qgis_headless import MapRequest, CRS, Layer, Style
+from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths
 from qgis_headless.util import image_stat
 
 
 EXTENT_ONE = (-0.5, -0.5, 0.5, 0.5)
 
 
-def render_vector(data, qml, extent, size, svg_paths=None):
+def render_vector(layer, style, extent, size, svg_resolver=None):
     req = MapRequest()
     req.set_dpi(96)
     req.set_crs(CRS.from_epsg(3857))
-    if svg_paths is not None:
-        req.set_svg_paths(svg_paths)
 
     if isinstance(size, int):
         size = (size, int(size * (extent[3] - extent[1]) / (extent[2] - extent[0])))
 
-    req.add_layer(
-        Layer.from_ogr(str(data)),
-        Style.from_string(qml))
+    if not isinstance(layer, Layer):
+        layer = Layer.from_ogr(str(layer))
+    
+    if not isinstance(style, Style):
+        style = Style.from_string(style, svg_resolver=svg_resolver)
+
+    req.add_layer(layer, style)
 
     image = req.render_image(extent, size)
     return Image.open(BytesIO(image.to_bytes()))
 
 
-def test_contour(fetch, shared_datadir):
-    data = (shared_datadir / 'contour.geojson').read_text()
+def test_contour(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rgb.qml').read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
@@ -51,8 +53,8 @@ def test_contour(fetch, shared_datadir):
     assert 29 < stat.blue.mean < 30
 
 
-def test_legend(fetch, shared_datadir):
-    data = (shared_datadir / 'contour.geojson').read_text()
+def test_legend(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rgb.qml').read_text()
 
     req = MapRequest()
@@ -83,12 +85,12 @@ def test_legend(fetch, shared_datadir):
         "Higher DPI should produce bigger legend"
 
 
-def test_marker_simple(fetch, shared_datadir):
-    data = (shared_datadir / 'zero.geojson').read_text()
+def test_marker_simple(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
 
-    img = render_vector(data, style, EXTENT_ONE, 256, svg_paths=[
-        str(shared_datadir / 'marker-blue'), ])
+    set_svg_paths([str(shared_datadir / 'marker-blue'), ])
+    img = render_vector(data, style, EXTENT_ONE, 256)
     # img.save('test_marker_simple.png')
 
     stat = image_stat(img)
@@ -97,33 +99,67 @@ def test_marker_simple(fetch, shared_datadir):
     assert stat.blue.max == 255, "Blue marker is missing"
 
 
-def test_marker_change(fetch, shared_datadir):
-    data = (shared_datadir / 'zero.geojson').read_text()
+def test_marker_change(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
 
     # Render with blue marker in SVG paths
-    img = render_vector(data, style, EXTENT_ONE, 256, svg_paths=[
-        str(shared_datadir / 'marker-blue'), ])
+    set_svg_paths([str(shared_datadir / 'marker-blue'), ])
+    img = render_vector(data, style, EXTENT_ONE, 256)
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
     # Render with green marker in SVG paths
-    img = render_vector(data, style, EXTENT_ONE, 256, svg_paths=[
-        str(shared_datadir / 'marker-green'), ])
+    set_svg_paths([str(shared_datadir / 'marker-green'), ])
+    img = render_vector(data, style, EXTENT_ONE, 256)
     assert image_stat(img).green.max == 255, "Green marker is missing"
 
 
-@pytest.mark.xfail(reason="SVG marker cache doesn't work yet!")
-def test_marker_cache(fetch, shared_datadir):
-    data = (shared_datadir / 'zero.geojson').read_text()
+def test_svg_resolver(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
 
-    img = render_vector(data, style, EXTENT_ONE, 256, svg_paths=[
-        str(shared_datadir / 'marker-blue'), ])
+    color = None
+
+    def _resolver(source):
+        target = str((shared_datadir / 'marker-{}'.format(color) / source).resolve())
+        return target
+
+    color = 'blue'
+    img = render_vector(
+        data, style, EXTENT_ONE, 256,
+        svg_resolver=_resolver)
+    assert image_stat(img).blue.max == 255, "Blue marker is missing"
+
+    color = 'green'
+    img = render_vector(
+        data, style, EXTENT_ONE, 256,
+        svg_resolver=_resolver)
+    assert image_stat(img).green.max == 255, "Green marker is missing"
+
+    color = 'missing'
+    img = render_vector(
+        data, style, EXTENT_ONE, 256,
+        svg_resolver=_resolver)
+
+    stat = image_stat(img)
+    assert stat.red.min == stat.green.min == stat.blue.min == 0, "Black question mark is missing"
+
+
+@pytest.mark.xfail(reason="SVG marker cache doesn't work yet!")
+def test_marker_cache(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'zero.geojson'
+    style = (shared_datadir / 'zero-marker.qml').read_text()
+
+    set_svg_paths([str(shared_datadir / 'marker-blue'), ])
+
+    layer = Layer.from_ogr(str(data))
+    style = Style.from_string(style)
+
+    img = render_vector(layer, style, EXTENT_ONE, 256)
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
     (shared_datadir / 'marker-blue' / 'marker.svg').unlink()
 
     # Render with green marker in SVG paths
-    img = render_vector(data, style, EXTENT_ONE, 256, svg_paths=[
-        str(shared_datadir / 'marker-blue'), ])
+    img = render_vector(layer, style, EXTENT_ONE, 256)
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
