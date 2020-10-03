@@ -83,29 +83,6 @@ def test_legend(fetch, shared_datadir):
         "Higher DPI should produce bigger legend"
 
 
-def test_legend_empty(fetch, shared_datadir):
-    data = (shared_datadir / 'contour.geojson').read_text()
-    style = (shared_datadir / 'contour-rgb.qml').read_text()
-
-    # Remove all features from data
-    data_obj = json.loads(data)
-    data_obj['features'] = []
-    data = json.dumps(data_obj)
-
-    req = MapRequest()
-    req.set_dpi(96)
-
-    req.add_layer(
-        Layer.from_ogr(str(data)),
-        Style.from_string(style),
-        label="Contour")
-
-    img = Image.open(BytesIO(req.render_legend().to_bytes()))
-    # img.save('test_legend_empty.png')
-
-    assert img.size == (223, 92), "Expected size is 223 x 92"
-
-
 def test_marker_simple(fetch, shared_datadir):
     data = (shared_datadir / 'zero.geojson').read_text()
     style = (shared_datadir / 'zero-marker.qml').read_text()
