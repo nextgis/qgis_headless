@@ -62,15 +62,15 @@ std::string HeadlessRender::Style::data() const
 
 std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, const HeadlessRender::SvgResolverCallback &svgResolverCallback)
 {
-    QDomDocument domDocument;
+    QDomDocument importStyleDocument;
+    QDomDocument exportStyleDocument;
+
     QString errorMessage;
     QgsReadWriteContext context;
 
-    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>( new QgsVectorLayer );
-    domDocument.setContent( QString::fromStdString( data ) );
-    qgsVectorLayer->readStyle( domDocument.firstChild(), errorMessage, context );
-
-    QString dataWithResolvedPaths = QString::fromStdString( data );
+    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>(  new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
+    importStyleDocument.setContent( QString::fromStdString( data ) );
+    qgsVectorLayer->readStyle( importStyleDocument.firstChild(), errorMessage, context );
 
     QgsRenderContext renderContext;
     for ( const auto &symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
@@ -80,11 +80,13 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
             if ( symbolLayer->layerType() == "SvgMarker" )
             {
                 QgsSvgMarkerSymbolLayer *svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>( symbolLayer );
-                std::string resolvedPath = svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
-                dataWithResolvedPaths.replace( svgMarkerSymbolLayer->path(), QString::fromStdString( resolvedPath ) );
+                const std::string &resolvedPath = svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
+                svgMarkerSymbolLayer->setPath( QString::fromStdString( resolvedPath ) );
             }
         }
     }
 
-    return dataWithResolvedPaths.toStdString();
+    qgsVectorLayer->exportNamedStyle( exportStyleDocument, errorMessage );
+
+    return exportStyleDocument.toString().toStdString();
 }
