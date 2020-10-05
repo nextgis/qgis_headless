@@ -33,8 +33,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
             .def( pybind11::init<>()  )
-            .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svgResolverCallback") = nullptr )
-            .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svgResolverCallback") = nullptr );
+            .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr )
+            .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr );
 
     pybind11::class_<HeadlessRender::Layer>( m, "Layer" )
             .def( pybind11::init<>() )
@@ -50,7 +50,6 @@ PYBIND11_MODULE(_qgis_headless, m) {
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
             .def( pybind11::init<>() )
             .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
-            .def( "set_svg_paths", &HeadlessRender::MapRequest::setSvgPaths )
             .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
             .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
             .def( "render_image", &HeadlessRender::MapRequest::renderImage )
@@ -65,6 +64,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
     }, "Library initialization");
 
     m.def("deinit", &HeadlessRender::deinit, "Library deinitialization");
+
+    m.def("set_svg_paths", &HeadlessRender::setSvgPaths, "Set SVG search paths");
 
     m.def("get_version", &HeadlessRender::getVersion, "Get library version");
 }

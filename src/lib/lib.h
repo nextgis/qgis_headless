@@ -48,7 +48,6 @@ namespace HeadlessRender
         explicit MapRequest();
 
         void setDpi( int dpi );
-        void setSvgPaths( const std::vector< std::string > &paths );
         void setCrs( const CRS &crs );
         void addLayer( const Layer &layer, const Style &style, const std::string &label = "");
 
@@ -64,6 +63,8 @@ namespace HeadlessRender
     QGIS_HEADLESS_EXPORT void init( int argc, char **argv );
 
     QGIS_HEADLESS_EXPORT void deinit();
+
+    QGIS_HEADLESS_EXPORT void setSvgPaths( const std::vector< std::string > &paths );
 
     QGIS_HEADLESS_EXPORT const char *getVersion();
 }

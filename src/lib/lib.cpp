@@ -54,6 +54,14 @@ void HeadlessRender::deinit()
     delete app;
 }
 
+void HeadlessRender::setSvgPaths( const std::vector<std::string> &paths )
+{
+    QStringList svgPaths;
+    for (const std::string &path : paths)
+        svgPaths.push_back( QString::fromStdString( path ) );
+    QgsApplication::instance()->setDefaultSvgPaths( svgPaths );
+}
+
 const char * HeadlessRender::getVersion()
 {
     return QGIS_HEADLESS_LIB_VERSION_STRING;
@@ -69,14 +77,6 @@ HeadlessRender::MapRequest::MapRequest()
 void HeadlessRender::MapRequest::setDpi( int dpi )
 {
     mSettings->setOutputDpi( dpi );
-}
-
-void HeadlessRender::MapRequest::setSvgPaths( const std::vector<std::string> &paths )
-{
-    QStringList svgPaths;
-    for (const std::string &path : paths)
-        svgPaths.push_back( QString::fromStdString( path ) );
-    QgsApplication::instance()->setDefaultSvgPaths( svgPaths );
 }
 
 void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
