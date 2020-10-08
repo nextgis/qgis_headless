@@ -6,30 +6,7 @@ import pytest
 from PIL import Image
 
 from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths
-from qgis_headless.util import image_stat
-
-
-EXTENT_ONE = (-0.5, -0.5, 0.5, 0.5)
-
-
-def render_vector(layer, style, extent, size, svg_resolver=None):
-    req = MapRequest()
-    req.set_dpi(96)
-    req.set_crs(CRS.from_epsg(3857))
-
-    if isinstance(size, int):
-        size = (size, int(size * (extent[3] - extent[1]) / (extent[2] - extent[0])))
-
-    if not isinstance(layer, Layer):
-        layer = Layer.from_ogr(str(layer))
-    
-    if not isinstance(style, Style):
-        style = Style.from_string(style, svg_resolver=svg_resolver)
-
-    req.add_layer(layer, style)
-
-    image = req.render_image(extent, size)
-    return Image.open(BytesIO(image.to_bytes()))
+from qgis_headless.util import image_stat, render_vector, EXTENT_ONE
 
 
 def test_contour(shared_datadir, reset_svg_paths):

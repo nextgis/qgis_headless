@@ -2,6 +2,7 @@ from binascii import a2b_hex
 
 import pytest 
 from qgis_headless import Layer, CRS
+from qgis_headless.util import render_vector, EXTENT_ONE, image_stat
 
 
 # Constant values for geometry types  are imported from GDAL/OGR
@@ -32,10 +33,12 @@ WKB_LINESTRING = a2b_hex('010200000002000000000000000000000000000000000000000000
 
 
 @pytest.mark.xfail(reason="Not implemented yet")
-def test_from_data(shared_datadir, reset_svg_paths):
-    crs = CRS.from_epsg(4326)
+def test_from_data_red_circle(shared_datadir, reset_svg_paths):
+    style = (shared_datadir / 'zero-red-circle.qml').read_text()
+    crs = CRS.from_epsg(3857)
 
-    Layer.from_data(
+    # layer = str(shared_datadir / 'zero.geojson')
+    layer = Layer.from_data(
         GT_POINT, crs, (
             ('f_integer', FT_INTEGER),
             ('f_real', FT_REAL),
@@ -46,6 +49,15 @@ def test_from_data(shared_datadir, reset_svg_paths):
         )
     )
 
+    img = render_vector(layer, style, EXTENT_ONE, 256)
+    # img.save("test_from_data_red_circle.png")
+
+    stat = image_stat(img)
+    assert stat.red.max == 255, "Red marker missing"
+
+
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_from_data_linestring(shared_datadir, reset_svg_paths):
     empty_tuple = tuple()
     Layer.from_data(
         GT_LINESTRING, crs, empty_tuple, (
