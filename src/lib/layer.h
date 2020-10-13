@@ -22,7 +22,10 @@
 #define QGIS_HEADLESS_LAYER_H
 
 #include <string>
-#include <memory>
+#include <QVariant>
+#include <QString>
+#include <QVector>
+#include "crs.h"
 
 class QgsMapLayer;
 
@@ -33,9 +36,40 @@ namespace HeadlessRender
     class QGIS_HEADLESS_EXPORT Layer
     {
     public:
+        enum class GeometryType
+        {
+            Point,
+            LineString,
+            Polygon,
+            MultiPoint,
+            MultiLineString,
+            MultiPolygon
+        };
+
+        enum class AttributeType
+        {
+            Integer,
+            Real,
+            String,
+            Date,
+            Time,
+            DateTime,
+            Integer64
+        };
+
+        struct FeatureData
+        {
+            qint64 id;
+            std::string wkb;
+            QVector<QVariant> attributes;
+        };
+
         Layer() = default;
+
         static Layer fromOgr( const std::string &uri );
         static Layer fromGdal( const std::string &uri );
+        static Layer fromData( GeometryType geometryType, const CRS &crs, const QVector<QPair<QString, AttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
+
         QgsMapLayerPtr qgsMapLayer() const;
     private:
         QgsMapLayerPtr mLayer;

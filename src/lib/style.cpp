@@ -68,7 +68,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     QString errorMessage;
     QgsReadWriteContext context;
 
-    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>(  new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
+    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
     importStyleDocument.setContent( QString::fromStdString( data ) );
     qgsVectorLayer->readStyle( importStyleDocument.firstChild(), errorMessage, context );
 
