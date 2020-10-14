@@ -42,7 +42,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
     layer.def( pybind11::init<>() )
         .def_static( "from_ogr", &HeadlessRender::Layer::fromOgr )
         .def_static( "from_gdal", &HeadlessRender::Layer::fromGdal )
-        .def( "from_data", []( HeadlessRender::Layer::GeometryType geometryType,
+        .def_static( "from_data", []( HeadlessRender::Layer::GeometryType geometryType,
                                const HeadlessRender::CRS &crs,
                                const pybind11::tuple &attrTypes,
                                const pybind11::tuple &features )
