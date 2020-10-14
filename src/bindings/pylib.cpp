@@ -65,10 +65,17 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
                 feature.id = feat[0].cast<long long int>();
                 feature.wkb = feat[1].cast<std::string>();
+                
 
                 int idx = 0;
                 for (const auto &attr : feat[2])
                 {
+                    if ( attr.is_none() )
+                    {
+                        feature.attributes.append( QVariant() );
+                        continue;
+                    }
+
                     HeadlessRender::Layer::AttributeType attrType = attributeTypes[idx++].second;
                     switch( attrType )
                     {
