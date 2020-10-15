@@ -79,7 +79,9 @@ ELSE(WIN32)
         {QGIS_PREFIX_PATH}/include/ngqgis
         {QGIS_PREFIX_PATH}/include/qgis
         /usr/include/ngqgis
+        /usr/include/ngqgis/ngqgis
         /usr/local/include/ngqgis
+        /usr/local/include/ngqgis/ngqgis
         /usr/include/qgis
         /usr/local/include/qgis
         /Library/Frameworks/qgis_core.framework/Headers
