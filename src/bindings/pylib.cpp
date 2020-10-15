@@ -90,7 +90,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                         break;
                     case HeadlessRender::Layer::AttributeType::Date:
                     {
-                        pybind11::tuple params = attr.cast<pybind11::tuple>();
+                        const pybind11::tuple &params = attr.cast<pybind11::tuple>();
                         int y = params[0].cast<int>();
                         int m = params[1].cast<int>();
                         int d = params[2].cast<int>();
@@ -99,7 +99,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                     }
                     case HeadlessRender::Layer::AttributeType::Time:
                     {
-                        pybind11::tuple params = attr.cast<pybind11::tuple>();
+                        const pybind11::tuple &params = attr.cast<pybind11::tuple>();
                         int h = params[0].cast<int>();
                         int m = params[1].cast<int>();
                         int s = params[2].cast<int>();
@@ -108,7 +108,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                     }
                     case HeadlessRender::Layer::AttributeType::DateTime:
                     {
-                        pybind11::tuple params = attr.cast<pybind11::tuple>();
+                        const pybind11::tuple &params = attr.cast<pybind11::tuple>();
 
                         int year = params[0].cast<int>();
                         int month = params[1].cast<int>();
