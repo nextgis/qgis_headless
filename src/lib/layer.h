@@ -70,6 +70,8 @@ namespace HeadlessRender
         static Layer fromGdal( const std::string &uri );
         static Layer fromData( GeometryType geometryType, const CRS &crs, const QVector<QPair<QString, AttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
 
+        static QVariant::Type toQVariantType( AttributeType attributeType );
+
         QgsMapLayerPtr qgsMapLayer() const;
     private:
         QgsMapLayerPtr mLayer;

@@ -70,13 +70,14 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 int idx = 0;
                 for (const auto &attr : feat[2])
                 {
+                    HeadlessRender::Layer::AttributeType attrType = attributeTypes[idx++].second;
+
                     if ( attr.is_none() )
                     {
-                        feature.attributes.append( QVariant() );
+                        feature.attributes.append( QVariant( HeadlessRender::Layer::toQVariantType( attrType ) ) );
                         continue;
                     }
 
-                    HeadlessRender::Layer::AttributeType attrType = attributeTypes[idx++].second;
                     switch( attrType )
                     {
                     case HeadlessRender::Layer::AttributeType::Integer:

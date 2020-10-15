@@ -44,7 +44,7 @@ QgsWkbTypes::Type toQgsWkbType( HeadlessRender::Layer::GeometryType geometryType
     }
 }
 
-QVariant::Type toQVariantType( HeadlessRender::Layer::AttributeType attributeType )
+QVariant::Type HeadlessRender::Layer::toQVariantType( HeadlessRender::Layer::AttributeType attributeType )
 {
     switch( attributeType )
     {
