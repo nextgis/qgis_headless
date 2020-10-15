@@ -26,7 +26,7 @@ def test_from_data_red_circle(shared_datadir, reset_svg_paths):
             ('f_string', Layer.FT_STRING),
         ), (
             (1, WKB_POINT_00, (1, 0.33, 'foo')),
-            (2, WKB_POINT_11, (1, 0.33, None)),
+            (2, WKB_POINT_11, (1, None, 'bar')),
         )
     )
 
