@@ -144,6 +144,12 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .value( "GT_MULTIPOINT", HeadlessRender::Layer::GeometryType::MultiPoint )
         .value( "GT_MULTILINESTRING", HeadlessRender::Layer::GeometryType::MultiLineString )
         .value( "GT_MULTIPOLYGON", HeadlessRender::Layer::GeometryType::MultiPolygon )
+        .value( "GT_POINTZ", HeadlessRender::Layer::GeometryType::PointZ )
+        .value( "GT_LINESTRINGZ", HeadlessRender::Layer::GeometryType::LineStringZ )
+        .value( "GT_POLYGONZ", HeadlessRender::Layer::GeometryType::PolygonZ )
+        .value( "GT_MULTIPOINTZ", HeadlessRender::Layer::GeometryType::MultiPointZ )
+        .value( "GT_MULTILINESTRINGZ", HeadlessRender::Layer::GeometryType::MultiLineStringZ )
+        .value( "GT_MULTIPOLYGONZ", HeadlessRender::Layer::GeometryType::MultiPolygonZ )
         .export_values();
 
     pybind11::enum_<HeadlessRender::Layer::AttributeType>( layer, "AttributeType" )

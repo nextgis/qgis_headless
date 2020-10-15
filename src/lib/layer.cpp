@@ -41,6 +41,18 @@ QgsWkbTypes::Type toQgsWkbType( HeadlessRender::Layer::GeometryType geometryType
         return QgsWkbTypes::Type::MultiLineString;
     case HeadlessRender::Layer::GeometryType::MultiPolygon:
         return QgsWkbTypes::Type::MultiPolygon;
+    case HeadlessRender::Layer::GeometryType::PointZ:
+        return QgsWkbTypes::Type::PointZ;
+    case HeadlessRender::Layer::GeometryType::LineStringZ:
+        return QgsWkbTypes::Type::LineStringZ;
+    case HeadlessRender::Layer::GeometryType::PolygonZ:
+        return QgsWkbTypes::Type::PolygonZ;
+    case HeadlessRender::Layer::GeometryType::MultiPointZ:
+        return QgsWkbTypes::Type::MultiPointZ;
+    case HeadlessRender::Layer::GeometryType::MultiLineStringZ:
+        return QgsWkbTypes::Type::MultiLineStringZ;
+    case HeadlessRender::Layer::GeometryType::MultiPolygonZ:
+        return QgsWkbTypes::Type::MultiPolygonZ;
     }
 }
 

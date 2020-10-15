@@ -11,22 +11,29 @@ from qgis_headless.util import render_vector, EXTENT_ONE, image_stat
 WKB_POINT_00 = a2b_hex('010100000000000000000000000000000000000000')  # POINT(0 0)
 WKB_POINT_11 = a2b_hex('0101000000000000000000f03f000000000000f03f')  # POINT(1 1)
 
+WKB_POINTZ_000 = a2b_hex('0101000080000000000000000000000000000000000000000000000000')  # POINT Z(0 0 0)
+WKB_POINTZ_111 = a2b_hex('0101000080000000000000f03f000000000000f03f000000000000f03f')  # POINT Z(1 1 1)
+
 WKB_LINESTRING = a2b_hex('01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f')  # LINESTRING(0 0, 1 1)
 
 
-def test_from_data_red_circle(shared_datadir, reset_svg_paths):
+@pytest.mark.parametrize('gt, pt0, pt1', (
+    pytest.param(Layer.GT_POINT, WKB_POINT_00, WKB_POINT_11, id='2D'),
+    pytest.param(Layer.GT_POINTZ, WKB_POINTZ_000, WKB_POINTZ_111, id='3D'),
+))
+def test_from_data_red_circle(gt, pt0, pt1, shared_datadir, reset_svg_paths):
     style = (shared_datadir / 'zero-red-circle.qml').read_text()
     crs = CRS.from_epsg(3857)
 
     # layer = str(shared_datadir / 'zero.geojson')
     layer = Layer.from_data(
-        Layer.GT_POINT, crs, (
+        gt, crs, (
             ('f_integer', Layer.FT_INTEGER),
             ('f_real', Layer.FT_REAL),
             ('f_string', Layer.FT_STRING),
         ), (
-            (1, WKB_POINT_00, (1, 0.33, 'foo')),
-            (2, WKB_POINT_11, (1, None, 'bar')),
+            (1, pt0, (1, 0.33, 'foo')),
+            (2, pt1, (1, None, 'bar')),
         )
     )
 
