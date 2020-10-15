@@ -63,7 +63,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
                 const pybind11::tuple &feat = it.cast<pybind11::tuple>();
 
-                feature.id = feat[0].cast<long long int>();
+                feature.id = feat[0].cast<qint64>();
                 feature.wkb = feat[1].cast<std::string>();
                 
 
@@ -88,21 +88,40 @@ PYBIND11_MODULE(_qgis_headless, m) {
                     case HeadlessRender::Layer::AttributeType::String:
                         feature.attributes.append( QString::fromStdString( attr.cast<std::string>() ) );
                         break;
-                    case HeadlessRender::Layer::AttributeType::Date: // fall through
-                    case HeadlessRender::Layer::AttributeType::Time: // fall through
+                    case HeadlessRender::Layer::AttributeType::Date:
+                    {
+                        pybind11::tuple params = attr.cast<pybind11::tuple>();
+                        int y = params[0].cast<int>();
+                        int m = params[1].cast<int>();
+                        int d = params[2].cast<int>();
+                        feature.attributes.append( QDate( y, m, d ) );
+                        break;
+                    }
+                    case HeadlessRender::Layer::AttributeType::Time:
+                    {
+                        pybind11::tuple params = attr.cast<pybind11::tuple>();
+                        int h = params[0].cast<int>();
+                        int m = params[1].cast<int>();
+                        int s = params[2].cast<int>();
+                        feature.attributes.append( QTime( h, m, s ) );
+                        break;
+                    }
                     case HeadlessRender::Layer::AttributeType::DateTime:
                     {
-                        qint64 msec = attr.cast<qint64>();
-                        QDateTime dateTime;
-                        dateTime.setSecsSinceEpoch( msec );
+                        pybind11::tuple params = attr.cast<pybind11::tuple>();
 
-                        if ( attrType == HeadlessRender::Layer::AttributeType::Date )
-                            feature.attributes.append( dateTime.date() );
-                        else if ( attrType == HeadlessRender::Layer::AttributeType::Date )
-                            feature.attributes.append( dateTime.time() );
-                        else
-                            feature.attributes.append( dateTime );
+                        int year = params[0].cast<int>();
+                        int month = params[1].cast<int>();
+                        int day = params[2].cast<int>();
+                        int hour = params[3].cast<int>();
+                        int min = params[4].cast<int>();
+                        int sec = params[5].cast<int>();
 
+                        QDateTime datetime;
+                        datetime.setDate( QDate( year, month, day ) );
+                        datetime.setTime( QTime( hour, min, sec ) );
+
+                        feature.attributes.append( datetime );
                         break;
                     }
                     case HeadlessRender::Layer::AttributeType::Integer64:

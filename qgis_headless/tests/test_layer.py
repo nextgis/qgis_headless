@@ -57,7 +57,7 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
     pytest.param(Layer.FT_DATE, (1917, 11, 7), "field = to_date('1917-11-07')", id='date'),
     pytest.param(Layer.FT_TIME, (16, 20, 0), "field = to_time('16:20:00')", id='time'),
     pytest.param(Layer.FT_DATETIME, (1917, 11, 7, 16, 20, 0), "field = to_datetime('1917-11-07 16:20:00')", id='datetime'),
-    pytest.param(Layer.FT_INTEGER64, 2**62, "field = 4611686018427387904", id='integer64 2**62'),
+    pytest.param(Layer.FT_INTEGER64, 2**63-1, "field = 9223372036854775807", id='integer64 2**63-1'),
 ))
 def test_field_type(ftype, fvalue, cond, shared_datadir, reset_svg_paths):
     style = (shared_datadir / 'zero-placeholder.qml').read_text()
