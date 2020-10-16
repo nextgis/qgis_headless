@@ -111,7 +111,6 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::Ge
          size_t wkbBufSize = data.wkb.length();
          unsigned char *wkbBuf = new unsigned char[ wkbBufSize ]; // unmanaged memory is deleted in a geom.fromWkb
          memcpy( wkbBuf, data.wkb.c_str(), wkbBufSize );
-         wkbBuf[ wkbBufSize ] = '\0';
 
          geom.fromWkb( wkbBuf, wkbBufSize );
 
