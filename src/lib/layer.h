@@ -71,6 +71,7 @@ namespace HeadlessRender
         };
 
         Layer() = default;
+        explicit Layer( const QgsMapLayerPtr &qgsMapLayer );
 
         static Layer fromOgr( const std::string &uri );
         static Layer fromGdal( const std::string &uri );

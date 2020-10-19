@@ -25,6 +25,13 @@
 #include "qgsmemoryproviderutils.h"
 #include <QByteArray>
 
+void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )
+{
+    QgsVectorSimplifyMethod simplifyMethod = qgsVectorLayer->simplifyMethod();
+    simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
+    qgsVectorLayer->setSimplifyMethod( simplifyMethod );
+}
+
 QgsWkbTypes::Type toQgsWkbType( HeadlessRender::Layer::GeometryType geometryType )
 {
     switch( geometryType )
@@ -77,18 +84,22 @@ QVariant::Type HeadlessRender::Layer::toQVariantType( HeadlessRender::Layer::Att
     }
 }
 
+HeadlessRender::Layer::Layer( const HeadlessRender::QgsMapLayerPtr &qgsMapLayer )
+    : mLayer( qgsMapLayer )
+{
+
+}
+
 HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 {
-    Layer layer;
-    layer.mLayer = QgsMapLayerPtr( new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ) ) );
-    return layer;
+    QgsVectorLayer *qgsVectorLayer = new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ) );
+    disableVectorSimplify( qgsVectorLayer );
+    return Layer( QgsMapLayerPtr( qgsVectorLayer ) );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
-    Layer layer;
-    layer.mLayer = QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "" ) );
-    return layer;
+    return Layer( QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "" ) ) );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::GeometryType geometryType,
@@ -101,6 +112,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::Ge
         fields.append( QgsField( attrType.first, toQVariantType( attrType.second ) ) );
 
     QgsVectorLayer *qgsLayer = QgsMemoryProviderUtils::createMemoryLayer( "layername", fields, toQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
+    disableVectorSimplify( qgsLayer );
 
     for ( const auto &data : featureDataList )
     {
@@ -120,10 +132,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::Ge
          qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert );
     }
 
-    Layer layer;
-    layer.mLayer = QgsMapLayerPtr( qgsLayer );
-
-    return layer;
+    return Layer( QgsMapLayerPtr( qgsLayer ) );
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
