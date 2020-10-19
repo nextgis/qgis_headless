@@ -20,9 +20,9 @@
 
 #include "layer.h"
 #include "crs.h"
-#include "qgsvectorlayer.h"
-#include "qgsrasterlayer.h"
-#include "qgsmemoryproviderutils.h"
+#include <qgsvectorlayer.h>
+#include <qgsrasterlayer.h>
+#include <qgsmemoryproviderutils.h>
 #include <QByteArray>
 
 void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )

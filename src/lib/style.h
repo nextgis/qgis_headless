@@ -32,10 +32,14 @@ namespace HeadlessRender
     class QGIS_HEADLESS_EXPORT Style
     {
     public:
+        typedef long Category;
+
         Style() = default;
         static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr  );
         static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr  );
         std::string data() const;
+
+        static const Category DefaultImportCategories;
 
     private:
         static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );

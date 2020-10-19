@@ -21,12 +21,14 @@
 #include "style.h"
 
 #include "layer.h"
-#include "qgsvectorlayer.h"
-#include "qgsrenderer.h"
-#include "qgsrendercontext.h"
-#include "qgsmarkersymbollayer.h"
+#include <qgsvectorlayer.h>
+#include <qgsrenderer.h>
+#include <qgsrendercontext.h>
+#include <qgsmarkersymbollayer.h>
 #include <QFile>
 #include <QString>
+
+const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling;
 
 HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
 {
@@ -70,7 +72,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
 
     std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
     importStyleDocument.setContent( QString::fromStdString( data ) );
-    qgsVectorLayer->readStyle( importStyleDocument.firstChild(), errorMessage, context );
+    qgsVectorLayer->readStyle( importStyleDocument.firstChild(), errorMessage, context, static_cast<QgsMapLayer::StyleCategory>( DefaultImportCategories )  );
 
     QgsRenderContext renderContext;
     for ( const auto &symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )

@@ -21,15 +21,15 @@
 #include "lib.h"
 
 #include "version.h"
-#include "qgsnetworkaccessmanager.h"
-#include "qgsmaprendererparalleljob.h"
-#include "qgslegendrenderer.h"
-#include "qgslegendsettings.h"
-#include "qgslayertreemodel.h"
-#include "qgslayertree.h"
-#include "qgsrendercontext.h"
-#include "qgsapplication.h"
-#include "qgsvectorlayer.h"
+#include <qgsnetworkaccessmanager.h>
+#include <qgsmaprendererparalleljob.h>
+#include <qgslegendrenderer.h>
+#include <qgslegendsettings.h>
+#include <qgslayertreemodel.h>
+#include <qgslayertree.h>
+#include <qgsrendercontext.h>
+#include <qgsapplication.h>
+#include <qgsvectorlayer.h>
 
 #include <QApplication>
 #include <QSizeF>
@@ -41,7 +41,7 @@ void HeadlessRender::init( int argc, char **argv )
 {
     setenv("QT_QPA_PLATFORM", "offscreen", true);
 
-    app = new QgsApplication( argc, argv, false );
+    app = new QgsApplication( argc, argv, false, "", "offscreen" );
 
     QgsNetworkAccessManager::instance();
 
@@ -95,7 +95,7 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
     domDocument.setContent( QString::fromStdString( style.data() ) );
     QgsReadWriteContext context;
 
-    qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context );
+    qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
     qgsMapLayer->setName( QString::fromStdString( label ) );
 
     mLayers.push_back( qgsMapLayer );
