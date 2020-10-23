@@ -87,7 +87,12 @@ std::set<std::string> HeadlessRender::Style::usedAttributes() const
     for (const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ))
         usedAttributes.insert( attr.toStdString() );
 
+#if VERSION_INT < 31400
     const QSet<QString> &fields = referencedFields( qgsVectorLayer, renderContext );
+#else
+    const QSet<QString> &fields = qgsVectorLayer->labeling()->settings().usedAttributes( renderContext );
+#endif
+
     for ( const QString &field : fields )
         usedAttributes.insert( field.toStdString() );
 
@@ -122,9 +127,13 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
 
 QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context ) const
 {
+    QSet<QString> referenced;
+
+    if ( !layer->labeling() )
+        return referenced;
+
     auto settings = layer->labeling()->settings();
 
-    QSet<QString> referenced;
     if ( settings.drawLabels )
     {
         if ( settings.isExpression )
