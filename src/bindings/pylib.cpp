@@ -35,7 +35,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
         .def( pybind11::init<>()  )
         .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr )
-        .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr );
+        .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr )
+        .def( "used_attributes", &HeadlessRender::Style::usedAttributes );
 
     pybind11::class_<HeadlessRender::Layer> layer( m, "Layer" );
 

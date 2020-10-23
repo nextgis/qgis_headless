@@ -25,10 +25,25 @@
 #include <qgsrenderer.h>
 #include <qgsrendercontext.h>
 #include <qgsmarkersymbollayer.h>
+#include <qgsvectorlayerlabeling.h>
+#include <qgspallabeling.h>
+#include <qgscallout.h>
 #include <QFile>
 #include <QString>
 
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling;
+
+QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
+{
+    QDomDocument document;
+    QString errorMessage;
+    QgsReadWriteContext context;
+    document.setContent( QString::fromStdString( style ) );
+
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
+    qgsVectorLayer->readStyle( document.firstChild(), errorMessage, context, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories )  );
+    return qgsVectorLayer;
+}
 
 HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
 {
@@ -62,17 +77,29 @@ std::string HeadlessRender::Style::data() const
     return mData;
 }
 
+std::set<std::string> HeadlessRender::Style::usedAttributes() const
+{
+    std::set<std::string> usedAttributes;
+
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( mData );
+    QgsRenderContext renderContext;
+
+    for (const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ))
+        usedAttributes.insert( attr.toStdString() );
+
+    const QSet<QString> &fields = referencedFields( qgsVectorLayer, renderContext );
+    for ( const QString &field : fields )
+        usedAttributes.insert( field.toStdString() );
+
+    return usedAttributes;
+}
+
 std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, const HeadlessRender::SvgResolverCallback &svgResolverCallback)
 {
-    QDomDocument importStyleDocument;
-    QDomDocument exportStyleDocument;
-
+    QDomDocument domDocument;
     QString errorMessage;
-    QgsReadWriteContext context;
 
-    std::unique_ptr<QgsVectorLayer> qgsVectorLayer = std::unique_ptr<QgsVectorLayer>( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
-    importStyleDocument.setContent( QString::fromStdString( data ) );
-    qgsVectorLayer->readStyle( importStyleDocument.firstChild(), errorMessage, context, static_cast<QgsMapLayer::StyleCategory>( DefaultImportCategories )  );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( data );
 
     QgsRenderContext renderContext;
     for ( const auto &symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
@@ -88,7 +115,34 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
         }
     }
 
-    qgsVectorLayer->exportNamedStyle( exportStyleDocument, errorMessage );
+    qgsVectorLayer->exportNamedStyle( domDocument, errorMessage );
 
-    return exportStyleDocument.toString().toStdString();
+    return domDocument.toString().toStdString();
+}
+
+QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context ) const
+{
+    auto settings = layer->labeling()->settings();
+
+    QSet<QString> referenced;
+    if ( settings.drawLabels )
+    {
+        if ( settings.isExpression )
+            referenced.unite( QgsExpression( settings.fieldName ).referencedColumns() );
+        else
+            referenced.insert( settings.fieldName );
+    }
+
+    referenced.unite( settings.dataDefinedProperties().referencedFields( context.expressionContext() ) );
+
+    if ( settings.geometryGeneratorEnabled )
+    {
+        QgsExpression geomGeneratorExpr( settings.geometryGenerator );
+        referenced.unite( geomGeneratorExpr.referencedColumns() );
+    }
+
+    if ( settings.callout() )
+        referenced.unite( settings.callout()->referencedFields( context ) );
+
+    return referenced;
 }
