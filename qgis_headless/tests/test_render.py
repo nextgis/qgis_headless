@@ -157,12 +157,12 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
 
-# NOTE: This test breaks everything including next tests and qgis application teardown.
-def test_http_marker(shared_datadir, reset_svg_paths, capfd):
+def test_marker_url(shared_datadir, reset_svg_paths, capfd):
     data = shared_datadir / 'zero.geojson'
-    style = (shared_datadir / 'zero-http-marker.qml').read_text()
+    style = (shared_datadir / 'zero-marker-url.qml').read_text()
 
     img = render_vector(data, style, EXTENT_ONE, 256)
+    # img.save('test_marker_url.png')
     assert capfd.readouterr().out.strip() == '', "QGIS stdout output was captured"
     assert capfd.readouterr().err.strip() == '', "QGIS stderr output was captured"
     assert image_stat(img).red.max == 255, "Red marker is missing"
@@ -172,14 +172,6 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
     marker = (shared_datadir / 'marker-blue' / 'marker.svg').resolve()
-
-    svg_resolver = None
-    if mode == 'resolver':
-        svg_resolver = lambda _: str(marker)
-    elif mode == 'paths':
-        set_svg_paths([str(marker.parent), ])
-    else:
-        raise ValueError("Invalid mode")
 
     layer = Layer.from_ogr(str(data))
     style = Style.from_string(style, svg_resolver=lambda _: str(marker))
