@@ -30,6 +30,7 @@
 
 class QgsVectorLayer;
 class QgsRenderContext;
+class QgsSymbol;
 
 namespace HeadlessRender
 {
@@ -51,6 +52,7 @@ namespace HeadlessRender
 
     private:
         static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );
+        static void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback );
         QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context ) const;
 
         std::string mData;
