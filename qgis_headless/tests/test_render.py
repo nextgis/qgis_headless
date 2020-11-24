@@ -106,33 +106,55 @@ def test_svg_builtin(shared_datadir, reset_svg_paths):
 
 def test_svg_resolver(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
-    style = (shared_datadir / 'zero-marker.qml').read_text()
+    style_marker = (shared_datadir / 'zero-marker.qml').read_text()
 
     color = None
+    resolved = list()
 
     def _resolver(source):
         target = str((shared_datadir / 'marker-{}'.format(color) / source).resolve())
+        resolved.append(source)
         return target
-
+    
     color = 'blue'
+    resolved.clear()
+
     img = render_vector(
-        data, style, EXTENT_ONE, 256,
+        data, style_marker, EXTENT_ONE, 256,
         svg_resolver=_resolver)
+    assert resolved == ['marker.svg'], "Marker isn't resolved"
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
     color = 'green'
+    resolved.clear()
+
     img = render_vector(
-        data, style, EXTENT_ONE, 256,
+        data, style_marker, EXTENT_ONE, 256,
         svg_resolver=_resolver)
+    assert resolved == ['marker.svg'], "Marker isn't resolved"
     assert image_stat(img).green.max == 255, "Green marker is missing"
 
     color = 'missing'
+    resolved.clear()
+
     img = render_vector(
-        data, style, EXTENT_ONE, 256,
+        data, style_marker, EXTENT_ONE, 256,
         svg_resolver=_resolver)
 
     stat = image_stat(img)
+    assert resolved == ['marker.svg'], "Marker isn't resolved"
     assert stat.red.min == stat.green.min == stat.blue.min == 0, "Black question mark is missing"
+
+    style_svg_fill = (shared_datadir / 'zero-svg-fill.qml').read_text()
+
+    color = 'blue'
+    resolved.clear()
+
+    img = render_vector(
+        data, style_svg_fill, EXTENT_ONE, 256,
+        svg_resolver=_resolver)
+    assert resolved == ['marker.svg'], "Marker isn't resolved"
+    assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
 
 @pytest.mark.parametrize('mode', (
