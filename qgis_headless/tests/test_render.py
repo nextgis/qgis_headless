@@ -158,7 +158,6 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
 
 
 # NOTE: This test breaks everything including next tests and qgis application teardown.
-@pytest.mark.skip()
 def test_http_marker(shared_datadir, reset_svg_paths, capfd):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-http-marker.qml').read_text()
