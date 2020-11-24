@@ -168,11 +168,7 @@ def test_http_marker(shared_datadir, reset_svg_paths, capfd):
     assert image_stat(img).red.max == 255, "Red marker is missing"
 
 
-@pytest.mark.parametrize('mode', (
-    pytest.param('resolver'),
-    pytest.param('paths', marks=pytest.mark.xfail),
-))
-def test_svg_cache(mode, shared_datadir, reset_svg_paths):
+def test_svg_cache(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
     marker = (shared_datadir / 'marker-blue' / 'marker.svg').resolve()
@@ -186,7 +182,7 @@ def test_svg_cache(mode, shared_datadir, reset_svg_paths):
         raise ValueError("Invalid mode")
 
     layer = Layer.from_ogr(str(data))
-    style = Style.from_string(style, svg_resolver=svg_resolver)
+    style = Style.from_string(style, svg_resolver=lambda _: str(marker))
 
     req = MapRequest()
     req.set_crs(CRS.from_epsg(3857))
