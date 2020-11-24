@@ -157,6 +157,18 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
 
+# NOTE: This test breaks everything including next tests and qgis application teardown.
+@pytest.mark.skip()
+def test_http_marker(shared_datadir, reset_svg_paths, capfd):
+    data = shared_datadir / 'zero.geojson'
+    style = (shared_datadir / 'zero-http-marker.qml').read_text()
+
+    img = render_vector(data, style, EXTENT_ONE, 256)
+    assert capfd.readouterr().out.strip() == '', "QGIS stdout output was captured"
+    assert capfd.readouterr().err.strip() == '', "QGIS stderr output was captured"
+    assert image_stat(img).red.max == 255, "Red marker is missing"
+
+
 @pytest.mark.parametrize('mode', (
     pytest.param('resolver'),
     pytest.param('paths', marks=pytest.mark.xfail),
