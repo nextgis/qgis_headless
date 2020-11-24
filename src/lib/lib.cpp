@@ -42,11 +42,7 @@ void HeadlessRender::init( int argc, char **argv )
     setenv("QT_QPA_PLATFORM", "offscreen", true);
 
     app = new QgsApplication( argc, argv, false, "", "offscreen" );
-
-    QgsNetworkAccessManager::instance();
-
-    qRegisterMetaType<QgsNetworkRequestParameters>( "QgsNetworkRequestParameters" );
-    qRegisterMetaType<QgsNetworkReplyContent>( "QgsNetworkReplyContent" );
+    QgsApplication::initQgis();
 }
 
 void HeadlessRender::deinit()
@@ -136,7 +132,6 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
 
     QgsLayerTreeModel legendModel( mQgsLayerTree.get() );
     QgsLegendRenderer legendRenderer( &legendModel, QgsLegendSettings() );
-
 
     int dpi = mSettings->outputDpi();
     qreal dpmm = dpi / 25.4;
