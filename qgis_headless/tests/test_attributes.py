@@ -6,6 +6,7 @@ from qgis_headless import Style
 @pytest.mark.parametrize('file, expected', (
     pytest.param('contour-simple.qml', (), id='contour-simple'),
     pytest.param('contour-rgb.qml', ('level', ), id='contour-rgb'),
+    pytest.param('contour-rbl.qml', ('level', ), id='contour-rbl'),
     pytest.param('attributes/osm-highway.qml', ('HIGHWAY', 'NAME_EN', 'NAME'), id='osm-highway'),
     pytest.param('attributes/data-defined.qml', ('size', ), id='osm-highway'),
 ))

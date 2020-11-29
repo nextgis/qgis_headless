@@ -30,6 +30,20 @@ def test_contour(shared_datadir, reset_svg_paths):
     assert 29 < stat.blue.mean < 30
 
 
+def test_rule_based_labeling(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'contour.geojson'
+    style = (shared_datadir / 'contour-rbl.qml').read_text()
+
+    extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
+
+    img = render_vector(data, style, extent, 1024)
+    # img.save('test_rule_based_labeling.png')
+
+    stat = image_stat(img)
+    assert stat.green.max == 255, "Green labels aren't visible"
+    assert stat.blue.max == 255, "Blue labels aren't visible"
+
+
 def test_legend(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rgb.qml').read_text()
