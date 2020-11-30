@@ -94,14 +94,19 @@ std::set<std::string> HeadlessRender::Style::usedAttributes() const
     for (const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ))
         usedAttributes.insert( attr.toStdString() );
 
+    if ( qgsVectorLayer->labeling() )
+    {
+        for ( const QString &providerId : qgsVectorLayer->labeling()->subProviders() )
+        {
 #if VERSION_INT < 31400
-    const QSet<QString> &fields = referencedFields( qgsVectorLayer, renderContext );
+            const QSet<QString> &fields = referencedFields( qgsVectorLayer, renderContext, providerId );
 #else
-    const QSet<QString> &fields = qgsVectorLayer->labeling()->settings().referencedFields( renderContext );
+            const QSet<QString> &fields = qgsVectorLayer->labeling()->settings( providerId ).referencedFields( renderContext );
 #endif
-
-    for ( const QString &field : fields )
-        usedAttributes.insert( field.toStdString() );
+            for ( const QString &field : fields )
+                usedAttributes.insert( field.toStdString() );
+        }
+    }
 
     return usedAttributes;
 }
@@ -144,36 +149,30 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     return domDocument.toString().toStdString();
 }
 
-QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context ) const
+QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const
 {
     QSet<QString> referenced;
 
-    if ( !layer->labeling() )
-        return referenced;
+    QgsPalLayerSettings settings = layer->labeling()->settings( providerId );
 
-    for ( const QString &provider : layer->labeling()->subProviders() )
+    if ( settings.drawLabels )
     {
-        QgsPalLayerSettings settings = layer->labeling()->settings( provider );
-
-        if ( settings.drawLabels )
-        {
-            if ( settings.isExpression )
-                referenced.unite( QgsExpression( settings.fieldName ).referencedColumns() );
-            else
-                referenced.insert( settings.fieldName );
-        }
-
-        referenced.unite( settings.dataDefinedProperties().referencedFields( context.expressionContext() ) );
-
-        if ( settings.geometryGeneratorEnabled )
-        {
-            QgsExpression geomGeneratorExpr( settings.geometryGenerator );
-            referenced.unite( geomGeneratorExpr.referencedColumns() );
-        }
-
-        if ( settings.callout() )
-            referenced.unite( settings.callout()->referencedFields( context ) );
+        if ( settings.isExpression )
+            referenced.unite( QgsExpression( settings.fieldName ).referencedColumns() );
+        else
+            referenced.insert( settings.fieldName );
     }
+
+    referenced.unite( settings.dataDefinedProperties().referencedFields( context.expressionContext() ) );
+
+    if ( settings.geometryGeneratorEnabled )
+    {
+        QgsExpression geomGeneratorExpr( settings.geometryGenerator );
+        referenced.unite( geomGeneratorExpr.referencedColumns() );
+    }
+
+    if ( settings.callout() )
+        referenced.unite( settings.callout()->referencedFields( context ) );
 
     return referenced;
 }
