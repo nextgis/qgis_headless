@@ -32,6 +32,12 @@
 #include <QFile>
 #include <QString>
 
+namespace SymbolLayerType
+{
+    static const QString SvgMarker = "SvgMarker";
+    static const QString SVGFill = "SVGFill";
+};
+
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling;
 
 QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
@@ -91,7 +97,7 @@ std::set<std::string> HeadlessRender::Style::usedAttributes() const
 #if VERSION_INT < 31400
     const QSet<QString> &fields = referencedFields( qgsVectorLayer, renderContext );
 #else
-    const QSet<QString> &fields = qgsVectorLayer->labeling()->settings().usedAttributes( renderContext );
+    const QSet<QString> &fields = qgsVectorLayer->labeling()->settings().referencedFields( renderContext );
 #endif
 
     for ( const QString &field : fields )
@@ -104,13 +110,13 @@ void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRend
 {
     for ( QgsSymbolLayer *symbolLayer : symbol->symbolLayers() )
     {
-        if ( symbolLayer->layerType() == "SvgMarker" )
+        if ( symbolLayer->layerType() == SymbolLayerType::SvgMarker )
         {
             QgsSvgMarkerSymbolLayer *svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>( symbolLayer );
             const std::string &resolvedPath = svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
             svgMarkerSymbolLayer->setPath( QString::fromStdString( resolvedPath ) );
         }
-        else if ( symbolLayer->layerType() == "SVGFill" )
+        else if ( symbolLayer->layerType() == SymbolLayerType::SVGFill )
         {
             QgsSVGFillSymbolLayer *svgFillSymbolLayer = dynamic_cast<QgsSVGFillSymbolLayer *>( symbolLayer );
             const std::string &resolvedPath = svgResolverCallback( svgFillSymbolLayer->svgFilePath().toStdString() );
@@ -145,26 +151,29 @@ QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsV
     if ( !layer->labeling() )
         return referenced;
 
-    auto settings = layer->labeling()->settings();
-
-    if ( settings.drawLabels )
+    for ( const QString &provider : layer->labeling()->subProviders() )
     {
-        if ( settings.isExpression )
-            referenced.unite( QgsExpression( settings.fieldName ).referencedColumns() );
-        else
-            referenced.insert( settings.fieldName );
+        QgsPalLayerSettings settings = layer->labeling()->settings( provider );
+
+        if ( settings.drawLabels )
+        {
+            if ( settings.isExpression )
+                referenced.unite( QgsExpression( settings.fieldName ).referencedColumns() );
+            else
+                referenced.insert( settings.fieldName );
+        }
+
+        referenced.unite( settings.dataDefinedProperties().referencedFields( context.expressionContext() ) );
+
+        if ( settings.geometryGeneratorEnabled )
+        {
+            QgsExpression geomGeneratorExpr( settings.geometryGenerator );
+            referenced.unite( geomGeneratorExpr.referencedColumns() );
+        }
+
+        if ( settings.callout() )
+            referenced.unite( settings.callout()->referencedFields( context ) );
     }
-
-    referenced.unite( settings.dataDefinedProperties().referencedFields( context.expressionContext() ) );
-
-    if ( settings.geometryGeneratorEnabled )
-    {
-        QgsExpression geomGeneratorExpr( settings.geometryGenerator );
-        referenced.unite( geomGeneratorExpr.referencedColumns() );
-    }
-
-    if ( settings.callout() )
-        referenced.unite( settings.callout()->referencedFields( context ) );
 
     return referenced;
 }
