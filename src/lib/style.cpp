@@ -29,10 +29,10 @@
 #include <qgsvectorlayerlabeling.h>
 #include <qgspallabeling.h>
 #include <qgscallout.h>
+#include <qgsrulebasedlabeling.h>
 #include <QFile>
 #include <QString>
 
-#include <qgsrulebasedlabeling.h>
 
 namespace SymbolLayerType
 {
