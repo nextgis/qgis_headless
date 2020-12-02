@@ -63,6 +63,11 @@ const char * HeadlessRender::getVersion()
     return QGIS_HEADLESS_LIB_VERSION_STRING;
 }
 
+const char * HeadlessRender::getQGISVersion()
+{
+    return VERSION;
+}
+
 HeadlessRender::MapRequest::MapRequest()
     : mSettings( new QgsMapSettings )
     , mQgsLayerTree( new QgsLayerTree )

@@ -36,7 +36,14 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .def( pybind11::init<>()  )
         .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr )
         .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr )
-        .def( "used_attributes", &HeadlessRender::Style::usedAttributes );
+        .def( "used_attributes", []( const HeadlessRender::Style &style ) -> pybind11::object
+        {
+            const std::pair<bool, std::set<std::string>> &result = style.usedAttributes();
+            if ( result.first )
+                return pybind11::cast( result.second );
+            else
+                return pybind11::none();
+        });
 
     pybind11::class_<HeadlessRender::Layer> layer( m, "Layer" );
 
@@ -192,4 +199,6 @@ PYBIND11_MODULE(_qgis_headless, m) {
     m.def("set_svg_paths", &HeadlessRender::setSvgPaths, "Set SVG search paths");
 
     m.def("get_version", &HeadlessRender::getVersion, "Get library version");
+
+    m.def("get_qgis_version", &HeadlessRender::getQGISVersion, "Get QGIS library version");
 }

@@ -46,7 +46,7 @@ namespace HeadlessRender
         static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr  );
         static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr  );
         std::string data() const;
-        std::set<std::string> usedAttributes() const;
+        std::pair<bool, std::set<std::string>> usedAttributes() const;
 
         static const Category DefaultImportCategories;
 

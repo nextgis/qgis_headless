@@ -29,10 +29,12 @@
 #include <qgsvectorlayerlabeling.h>
 #include <qgspallabeling.h>
 #include <qgscallout.h>
-#include <qgsrulebasedlabeling.h>
 #include <QFile>
 #include <QString>
 
+#if VERSION_INT >= 31200
+#	include <qgsrulebasedlabeling.h>
+#endif
 
 namespace SymbolLayerType
 {
@@ -91,15 +93,12 @@ std::string HeadlessRender::Style::data() const
     return mData;
 }
 
-std::set<std::string> HeadlessRender::Style::usedAttributes() const
+std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() const
 {
     std::set<std::string> usedAttributes;
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( mData );
     QgsRenderContext renderContext;
-
-    for (const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ))
-        usedAttributes.insert( attr.toStdString() );
 
     QgsAbstractVectorLayerLabeling *abstractVectorLayerLabeling = qgsVectorLayer->labeling();
     if ( abstractVectorLayerLabeling )
@@ -108,10 +107,14 @@ std::set<std::string> HeadlessRender::Style::usedAttributes() const
 
         if ( abstractVectorLayerLabeling->type() == LabelingType::RuleBased )
         {
+#if VERSION_INT >= 31200
             QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>( abstractVectorLayerLabeling );
             if ( ruleBasedLabeling->rootRule() )
                 for ( QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
                     fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
+#else
+            return std::make_pair( false, usedAttributes );
+#endif
         }
 
         for ( const QString &providerId : qgsVectorLayer->labeling()->subProviders() )
@@ -127,7 +130,10 @@ std::set<std::string> HeadlessRender::Style::usedAttributes() const
             usedAttributes.insert( field.toStdString() );
     }
 
-    return usedAttributes;
+    for (const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ))
+        usedAttributes.insert( attr.toStdString() );
+
+    return std::make_pair( true, usedAttributes );
 }
 
 void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRender::SvgResolverCallback &svgResolverCallback )

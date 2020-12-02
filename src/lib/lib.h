@@ -67,6 +67,8 @@ namespace HeadlessRender
     QGIS_HEADLESS_EXPORT void setSvgPaths( const std::vector< std::string > &paths );
 
     QGIS_HEADLESS_EXPORT const char *getVersion();
+
+    QGIS_HEADLESS_EXPORT const char *getQGISVersion();
 }
 
 #endif // QGIS_HEADLESS_H
