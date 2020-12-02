@@ -32,10 +32,17 @@
 #include <QFile>
 #include <QString>
 
+#include <qgsrulebasedlabeling.h>
+
 namespace SymbolLayerType
 {
     static const QString SvgMarker = "SvgMarker";
     static const QString SVGFill = "SVGFill";
+};
+
+namespace LabelingType
+{
+    static const QString RuleBased = "rule-based";
 };
 
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling;
@@ -47,7 +54,7 @@ QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
     QgsReadWriteContext context;
     document.setContent( QString::fromStdString( style ) );
 
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "Point?crs=epsg:4326" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
     qgsVectorLayer->readStyle( document.firstChild(), errorMessage, context, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories )  );
     return qgsVectorLayer;
 }
@@ -94,18 +101,30 @@ std::set<std::string> HeadlessRender::Style::usedAttributes() const
     for (const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ))
         usedAttributes.insert( attr.toStdString() );
 
-    if ( qgsVectorLayer->labeling() )
+    QgsAbstractVectorLayerLabeling *abstractVectorLayerLabeling = qgsVectorLayer->labeling();
+    if ( abstractVectorLayerLabeling )
     {
+        QSet<QString> fields;
+
+        if ( abstractVectorLayerLabeling->type() == LabelingType::RuleBased )
+        {
+            QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>( abstractVectorLayerLabeling );
+            if ( ruleBasedLabeling->rootRule() )
+                for ( QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
+                    fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
+        }
+
         for ( const QString &providerId : qgsVectorLayer->labeling()->subProviders() )
         {
 #if VERSION_INT < 31400
-            const QSet<QString> &fields = referencedFields( qgsVectorLayer, renderContext, providerId );
+            fields.unite( referencedFields( qgsVectorLayer, renderContext, providerId ));
 #else
-            const QSet<QString> &fields = qgsVectorLayer->labeling()->settings( providerId ).referencedFields( renderContext );
+            fields.unite( qgsVectorLayer->labeling()->settings( providerId ).referencedFields( renderContext ));
 #endif
-            for ( const QString &field : fields )
-                usedAttributes.insert( field.toStdString() );
         }
+
+        for ( const QString &field : fields )
+            usedAttributes.insert( field.toStdString() );
     }
 
     return usedAttributes;
