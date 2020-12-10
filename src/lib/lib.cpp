@@ -124,8 +124,10 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
 
     QgsMapRendererParallelJob job( *mSettings );
 
+    QEventLoop eventLoop;
+    QObject::connect( &job, &QgsMapRendererParallelJob::finished, &eventLoop, (void(QEventLoop::*)())&QEventLoop::exit );
     job.start();
-    job.waitForFinished();
+    eventLoop.exec();
 
     return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }

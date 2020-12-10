@@ -110,7 +110,7 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
 #if VERSION_INT >= 31200
             QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>( abstractVectorLayerLabeling );
             if ( ruleBasedLabeling->rootRule() )
-                for ( QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
+                for ( const QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
                     fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
 #else
             return std::make_pair( false, usedAttributes );
