@@ -1,5 +1,6 @@
 import ctypes
 import json
+import os.path
 from io import BytesIO
 
 import pytest
@@ -105,6 +106,7 @@ def test_marker_change(shared_datadir, reset_svg_paths):
     assert image_stat(img).green.max == 255, "Green marker is missing"
 
 
+@pytest.mark.skipif(not os.path.exists('/usr/share/qgis/svg'), reason="Builtin SVG icons are missing")
 def test_svg_builtin(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-builtin.qml').read_text()
