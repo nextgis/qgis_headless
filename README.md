@@ -5,8 +5,10 @@ Headless rendering library using QGIS
 ## Installation to Virtualenv
 
 1. Install dependecies: 
+
    * `libqgis-dev`
-   * `build-essentials`
+   * `qt5-image-formats-plugins` (usually installed via dependencies)
+   * `build-essential`
    * `cmake`
 
 2. Create virtualenv, activate it and install the package there:
