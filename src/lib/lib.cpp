@@ -47,6 +47,7 @@ void HeadlessRender::init( int argc, char **argv )
 
 void HeadlessRender::deinit()
 {
+    QgsApplication::exitQgis();
     delete app;
 }
 
@@ -73,6 +74,7 @@ HeadlessRender::MapRequest::MapRequest()
     , mQgsLayerTree( new QgsLayerTree )
 {
     mSettings->setBackgroundColor( Qt::transparent );
+    mSettings->setFlag( QgsMapSettings::RenderBlocking );
 }
 
 void HeadlessRender::MapRequest::setDpi( int dpi )
@@ -125,9 +127,11 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     QgsMapRendererParallelJob job( *mSettings );
 
     QEventLoop eventLoop;
-    QObject::connect( &job, &QgsMapRendererParallelJob::finished, &eventLoop, (void(QEventLoop::*)())&QEventLoop::exit );
+    QObject::connect( &job, &QgsMapRendererParallelJob::finished, &eventLoop, &QEventLoop::quit );
+
     job.start();
     eventLoop.exec();
+    job.waitForFinished();
 
     return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }
