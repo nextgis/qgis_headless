@@ -2,11 +2,12 @@ import ctypes
 import json
 import os.path
 from io import BytesIO
+from packaging import version
 
 import pytest
 from PIL import Image
 
-from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths
+from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version
 from qgis_headless.util import image_stat, render_vector, EXTENT_ONE
 
 
@@ -173,6 +174,10 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
 
+@pytest.mark.skipif(
+    version.parse(get_qgis_version()) < version.parse('3.14'),
+    reason="Fetching marker by URL may fail in QGIS < 3.14",
+)
 def test_marker_url(shared_datadir, reset_svg_paths, capfd):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker-url.qml').read_text()
