@@ -39,9 +39,10 @@ static QApplication *app = nullptr;
 
 void HeadlessRender::init( int argc, char **argv )
 {
-    setenv("QT_QPA_PLATFORM", "offscreen", true);
+    QByteArray platform( "offscreen" );
+    qputenv( "QT_QPA_PLATFORM", platform );
 
-    app = new QgsApplication( argc, argv, false, "", "offscreen" );
+    app = new QgsApplication( argc, argv, false, "", platform );
     QgsApplication::initQgis();
 }
 
@@ -58,6 +59,15 @@ void HeadlessRender::setSvgPaths( const std::vector<std::string> &paths )
         svgPaths.push_back( QString::fromStdString( path ) );
     QgsApplication::instance()->setDefaultSvgPaths( svgPaths );
 }
+
+std::vector<std::string> HeadlessRender::getSvgPaths()
+{
+    std::vector<std::string> svgPaths;
+    for ( const QString &path : QgsApplication::instance()->svgPaths() )
+        svgPaths.push_back( path.toStdString() );
+    return svgPaths;
+}
+
 
 const char * HeadlessRender::getVersion()
 {

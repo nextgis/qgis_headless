@@ -198,6 +198,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     m.def("set_svg_paths", &HeadlessRender::setSvgPaths, "Set SVG search paths");
 
+    m.def("get_svg_paths", &HeadlessRender::getSvgPaths, "Get SVG search paths");
+
     m.def("get_version", &HeadlessRender::getVersion, "Get library version");
 
     m.def("get_qgis_version", &HeadlessRender::getQGISVersion, "Get QGIS library version");
