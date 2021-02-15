@@ -46,38 +46,6 @@ def test_rule_based_labeling(shared_datadir, reset_svg_paths):
     assert stat.blue.max == 255, "Blue labels aren't visible"
 
 
-def test_legend(shared_datadir, reset_svg_paths):
-    data = shared_datadir / 'contour.geojson'
-    style = (shared_datadir / 'contour-rgb.qml').read_text()
-
-    req = MapRequest()
-    req.set_dpi(96)
-    req.set_crs(CRS.from_epsg(3857))
-
-    req.add_layer(
-        Layer.from_ogr(str(data)),
-        Style.from_string(style),
-        label="Contour")
-
-    img = Image.open(BytesIO(req.render_legend().to_bytes()))
-    # img.save('test_legend.png')
-
-    assert img.size == (223, 92), "Expected size is 223 x 92"
-
-    stat = image_stat(img)
-    assert stat.green.max == 255, "Primary lines aren't visible"
-    assert stat.blue.max == 255, "Primary lines aren't visible"
-    assert stat.red.mean == 0
-    assert 1 < stat.green.mean < 3
-    assert 1 < stat.blue.mean < 3
-
-    req.set_dpi(2 * 96)
-    hdpi_img = Image.open(BytesIO(req.render_legend().to_bytes()))
-
-    assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
-        "Higher DPI should produce bigger legend"
-
-
 def test_marker_simple(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
@@ -218,3 +186,78 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     # And render again
     img = Image.open(BytesIO(req.render_image(EXTENT_ONE, (256, 256)).to_bytes()))
     assert image_stat(img).blue.max == 255, "Marker is missing in new MapRequest"
+
+
+def test_legend(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'contour.geojson'
+    style = (shared_datadir / 'contour-rgb.qml').read_text()
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+
+    req.add_layer(
+        Layer.from_ogr(str(data)),
+        Style.from_string(style),
+        label="Contour")
+
+    img = Image.open(BytesIO(req.render_legend().to_bytes()))
+    # img.save('test_legend.png')
+
+    assert img.size == (223, 92), "Expected size is 223 x 92"
+
+    stat = image_stat(img)
+    assert stat.green.max == 255, "Primary lines aren't visible"
+    assert stat.blue.max == 255, "Primary lines aren't visible"
+    assert stat.red.mean == 0
+    assert 1 < stat.green.mean < 3
+    assert 1 < stat.blue.mean < 3
+
+    req.set_dpi(2 * 96)
+    hdpi_img = Image.open(BytesIO(req.render_legend().to_bytes()))
+
+    assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
+        "Higher DPI should produce bigger legend"
+
+
+def test_legend_svg_path(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'zero.geojson'
+    style = (shared_datadir / 'zero-marker.qml').read_text()
+
+    set_svg_paths([str(shared_datadir / 'marker-blue'), ])
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+
+    req.add_layer(
+        Layer.from_ogr(str(data)),
+        Style.from_string(style),
+        label="Marker")
+
+    img = Image.open(BytesIO(req.render_legend().to_bytes()))
+    # img.save('test_legend_svg_path.png')
+
+    stat = image_stat(img)
+    assert stat.blue.max == 255, "Blue marker is missing"
+
+
+def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'zero.geojson'
+    style = (shared_datadir / 'zero-marker.qml').read_text()
+    marker = (shared_datadir / 'marker-blue' / 'marker.svg').resolve()
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+
+    req.add_layer(
+        Layer.from_ogr(str(data)),
+        Style.from_string(style, svg_resolver=lambda _: str(marker)),
+        label="Marker")
+
+    img = Image.open(BytesIO(req.render_legend().to_bytes()))
+    # img.save('test_legend_svg_resolver.png')
+
+    stat = image_stat(img)
+    assert stat.blue.max == 255, "Blue marker is missing"
