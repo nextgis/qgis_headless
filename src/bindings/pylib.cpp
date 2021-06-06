@@ -28,6 +28,14 @@
 
 PYBIND11_MODULE(_qgis_headless, m) {
 
+    pybind11::enum_<HeadlessRender::LogLevel>( m, "LogLevel" )
+        .value("Debug", HeadlessRender::LogLevel::Debug)
+        .value("Info", HeadlessRender::LogLevel::Info)
+        .value("Warning", HeadlessRender::LogLevel::Warning)
+        .value("Critical", HeadlessRender::LogLevel::Critical)
+        .value("None", HeadlessRender::LogLevel::None)
+        .export_values();
+
     pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
         .def( pybind11::init<>() )
         .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG );
@@ -170,7 +178,6 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .value("FT_INTEGER64", HeadlessRender::Layer::AttributeType::Integer64)
         .export_values();
 
-
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
         .def( pybind11::init<>() )
         .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
@@ -203,4 +210,6 @@ PYBIND11_MODULE(_qgis_headless, m) {
     m.def("get_version", &HeadlessRender::getVersion, "Get library version");
 
     m.def("get_qgis_version", &HeadlessRender::getQGISVersion, "Get QGIS library version");
+
+    m.def("set_logging_level", &HeadlessRender::setLoggingLevel, "Set logging level");
 }

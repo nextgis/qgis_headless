@@ -47,6 +47,8 @@ int main( int argc, char **argv )
 
     HeadlessRender::init(argc, argv);
 
+    HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel::Info | HeadlessRender::LogLevel::Critical );
+
     HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg );
     HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );
     HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );

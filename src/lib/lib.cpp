@@ -68,7 +68,6 @@ std::vector<std::string> HeadlessRender::getSvgPaths()
     return svgPaths;
 }
 
-
 const char * HeadlessRender::getVersion()
 {
     return QGIS_HEADLESS_LIB_VERSION_STRING;
@@ -180,4 +179,20 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     painter.end();
 
     return std::make_shared<HeadlessRender::Image>( img );
+}
+
+void HeadlessRender::setLoggingLevel( int flags )
+{
+    auto isLogLevelEnabled = [ flags ]( HeadlessRender::LogLevel logLevel ) -> bool
+    {
+        return ( flags & logLevel ) == logLevel;
+    };
+
+    QString rules;
+    rules.append( QString( "*.debug=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Debug ) ? "true" : "false" ));
+    rules.append( QString( "*.info=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Info ) ? "true" : "false" ));
+    rules.append( QString( "*.warning=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Warning ) ? "true" : "false" ));
+    rules.append( QString( "*.critical=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Critical ) ? "true" : "false" ));
+
+    QLoggingCategory::setFilterRules(rules);
 }

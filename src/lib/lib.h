@@ -42,6 +42,15 @@ namespace HeadlessRender
     typedef std::tuple<double, double, double, double> Extent;
     typedef std::tuple<int, int> Size;
 
+    enum LogLevel
+    {
+        Debug = 1,
+        Info = 2,
+        Warning = 4,
+        Critical = 8,
+        None = 16
+    };
+
     class QGIS_HEADLESS_EXPORT MapRequest
     {
     public:
@@ -71,6 +80,8 @@ namespace HeadlessRender
     QGIS_HEADLESS_EXPORT const char *getVersion();
 
     QGIS_HEADLESS_EXPORT const char *getQGISVersion();
+
+    QGIS_HEADLESS_EXPORT void setLoggingLevel( int flags );
 }
 
 #endif // QGIS_HEADLESS_H
