@@ -29,11 +29,11 @@
 PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::enum_<HeadlessRender::LogLevel>( m, "LogLevel" )
-        .value("Debug", HeadlessRender::LogLevel::Debug)
-        .value("Info", HeadlessRender::LogLevel::Info)
-        .value("Warning", HeadlessRender::LogLevel::Warning)
-        .value("Critical", HeadlessRender::LogLevel::Critical)
-        .value("None", HeadlessRender::LogLevel::None)
+        .value("DEBUG", HeadlessRender::LogLevel::Debug)
+        .value("INFO", HeadlessRender::LogLevel::Info)
+        .value("WARNING", HeadlessRender::LogLevel::Warning)
+        .value("CRITICAL", HeadlessRender::LogLevel::Critical)
+        .value("NONE", HeadlessRender::LogLevel::None)
         .export_values();
 
     pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
