@@ -44,9 +44,9 @@ namespace HeadlessRender
 
     enum LogLevel
     {
-        Debug = 1,
-        Info = 2,
-        Warning = 4,
+        Debug = 8 + 4 + 2 + 1,
+        Info = 8 + 4 + 2,
+        Warning = 8 + 4,
         Critical = 8,
         None = 16
     };
