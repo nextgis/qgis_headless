@@ -36,9 +36,40 @@
 #include <cstdlib>
 
 static QApplication *app = nullptr;
+static HeadlessRender::LogLevel appLogLevel = HeadlessRender::LogLevel::Debug;
+
+static void messageHandler( QtMsgType msgType, const QMessageLogContext &, const QString &msg )
+{
+    QByteArray logMessage = msg.toLocal8Bit();
+
+    switch ( appLogLevel )
+    {
+    case HeadlessRender::LogLevel::Debug:
+        if ( msgType == QtDebugMsg )
+            qDebug( logMessage );
+        // fall down
+    case HeadlessRender::LogLevel::Info:
+        if ( msgType == QtInfoMsg )
+            qInfo( logMessage );
+        // fall down
+    case HeadlessRender::LogLevel::Warning:
+        if ( msgType == QtWarningMsg )
+            qWarning( logMessage );
+        // fall down
+    case HeadlessRender::LogLevel::Critical:
+        if ( msgType == QtCriticalMsg )
+            qCritical( logMessage );
+        break;
+    }
+
+    if ( msgType == QtFatalMsg )
+        qFatal( logMessage );
+}
 
 void HeadlessRender::init( int argc, char **argv )
 {
+    qInstallMessageHandler( messageHandler );
+
     QByteArray platform( "offscreen" );
     qputenv( "QT_QPA_PLATFORM", platform );
 
@@ -181,18 +212,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     return std::make_shared<HeadlessRender::Image>( img );
 }
 
-void HeadlessRender::setLoggingLevel( int flags )
+void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level)
 {
-    auto isLogLevelEnabled = [ flags ]( HeadlessRender::LogLevel logLevel ) -> bool
-    {
-        return ( flags & logLevel ) == logLevel;
-    };
-
-    QString rules;
-    rules.append( QString( "*.debug=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Debug ) ? "true" : "false" ));
-    rules.append( QString( "*.info=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Info ) ? "true" : "false" ));
-    rules.append( QString( "*.warning=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Warning ) ? "true" : "false" ));
-    rules.append( QString( "*.critical=%1\n" ).arg( isLogLevelEnabled( HeadlessRender::LogLevel::Critical ) ? "true" : "false" ));
-
-    QLoggingCategory::setFilterRules(rules);
+    appLogLevel = level;
 }

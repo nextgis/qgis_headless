@@ -44,11 +44,10 @@ namespace HeadlessRender
 
     enum LogLevel
     {
-        Debug = 8 + 4 + 2 + 1,
-        Info = 8 + 4 + 2,
-        Warning = 8 + 4,
-        Critical = 8,
-        None = 16
+        Debug,
+        Info,
+        Warning,
+        Critical
     };
 
     class QGIS_HEADLESS_EXPORT MapRequest
@@ -81,7 +80,7 @@ namespace HeadlessRender
 
     QGIS_HEADLESS_EXPORT const char *getQGISVersion();
 
-    QGIS_HEADLESS_EXPORT void setLoggingLevel( int flags );
+    QGIS_HEADLESS_EXPORT void setLoggingLevel( HeadlessRender::LogLevel level );
 }
 
 #endif // QGIS_HEADLESS_H

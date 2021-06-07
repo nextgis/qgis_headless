@@ -47,7 +47,7 @@ int main( int argc, char **argv )
 
     HeadlessRender::init(argc, argv);
 
-    HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel::Info | HeadlessRender::LogLevel::Critical );
+    HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel::Info );
 
     HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg );
     HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );

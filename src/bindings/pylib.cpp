@@ -33,7 +33,6 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .value("INFO", HeadlessRender::LogLevel::Info)
         .value("WARNING", HeadlessRender::LogLevel::Warning)
         .value("CRITICAL", HeadlessRender::LogLevel::Critical)
-        .value("NONE", HeadlessRender::LogLevel::None)
         .export_values();
 
     pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
