@@ -49,7 +49,7 @@ namespace LabelingType
 
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling;
 
-QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
+static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
 {
     QDomDocument document;
     QString errorMessage;
@@ -61,8 +61,50 @@ QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
     return qgsVectorLayer;
 }
 
+static bool validateStyle( const std::string &style, QString &errorMessage )
+{
+    QDomDocument document;
+    document.setContent( QString::fromStdString( style ), &errorMessage );
+
+    QgsVectorLayer::LayerOptions layerOptions;
+
+    QDomElement myRoot = document.firstChildElement( QStringLiteral( "qgis" ) );
+    if ( !myRoot.isNull() )
+    {
+        switch( static_cast<QgsWkbTypes::GeometryType>( myRoot.firstChildElement( QStringLiteral( "layerGeometryType" ) ).text().toInt() ) )
+        {
+        case QgsWkbTypes::GeometryType::PointGeometry:
+            layerOptions.fallbackWkbType = QgsWkbTypes::Point;
+        break;
+        case QgsWkbTypes::GeometryType::LineGeometry:
+            layerOptions.fallbackWkbType = QgsWkbTypes::LineString;
+        break;
+        case QgsWkbTypes::GeometryType::PolygonGeometry:
+            layerOptions.fallbackWkbType = QgsWkbTypes::Polygon;
+        break;
+        case QgsWkbTypes::GeometryType::UnknownGeometry:
+            layerOptions.fallbackWkbType = QgsWkbTypes::Unknown;
+        break;
+        case QgsWkbTypes::GeometryType::NullGeometry:
+            layerOptions.fallbackWkbType = QgsWkbTypes::NoGeometry;
+        break;
+        }
+    }
+    else
+    {
+        layerOptions.fallbackWkbType = QgsWkbTypes::Point;
+    }
+
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
+    return qgsVectorLayer->importNamedStyle( document, errorMessage );
+}
+
 HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
 {
+    QString errorMessage;
+    if ( !validateStyle( string, errorMessage ) )
+        throw HeadlessRender::StyleValidationError( errorMessage.toStdString() );
+
     Style style;
     style.mData = string;
 
@@ -74,18 +116,14 @@ HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &stri
 
 HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
 {
-    Style style;
-
+    std::string data;
     QFile file( QString::fromStdString( filePath) );
     if ( file.open( QIODevice::ReadOnly ) ) {
         QByteArray byteArray = file.readAll();
-        style.mData = std::string( byteArray.constData(), byteArray.length() );
+        data = std::string( byteArray.constData(), byteArray.length() );
     }
 
-    if (svgResolverCallback)
-        style.mData = resolveSvgPaths( style.mData, svgResolverCallback );
-
-    return style;
+    return HeadlessRender::Style::fromString( data, svgResolverCallback );
 }
 
 std::string HeadlessRender::Style::data() const
@@ -200,4 +238,15 @@ QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsV
         referenced.unite( settings.callout()->referencedFields( context ) );
 
     return referenced;
+}
+
+HeadlessRender::StyleValidationError::StyleValidationError(const std::string &message)
+    : errorMessage( message )
+{
+
+}
+
+const char *HeadlessRender::StyleValidationError::what() const throw()
+{
+    return errorMessage.c_str();
 }

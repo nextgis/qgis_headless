@@ -27,6 +27,7 @@
 #include <QSet>
 #include <QString>
 #include <QSharedPointer>
+#include <exception>
 
 class QgsVectorLayer;
 class QgsRenderContext;
@@ -36,6 +37,15 @@ namespace HeadlessRender
 {
     class Layer;
     typedef std::function<std::string(const std::string &)> SvgResolverCallback;
+
+    class StyleValidationError : public std::exception
+    {
+    public:
+        StyleValidationError( const std::string &message );
+        const char * what() const throw() override;
+    private:
+        std::string errorMessage;
+    };
 
     class QGIS_HEADLESS_EXPORT Style
     {
