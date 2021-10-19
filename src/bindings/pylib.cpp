@@ -37,7 +37,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
         .def( pybind11::init<>() )
-        .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG );
+        .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG )
+        .def_static( "from_wkt", &HeadlessRender::CRS::fromWkt );
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
         .def( pybind11::init<>()  )

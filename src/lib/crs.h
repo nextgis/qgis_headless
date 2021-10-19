@@ -24,6 +24,7 @@
 #include <memory>
 
 class QgsCoordinateReferenceSystem;
+class QString;
 
 namespace HeadlessRender
 {
@@ -33,6 +34,7 @@ namespace HeadlessRender
     {
     public:
         static CRS fromEPSG( long epsg );
+        static CRS fromWkt( const QString &wkt );
         QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
     private:
         QgsCoordinateReferenceSystemPtr mCRS;
