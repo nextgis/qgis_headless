@@ -29,6 +29,7 @@
 #include <qgsvectorlayerlabeling.h>
 #include <qgspallabeling.h>
 #include <qgscallout.h>
+#include <qgssymbol.h>
 #include <QFile>
 #include <QString>
 
