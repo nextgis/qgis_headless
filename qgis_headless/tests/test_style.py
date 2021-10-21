@@ -1,7 +1,7 @@
 import pytest
 from packaging import version
 
-from qgis_headless import Style, get_qgis_version
+from qgis_headless import Style, StyleValidationError, get_qgis_version
 
 
 _version = version.parse(get_qgis_version().split('-')[0])
@@ -9,17 +9,17 @@ _version_312 = _version >= version.parse('3.12')
 
 
 def test_non_existent_file(shared_datadir):
-    with pytest.raises(Exception):
+    with pytest.raises(StyleValidationError):
         Style.from_file(str(shared_datadir / 'missing.qml'))
 
 
 def test_invalid_file(shared_datadir):
-    with pytest.raises(Exception):
+    with pytest.raises(StyleValidationError):
         Style.from_file(str(shared_datadir / 'invalid.qml'))
 
 
 def test_empty_string(shared_datadir):
-    with pytest.raises(Exception):
+    with pytest.raises(StyleValidationError):
         Style.from_string('')
 
 
