@@ -1,6 +1,7 @@
 import ctypes
 import json
 import os.path
+from binascii import a2b_hex
 from io import BytesIO
 from packaging import version
 
@@ -9,6 +10,10 @@ from PIL import Image
 
 from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version
 from qgis_headless.util import image_stat, render_vector, EXTENT_ONE
+
+WKB_MSC = a2b_hex('01010000005070B1A206CF42409CDCEF5014E04B40')  # POINT (37.61739 55.75062)
+EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+EPSG_3395_WKT = 'PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","3395"]]'
 
 
 def test_contour(shared_datadir, reset_svg_paths):
@@ -261,3 +266,33 @@ def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
 
     stat = image_stat(img)
     assert stat.blue.max == 255, "Blue marker is missing"
+
+
+@pytest.mark.parametrize('crs, extent, extent_empty', (
+    pytest.param(CRS.from_epsg(4326), (37.60, 55.74, 37.62, 55.76),
+                                      (37.60, 57.74, 37.62, 57.76), id='from EPSG:4326'),
+    pytest.param(CRS.from_wkt(EPSG_4326_WKT), (37.60, 55.74, 37.62, 55.76),
+                                              (37.60, 57.74, 37.62, 57.76), id='from WKT EPSG:4326'),
+    pytest.param(CRS.from_epsg(3857), (4187547.0, 7508930.0, 4187549.0, 7508932.0),
+                                      (4187547.0, 7473582.0, 4187549.0, 7473584.0), id='from EPSG:3857'),
+    pytest.param(CRS.from_wkt(EPSG_3395_WKT), (4187547.0, 7473582.0, 4187549.0, 7473584.0),
+                                              (4187547.0, 7508930.0, 4187549.0, 7508932.0), id='from WKT EPSG:3395'),
+))
+def test_render_crs(shared_datadir, crs, extent, extent_empty):
+    source_crs = CRS.from_epsg(4326)
+    layer = Layer.from_data(Layer.GT_POINT, source_crs, tuple(), (
+        (1, WKB_MSC, tuple()),
+    ))
+
+    style = (shared_datadir / 'zero-red-circle.qml').read_text()
+
+    img = render_vector(layer, style, extent, 1024, crs=crs)
+    img.save('backup/test_img.png')
+
+    stat = image_stat(img)
+    assert stat.green.max == stat.blue.max == 0, "Unexpected data in blue or green channel"
+    assert stat.red.max == 255, "Red marker is missing"
+
+    img_empty = render_vector(layer, style, extent_empty, 256, crs=crs)
+    stat = image_stat(img_empty)
+    assert stat.red.max == stat.green.max == stat.blue.max == 0, "Unexpected non-empty image"

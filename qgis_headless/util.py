@@ -20,19 +20,19 @@ def image_stat(image):
     ])
 
 
-def render_vector(layer, style, extent, size, svg_resolver=None):
+def render_vector(layer, style, extent, size, crs=CRS.from_epsg(3857), svg_resolver=None):
     from PIL import Image  # Optional dependency
 
     req = MapRequest()
     req.set_dpi(96)
-    req.set_crs(CRS.from_epsg(3857))
+    req.set_crs(crs)
 
     if isinstance(size, int):
         size = (size, int(size * (extent[3] - extent[1]) / (extent[2] - extent[0])))
 
     if not isinstance(layer, Layer):
         layer = Layer.from_ogr(str(layer))
-    
+
     if not isinstance(style, Style):
         style = Style.from_string(style, svg_resolver=svg_resolver)
 
