@@ -11,6 +11,8 @@ from PIL import Image
 from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version
 from qgis_headless.util import image_stat, render_vector, EXTENT_ONE
 
+QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
+
 WKB_MSC = a2b_hex('01010000005070B1A206CF42409CDCEF5014E04B40')  # POINT (37.61739 55.75062)
 EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 EPSG_3395_WKT = 'PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","3395"]]'
@@ -148,7 +150,7 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
 
 
 @pytest.mark.skipif(
-    version.parse(get_qgis_version()) < version.parse('3.14'),
+    QGIS_VERSION < version.parse('3.14'),
     reason="Fetching marker by URL may fail in QGIS < 3.14",
 )
 def test_marker_url(shared_datadir, reset_svg_paths, capfd):
@@ -156,7 +158,7 @@ def test_marker_url(shared_datadir, reset_svg_paths, capfd):
     style = (shared_datadir / 'zero-marker-url.qml').read_text()
 
     img = render_vector(data, style, EXTENT_ONE, 256)
-    # img.save('test_marker_url.png')
+    img.save('test_marker_url.png')
     assert capfd.readouterr().out.strip() == '', "QGIS stdout output was captured"
     assert capfd.readouterr().err.strip() == '', "QGIS stderr output was captured"
     assert image_stat(img).red.max == 255, "Red marker is missing"
