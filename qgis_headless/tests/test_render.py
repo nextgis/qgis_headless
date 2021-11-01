@@ -287,7 +287,6 @@ def test_render_crs(shared_datadir, crs, extent, extent_empty):
     style = (shared_datadir / 'zero-red-circle.qml').read_text()
 
     img = render_vector(layer, style, extent, 1024, crs=crs)
-    img.save('backup/test_img.png')
 
     stat = image_stat(img)
     assert stat.green.max == stat.blue.max == 0, "Unexpected data in blue or green channel"
