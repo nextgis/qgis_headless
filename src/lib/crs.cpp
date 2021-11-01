@@ -45,10 +45,10 @@ HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( long epsg )
     return crs;
 }
 
-HeadlessRender::CRS HeadlessRender::CRS::fromWkt( const QString &wkt )
+HeadlessRender::CRS HeadlessRender::CRS::fromWkt( const std::string &wkt )
 {
     CRS crs;
-    crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( QgsCoordinateReferenceSystem::fromWkt( wkt ) );
+    crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( QgsCoordinateReferenceSystem::fromWkt( QString::fromStdString( wkt ) ) );
     return crs;
 }
 

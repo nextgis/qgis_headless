@@ -22,9 +22,9 @@
 #define QGIS_HEADLESS_CRS_H
 
 #include <memory>
+#include <string>
 
 class QgsCoordinateReferenceSystem;
-class QString;
 
 namespace HeadlessRender
 {
@@ -34,7 +34,7 @@ namespace HeadlessRender
     {
     public:
         static CRS fromEPSG( long epsg );
-        static CRS fromWkt( const QString &wkt );
+        static CRS fromWkt( const std::string &wkt );
         QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
     private:
         QgsCoordinateReferenceSystemPtr mCRS;
