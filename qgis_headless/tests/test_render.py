@@ -297,3 +297,18 @@ def test_render_crs(shared_datadir, crs, extent, extent_empty):
     img_empty = render_vector(layer, style, extent_empty, 256, crs=crs)
     stat = image_stat(img_empty)
     assert stat.red.max == stat.green.max == stat.blue.max == 0, "Unexpected non-empty image"
+
+
+def test_style_25d(shared_datadir):
+    data = shared_datadir / 'poly.geojson'
+    layer = Layer.from_ogr(str(data))
+
+    style = (shared_datadir / '25d' / 'poly_25d.qml').read_text()
+
+    img = render_vector(layer, style, (7298419.0, 7795268.0, 7298536.0, 7795397.0), 256)
+
+    stat = image_stat(img)
+
+    assert stat.red.max == 255, "Shadow is missing"
+    assert stat.blue.max == 255, "Roof is missing"
+    assert stat.green.max == 255, "Walls are missing"
