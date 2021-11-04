@@ -39,6 +39,21 @@ def test_contour(shared_datadir, reset_svg_paths):
     assert 29 < stat.blue.mean < 30
 
 
+def test_opacity(shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'contour.geojson'
+    style = (shared_datadir / 'contour-opacity.qml').read_text()
+
+    extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
+
+    img = render_vector(data, style, extent, 1024)
+    # img.save('test_opacity.png')
+
+    stat = image_stat(img)
+
+    assert stat.alpha.min == 0, "There are no transparent pixels found"
+    assert stat.alpha.max == 127, "Maximum alpha must be 127 (50%)"
+
+
 def test_rule_based_labeling(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rbl.qml').read_text()

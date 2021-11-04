@@ -48,7 +48,7 @@ namespace LabelingType
     static const QString RuleBased = "rule-based";
 };
 
-const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling;
+const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling | QgsMapLayer::Rendering;
 
 static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
 {
