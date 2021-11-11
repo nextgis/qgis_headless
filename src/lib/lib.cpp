@@ -138,7 +138,7 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
     domDocument.setContent( QString::fromStdString( style.data() ) );
     QgsReadWriteContext context;
 
-    qgsMapLayer->readStyle( domDocument.firstChild(), readStyleError, context, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
     qgsMapLayer->setName( QString::fromStdString( label ) );
 
     mLayers.push_back( qgsMapLayer );

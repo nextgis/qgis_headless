@@ -48,7 +48,11 @@ namespace LabelingType
     static const QString RuleBased = "rule-based";
 };
 
-const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology | QgsMapLayer::Symbology3D | QgsMapLayer::Labeling | QgsMapLayer::Rendering;
+const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology
+                                                                                     | QgsMapLayer::Symbology3D
+                                                                                     | QgsMapLayer::Labeling
+                                                                                     | QgsMapLayer::Rendering
+                                                                                     | QgsMapLayer::CustomProperties;
 
 static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
 {
@@ -97,7 +101,7 @@ static bool validateStyle( const std::string &style, QString &errorMessage )
     }
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
-    return qgsVectorLayer->importNamedStyle( document, errorMessage );
+    return qgsVectorLayer->importNamedStyle( document, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
 }
 
 HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
