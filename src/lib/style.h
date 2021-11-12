@@ -63,6 +63,8 @@ namespace HeadlessRender
     private:
         static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );
         static void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback );
+        static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style, QString &errorMessage );
+        static bool validateStyle( const std::string &style, QString &errorMessage );
         QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const;
 
         std::string mData;

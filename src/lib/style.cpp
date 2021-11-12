@@ -54,19 +54,7 @@ const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCatego
                                                                                      | QgsMapLayer::Rendering
                                                                                      | QgsMapLayer::CustomProperties;
 
-static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style )
-{
-    QDomDocument document;
-    QString errorMessage;
-    QgsReadWriteContext context;
-    document.setContent( QString::fromStdString( style ) );
-
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "Point?crs=epsg:4326" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
-    qgsVectorLayer->readStyle( document.firstChild(), errorMessage, context, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories )  );
-    return qgsVectorLayer;
-}
-
-static bool validateStyle( const std::string &style, QString &errorMessage )
+QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayer( const std::string &style, QString &errorMessage )
 {
     QDomDocument document;
     document.setContent( QString::fromStdString( style ), &errorMessage );
@@ -101,7 +89,16 @@ static bool validateStyle( const std::string &style, QString &errorMessage )
     }
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
-    return qgsVectorLayer->importNamedStyle( document, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    bool importStyleOk = qgsVectorLayer->importNamedStyle( document, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    if ( !importStyleOk )
+        return nullptr;
+
+    return qgsVectorLayer;
+}
+
+bool HeadlessRender::Style::validateStyle( const std::string &style, QString &errorMessage )
+{
+    return createTemporaryLayer( style, errorMessage ) ? true : false;
 }
 
 HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */ )
@@ -140,7 +137,8 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
 {
     std::set<std::string> usedAttributes;
 
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( mData );
+    QString errorMessage;
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( mData, errorMessage );
     QgsRenderContext renderContext;
 
     QgsAbstractVectorLayerLabeling *abstractVectorLayerLabeling = qgsVectorLayer->labeling();
@@ -206,7 +204,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     QDomDocument domDocument;
     QString errorMessage;
 
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( data );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( data, errorMessage );
 
     QgsRenderContext renderContext;
     for ( QgsSymbol *symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
