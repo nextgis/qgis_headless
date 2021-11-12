@@ -24,7 +24,7 @@ def test_contour(shared_datadir, reset_svg_paths):
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
-    img = render_vector(data, style, extent, 1024)
+    img = render_vector(data, style, extent, 1024, svg_resolver=lambda x: x)
     # img.save('test_contour.png')
 
     stat = image_stat(img)
@@ -327,3 +327,5 @@ def test_style_25d(shared_datadir):
     assert stat.red.max == 255, "Shadow is missing"
     assert stat.blue.max == 255, "Roof is missing"
     assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
+
+
