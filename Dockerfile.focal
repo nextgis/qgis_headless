@@ -5,7 +5,7 @@ RUN set -ex; export DEBIAN_FRONTEND=noninteractive; \
     apt-get update; \
     apt-get --yes -qq install --no-install-recommends  \
         curl ca-certificates gnupg software-properties-common; \
-    curl --silent https://qgis.org/downloads/qgis-2020.gpg.key | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - > /dev/null; \
+    curl --silent https://qgis.org/downloads/qgis-2021.gpg.key | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - > /dev/null; \
     add-apt-repository --yes --no-update "deb https://qgis.org/ubuntu-ltr focal main"; \
     apt-get update; \
     apt-get --yes -qq install --no-install-recommends  \

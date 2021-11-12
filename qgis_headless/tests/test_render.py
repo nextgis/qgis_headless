@@ -326,4 +326,4 @@ def test_style_25d(shared_datadir):
 
     assert stat.red.max == 255, "Shadow is missing"
     assert stat.blue.max == 255, "Roof is missing"
-    assert stat.green.max == 255, "Walls are missing"
+    assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
