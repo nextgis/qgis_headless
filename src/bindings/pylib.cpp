@@ -25,6 +25,7 @@
 #include <QDateTime>
 
 #include <lib.h>
+#include <exceptions.h>
 
 PYBIND11_MODULE(_qgis_headless, m) {
 
@@ -54,6 +55,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
         });
 
     pybind11::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError" );
+    pybind11::register_exception<HeadlessRender::QGisHeadlessError>( m, "QGisHeadlessError" );
 
     pybind11::class_<HeadlessRender::Layer> layer( m, "Layer" );
 

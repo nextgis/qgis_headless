@@ -31,9 +31,10 @@ set(LIB_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/layer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/style.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/exceptions.h
 )
 
-add_library(${LIB_NAME} ${LIB_SOURCES})
+add_library(${LIB_NAME} ${LIB_SOURCES} ${LIB_PUBLIC_HEADERS})
 
 target_include_directories(${LIB_NAME} PRIVATE ${QGIS_CORE_INCLUDE_DIRS})
 

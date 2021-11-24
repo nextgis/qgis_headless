@@ -89,8 +89,8 @@ QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayer( cons
     }
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
-    bool importStyleOk = qgsVectorLayer->importNamedStyle( document, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
-    if ( !importStyleOk )
+    bool importStyleStatus = qgsVectorLayer->importNamedStyle( document, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    if ( !importStyleStatus )
         return nullptr;
 
     return qgsVectorLayer;
@@ -105,7 +105,7 @@ HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &stri
 {
     QString errorMessage;
     if ( !validateStyle( string, errorMessage ) )
-        throw HeadlessRender::StyleValidationError( errorMessage.toStdString() );
+        throw StyleValidationError( errorMessage );
 
     Style style;
     style.mData = string;
@@ -139,6 +139,9 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
 
     QString errorMessage;
     QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( mData, errorMessage );
+    if ( !qgsVectorLayer )
+        throw QGisHeadlessError( errorMessage );
+
     QgsRenderContext renderContext;
 
     QgsAbstractVectorLayerLabeling *abstractVectorLayerLabeling = qgsVectorLayer->labeling();
@@ -205,12 +208,16 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     QString errorMessage;
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( data, errorMessage );
+    if ( !qgsVectorLayer )
+        throw QGisHeadlessError( errorMessage );
 
     QgsRenderContext renderContext;
     for ( QgsSymbol *symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
         resolveSymbol( symbol, svgResolverCallback );
 
     qgsVectorLayer->exportNamedStyle( domDocument, errorMessage );
+    if ( !errorMessage.isEmpty() )
+        throw QGisHeadlessError( errorMessage );
 
     return domDocument.toString().toStdString();
 }
@@ -241,15 +248,4 @@ QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsV
         referenced.unite( settings.callout()->referencedFields( context ) );
 
     return referenced;
-}
-
-HeadlessRender::StyleValidationError::StyleValidationError(const std::string &message)
-    : errorMessage( message )
-{
-
-}
-
-const char *HeadlessRender::StyleValidationError::what() const throw()
-{
-    return errorMessage.c_str();
 }

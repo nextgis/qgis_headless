@@ -31,6 +31,8 @@
 #include <qgsapplication.h>
 #include <qgsvectorlayer.h>
 
+#include "exceptions.h"
+
 #include <QApplication>
 #include <QSizeF>
 #include <cstdlib>
@@ -131,14 +133,17 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
-        return;
+        throw QGisHeadlessError( "Layer is null" );
 
     QString readStyleError;
     QDomDocument domDocument;
     domDocument.setContent( QString::fromStdString( style.data() ) );
     QgsReadWriteContext context;
 
-    qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    bool importStyleStatus = qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    if ( !importStyleStatus )
+        throw QGisHeadlessError( readStyleError );
+
     qgsMapLayer->setName( QString::fromStdString( label ) );
 
     mLayers.push_back( qgsMapLayer );
