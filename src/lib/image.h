@@ -35,7 +35,7 @@ namespace HeadlessRender
     public:
         Image() = default;
         Image( const QImage &qimage );
-        std::string toString();
+        const std::string & toString();
     private:
         QImagePtr mQImage;
         std::string mData;

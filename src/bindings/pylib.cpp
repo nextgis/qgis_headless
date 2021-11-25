@@ -54,8 +54,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 return pybind11::none();
         });
 
-    pybind11::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError" );
     pybind11::register_exception<HeadlessRender::QgisHeadlessError>( m, "QgisHeadlessError" );
+    pybind11::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError" );
 
     pybind11::class_<HeadlessRender::Layer> layer( m, "Layer" );
 
@@ -185,7 +185,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
         .def( pybind11::init<>() )
         .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
-            return pybind11::bytes( img->toString() );
+            return pybind11::memoryview::from_memory( img->toString().data(), img->toString().length() );
         });
 
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )

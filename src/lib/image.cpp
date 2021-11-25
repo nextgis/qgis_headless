@@ -30,7 +30,7 @@ HeadlessRender::Image::Image( const QImage &qimage )
     mQImage = std::make_shared<QImage>( qimage );
 }
 
-std::string HeadlessRender::Image::toString()
+const std::string & HeadlessRender::Image::toString()
 {
     if ( mData.empty() )
     {
