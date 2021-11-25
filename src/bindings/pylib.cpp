@@ -55,7 +55,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
         });
 
     pybind11::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError" );
-    pybind11::register_exception<HeadlessRender::QGisHeadlessError>( m, "QGisHeadlessError" );
+    pybind11::register_exception<HeadlessRender::QgisHeadlessError>( m, "QgisHeadlessError" );
 
     pybind11::class_<HeadlessRender::Layer> layer( m, "Layer" );
 

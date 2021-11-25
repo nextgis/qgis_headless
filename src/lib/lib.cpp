@@ -133,7 +133,7 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
-        throw QGisHeadlessError( "Layer is null" );
+        throw QgisHeadlessError( "Layer is null" );
 
     QString readStyleError;
     QDomDocument domDocument;
@@ -142,7 +142,7 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
 
     bool importStyleStatus = qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
     if ( !importStyleStatus )
-        throw QGisHeadlessError( readStyleError );
+        throw QgisHeadlessError( readStyleError );
 
     qgsMapLayer->setName( QString::fromStdString( label ) );
 

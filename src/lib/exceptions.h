@@ -26,23 +26,21 @@
 
 namespace HeadlessRender
 {
-    class StyleValidationError : public std::exception
+    class QgisHeadlessError : public std::exception
     {
     public:
-        StyleValidationError( const QString &message ):errorMessage( message.toStdString() ) {}
+        QgisHeadlessError( const QString &message ):errorMessage( message.toStdString() ) {}
         const char * what() const throw() override { return errorMessage.c_str(); }
     private:
         std::string errorMessage;
     };
 
-    class QGisHeadlessError : public std::exception
+    class StyleValidationError : public QgisHeadlessError
     {
     public:
-        QGisHeadlessError( const QString &message ):errorMessage( message.toStdString() ) {}
-        const char * what() const throw() override { return errorMessage.c_str(); }
-    private:
-        std::string errorMessage;
+        StyleValidationError( const QString &message ): QgisHeadlessError( message ) {}
     };
+
 }
 
 #endif // QGIS_HEADLESS_EXCEPTIONS_H

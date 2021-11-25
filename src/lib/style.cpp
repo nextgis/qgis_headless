@@ -140,7 +140,7 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
     QString errorMessage;
     QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( mData, errorMessage );
     if ( !qgsVectorLayer )
-        throw QGisHeadlessError( errorMessage );
+        throw QgisHeadlessError( errorMessage );
 
     QgsRenderContext renderContext;
 
@@ -209,7 +209,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( data, errorMessage );
     if ( !qgsVectorLayer )
-        throw QGisHeadlessError( errorMessage );
+        throw QgisHeadlessError( errorMessage );
 
     QgsRenderContext renderContext;
     for ( QgsSymbol *symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
@@ -217,7 +217,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
 
     qgsVectorLayer->exportNamedStyle( domDocument, errorMessage );
     if ( !errorMessage.isEmpty() )
-        throw QGisHeadlessError( errorMessage );
+        throw QgisHeadlessError( errorMessage );
 
     return domDocument.toString().toStdString();
 }
