@@ -27,7 +27,7 @@
 
 HeadlessRender::Image::Image( const QImage &qimage )
 {
-    mQImage = std::make_shared<QImage>( qimage );
+    mQImage = std::make_shared<QImage>( qimage.convertToFormat( QImage::Format_RGBA8888 ));
 }
 
 const std::string & HeadlessRender::Image::toString()
@@ -45,4 +45,19 @@ const std::string & HeadlessRender::Image::toString()
     }
 
     return mData;
+}
+
+const unsigned char *HeadlessRender::Image::bits() const
+{
+    return mQImage->bits();
+}
+
+std::size_t HeadlessRender::Image::sizeInBytes() const
+{
+    return mQImage->sizeInBytes();
+}
+
+std::pair<int, int> HeadlessRender::Image::size() const
+{
+    return std::make_pair( mQImage->size().width(), mQImage->size().height() );
 }

@@ -39,4 +39,4 @@ def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)
     req.add_layer(layer, style)
 
     image = req.render_image(extent, size)
-    return Image.open(BytesIO(image.to_bytes()))
+    return Image.frombytes('RGBA', image.size(), image.to_bytes().tobytes(), 'raw')
