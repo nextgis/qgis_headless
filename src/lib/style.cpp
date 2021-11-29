@@ -48,6 +48,9 @@ namespace LabelingType
     static const QString RuleBased = "rule-based";
 };
 
+static const QString QGIS_TAG = "qgis";
+static const QString LAYER_GEOMETRY_TYPE_TAG = "layerGeometryType";
+
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology
                                                                                      | QgsMapLayer::Symbology3D
                                                                                      | QgsMapLayer::Labeling
@@ -58,13 +61,17 @@ QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayer( cons
 {
     QDomDocument document;
     document.setContent( QString::fromStdString( style ), &errorMessage );
+    return createTemporaryLayer( document, errorMessage );
+}
 
+QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayer( QDomDocument &style, QString &errorMessage )
+{
     QgsVectorLayer::LayerOptions layerOptions;
 
-    QDomElement myRoot = document.firstChildElement( QStringLiteral( "qgis" ) );
+    QDomElement myRoot = style.firstChildElement( QGIS_TAG );
     if ( !myRoot.isNull() )
     {
-        switch( static_cast<QgsWkbTypes::GeometryType>( myRoot.firstChildElement( QStringLiteral( "layerGeometryType" ) ).text().toInt() ) )
+        switch( static_cast<QgsWkbTypes::GeometryType>( myRoot.firstChildElement( LAYER_GEOMETRY_TYPE_TAG ).text().toInt() ) )
         {
         case QgsWkbTypes::GeometryType::PointGeometry:
             layerOptions.fallbackWkbType = QgsWkbTypes::Point;
@@ -89,7 +96,7 @@ QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayer( cons
     }
 
     QSharedPointer<QgsVectorLayer> qgsVectorLayer( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
-    bool importStyleStatus = qgsVectorLayer->importNamedStyle( document, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+    bool importStyleStatus = qgsVectorLayer->importNamedStyle( style, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
     if ( !importStyleStatus )
         return nullptr;
 
@@ -204,10 +211,15 @@ void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRend
 
 std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, const HeadlessRender::SvgResolverCallback &svgResolverCallback)
 {
-    QDomDocument domDocument;
+    QDomDocument style;
+    QDomDocument exportedStyle;
     QString errorMessage;
 
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( data, errorMessage );
+    style.setContent( QString::fromStdString( data ), &errorMessage );
+    if ( !errorMessage.isEmpty() )
+        throw QgisHeadlessError( errorMessage );
+
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( style, errorMessage );
     if ( !qgsVectorLayer )
         throw QgisHeadlessError( errorMessage );
 
@@ -215,11 +227,15 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     for ( QgsSymbol *symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
         resolveSymbol( symbol, svgResolverCallback );
 
-    qgsVectorLayer->exportNamedStyle( domDocument, errorMessage );
+    qgsVectorLayer->exportNamedStyle( exportedStyle, errorMessage );
     if ( !errorMessage.isEmpty() )
         throw QgisHeadlessError( errorMessage );
 
-    return domDocument.toString().toStdString();
+    QDomElement myRoot = style.firstChildElement( QGIS_TAG );
+    if ( myRoot.isNull() || myRoot.firstChildElement( LAYER_GEOMETRY_TYPE_TAG ).text().isEmpty())
+        removeLayerGeometryTypeElement( exportedStyle );
+
+    return exportedStyle.toString().toStdString();
 }
 
 QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const
@@ -248,4 +264,15 @@ QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsV
         referenced.unite( settings.callout()->referencedFields( context ) );
 
     return referenced;
+}
+
+void HeadlessRender::Style::removeLayerGeometryTypeElement( QDomDocument &domDocument )
+{
+    QDomElement root = domDocument.firstChildElement( QGIS_TAG );
+    if ( !root.isNull() )
+    {
+        QDomElement child = root.firstChildElement( LAYER_GEOMETRY_TYPE_TAG );
+        if ( !child.isNull() )
+            root.removeChild( child );
+    }
 }

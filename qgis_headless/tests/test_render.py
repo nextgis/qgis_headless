@@ -321,7 +321,6 @@ def test_render_crs(shared_datadir, crs, extent, extent_empty):
     assert stat.red.max == stat.green.max == stat.blue.max == 0, "Unexpected non-empty image"
 
 
-@pytest.mark.skip
 def test_attribute_color(shared_datadir):
     data = shared_datadir / 'landuse' / 'landuse.geojson'
     layer = Layer.from_ogr(str(data))
