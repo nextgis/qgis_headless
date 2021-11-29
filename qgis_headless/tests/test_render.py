@@ -321,18 +321,32 @@ def test_render_crs(shared_datadir, crs, extent, extent_empty):
     assert stat.red.max == stat.green.max == stat.blue.max == 0, "Unexpected non-empty image"
 
 
+def test_attribute_color(shared_datadir):
+    data = shared_datadir / 'landuse' / 'landuse.geojson'
+    layer = Layer.from_ogr(str(data))
+
+    style = (shared_datadir / 'landuse' / 'landuse.qml').read_text()
+
+    img = render_vector(layer, style, (4189314.0, 7505071.0, 4190452.0, 7506101.0),
+                        svg_resolver=lambda x: x)
+
+    stat = image_stat(img)
+
+    assert stat.red.max == 255, "Red polygon is missing"
+    assert stat.green.max == 255, "Green polygon is missing"
+    assert stat.blue.max == 0, "Blue band is not expected"
+
+
 def test_style_25d(shared_datadir):
     data = shared_datadir / 'poly.geojson'
     layer = Layer.from_ogr(str(data))
 
     style = (shared_datadir / '25d' / 'poly_25d.qml').read_text()
 
-    img = render_vector(layer, style, (7298419.0, 7795268.0, 7298536.0, 7795397.0), 256)
+    img = render_vector(layer, style, (7298419.0, 7795268.0, 7298536.0, 7795397.0))
 
     stat = image_stat(img)
 
     assert stat.red.max == 255, "Shadow is missing"
     assert stat.blue.max == 255, "Roof is missing"
     assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
-
-

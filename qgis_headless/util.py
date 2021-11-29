@@ -20,7 +20,7 @@ def image_stat(image):
     ])
 
 
-def render_vector(layer, style, extent, size, crs=CRS.from_epsg(3857), svg_resolver=None):
+def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857), svg_resolver=None):
     from PIL import Image  # Optional dependency
 
     req = MapRequest()
