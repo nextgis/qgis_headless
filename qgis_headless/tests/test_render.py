@@ -9,7 +9,7 @@ import pytest
 from PIL import Image
 
 from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version
-from qgis_headless.util import image_stat, render_vector, EXTENT_ONE
+from qgis_headless.util import to_pil, image_stat, render_vector, EXTENT_ONE
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
 
@@ -173,7 +173,8 @@ def test_marker_url(shared_datadir, reset_svg_paths, capfd):
     style = (shared_datadir / 'zero-marker-url.qml').read_text()
 
     img = render_vector(data, style, EXTENT_ONE, 256)
-    img.save('test_marker_url.png')
+    # img.save('test_marker_url.png')
+
     assert capfd.readouterr().out.strip() == '', "QGIS stdout output was captured"
     assert capfd.readouterr().err.strip() == '', "QGIS stderr output was captured"
     assert image_stat(img).red.max == 255, "Red marker is missing"
@@ -192,14 +193,14 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     req.add_layer(layer, style)
 
     rendered_image  = req.render_image(EXTENT_ONE, (256, 256))
-    img = Image.frombytes('RGBA', rendered_image.size(), rendered_image.to_bytes().tobytes(), 'raw')
+    img = to_pil(rendered_image)
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
     marker.unlink()  # Remove marker file from directory
 
     # And render again
     rendered_image  = req.render_image(EXTENT_ONE, (256, 256))
-    img = Image.frombytes('RGBA', rendered_image.size(), rendered_image.to_bytes().tobytes(), 'raw')
+    img = to_pil(rendered_image)
     assert image_stat(img).blue.max == 255, "Marker is missing in same MapRequest"
 
     # Recreata MapRequest with same Layer and Style
@@ -209,7 +210,7 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
 
     # And render again
     rendered_image  = req.render_image(EXTENT_ONE, (256, 256))
-    img = Image.frombytes('RGBA', rendered_image.size(), rendered_image.to_bytes().tobytes(), 'raw')
+    img = to_pil(rendered_image)
     assert image_stat(img).blue.max == 255, "Marker is missing in new MapRequest"
 
 
@@ -227,7 +228,7 @@ def test_legend(shared_datadir, reset_svg_paths):
         label="Contour")
 
     rendered_legend = req.render_legend()
-    img = Image.frombytes('RGBA', rendered_legend.size(), rendered_legend.to_bytes().tobytes(), 'raw')
+    img = to_pil(rendered_legend)
     # img.save('test_legend.png')
 
     assert img.size == (223, 92), "Expected size is 223 x 92"
@@ -241,7 +242,7 @@ def test_legend(shared_datadir, reset_svg_paths):
 
     req.set_dpi(2 * 96)
     rendered_legend = req.render_legend()
-    hdpi_img = Image.frombytes('RGBA', rendered_legend.size(), rendered_legend.to_bytes().tobytes(), 'raw')
+    hdpi_img = to_pil(rendered_legend)
 
     assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
         "Higher DPI should produce bigger legend"
@@ -263,7 +264,7 @@ def test_legend_svg_path(shared_datadir, reset_svg_paths):
         label="Marker")
 
     rendered_legend = req.render_legend()
-    img = Image.frombytes('RGBA', rendered_legend.size(), rendered_legend.to_bytes().tobytes(), 'raw')
+    img = to_pil(rendered_legend)
     # img.save('test_legend_svg_path.png')
 
     stat = image_stat(img)
@@ -285,7 +286,7 @@ def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
         label="Marker")
 
     rendered_legend = req.render_legend()
-    img = Image.frombytes('RGBA', rendered_legend.size(), rendered_legend.to_bytes().tobytes(), 'raw')
+    img = to_pil(rendered_legend)
     # img.save('test_legend_svg_resolver.png')
 
     stat = image_stat(img)

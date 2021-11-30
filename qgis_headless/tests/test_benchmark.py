@@ -1,5 +1,6 @@
 import pytest
 from qgis_headless import MapRequest, CRS, Layer, Style
+from qgis_headless.util import to_pil
 
 
 SIZES = (256, 362, 512, 724, 1024)
@@ -13,7 +14,7 @@ def test_empty(size, benchmark):
     mreq.set_crs(CRS.from_epsg(3857))
 
     def _render_image():
-        mreq.render_image((-1, -1, 1, 1), (size, size)).to_bytes()
+        to_pil(mreq.render_image((-1, -1, 1, 1), (size, size)))
 
     benchmark(_render_image)
 
@@ -31,6 +32,6 @@ def test_contour(size, benchmark, shared_datadir):
     mreq.add_layer(Layer.from_ogr(str(data)), Style.from_string(style))
 
     def _render_image():
-        mreq.render_image(extent, (size, size)).to_bytes()
+        to_pil(mreq.render_image(extent, (size, size)))
 
     benchmark(_render_image)

@@ -10,6 +10,18 @@ ImageStat = namedtuple("ImageStat", ['red', 'green', 'blue', 'alpha'])
 EXTENT_ONE = (-0.5, -0.5, 0.5, 0.5)
 
 
+def to_pil(source):
+    from PIL import Image  # Optional dependency
+
+    im = Image.frombuffer('RGBA', source.size(), source.to_bytes(), 'raw')
+
+    # Keep reference to the original image, thus the source image won't be
+    # destroyed before PIL image
+    im._qgis_headless_source = source
+
+    return im
+
+
 def image_stat(image):
     from PIL.ImageStat import Stat  # Optional dependency
 
@@ -21,8 +33,6 @@ def image_stat(image):
 
 
 def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857), svg_resolver=None):
-    from PIL import Image  # Optional dependency
-
     req = MapRequest()
     req.set_dpi(96)
     req.set_crs(crs)
@@ -38,5 +48,4 @@ def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)
 
     req.add_layer(layer, style)
 
-    image = req.render_image(extent, size)
-    return Image.frombytes('RGBA', image.size(), image.to_bytes().tobytes(), 'raw')
+    return to_pil(req.render_image(extent, size))
