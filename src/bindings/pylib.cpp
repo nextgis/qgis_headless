@@ -54,6 +54,13 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 return pybind11::none();
         });
 
+    pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
+        .def( "icon", &HeadlessRender::LegendSymbol::icon )
+        .def( "title", []( const HeadlessRender::LegendSymbol &style )
+        {
+            return style.title().toStdString();
+        });
+
     pybind11::register_exception<HeadlessRender::QgisHeadlessError>( m, "QgisHeadlessError" );
     pybind11::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError" );
 
@@ -195,7 +202,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
         .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
         .def( "render_image", &HeadlessRender::MapRequest::renderImage )
-        .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() );
+        .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() )
+        .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbools, pybind11::arg("index"), pybind11::arg("size") = HeadlessRender::Size() );
 
     m.def("init", []( const std::vector<std::string> &args )
     {

@@ -30,6 +30,7 @@
 #include "layer.h"
 #include "style.h"
 #include "image.h"
+#include "legend_symbol.h"
 
 class QImage;
 class QgsMapSettings;
@@ -57,12 +58,15 @@ namespace HeadlessRender
 
         void setDpi( int dpi );
         void setCrs( const CRS &crs );
-        void addLayer( const Layer &layer, const Style &style, const std::string &label = "");
+        int addLayer( const Layer &layer, const Style &style, const std::string &label = "");
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );
 
+        std::vector<LegendSymbol> legendSymbools( size_t index, const Size & size = Size() );
+
     private:
+        void processLegendSymbols( QJsonArray nodes, std::vector<LegendSymbol> &legendSymbols );
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;
         std::vector<QgsMapLayerPtr> mLayers;

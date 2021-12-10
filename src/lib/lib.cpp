@@ -129,7 +129,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
+int HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
@@ -154,6 +154,9 @@ void HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, c
     mSettings->setLayers( qgsMapLayers );
 
     mQgsLayerTree->addLayer( qgsMapLayer.get() );
+
+    int addedLayerIndex = qgsMapLayers.size() - 1;
+    return addedLayerIndex;
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
@@ -215,6 +218,65 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     painter.end();
 
     return std::make_shared<HeadlessRender::Image>( img );
+}
+
+std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbools( size_t index, const HeadlessRender::Size &size /* = Size() */ )
+{
+    if ( mLayers.size() <= index )
+        throw QgisHeadlessError( "Invalid layer index" );
+
+    QgsMapLayerPtr layer = mLayers.at( index );
+
+    int width = std::get<0>( size );
+    int height = std::get<1>( size );
+
+    QgsLegendSettings legendSettings;
+    if ( width && height )
+        legendSettings.setSymbolSize( QSize( width, height ));
+
+    QgsLayerTree qgsLayerTree;
+    qgsLayerTree.addLayer( layer.get() );
+
+    QgsLayerTreeModel legendModel( &qgsLayerTree );
+    QgsLegendRenderer legendRenderer( &legendModel, legendSettings );
+
+    QJsonObject json;
+    legendRenderer.exportLegendToJson( QgsRenderContext(), json );
+    qDebug() << "json:" << json;
+
+    std::vector<HeadlessRender::LegendSymbol> legendSymbols;
+    QJsonArray nodes = json.value( "nodes" ).toArray();
+    processLegendSymbols( nodes, legendSymbols );
+    return legendSymbols;
+}
+
+void HeadlessRender::MapRequest::processLegendSymbols(QJsonArray nodes, std::vector<HeadlessRender::LegendSymbol> &legendSymbols)
+{
+    for ( const auto &item : nodes)
+    {
+        QJsonObject node = item.toObject();
+
+        QString type = node.value( "type" ).toString();
+        if ( type == "layer" )
+        {
+            QJsonArray symbols = node.value( "symbols" ).toArray();
+            for ( const auto &symbolItem : symbols)
+            {
+                QJsonObject symbol = symbolItem.toObject();
+                QString iconBase64 = symbol.value( "icon" ).toString();
+                QString title = symbol.value( "title" ).toString();
+
+                QImage image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
+
+                legendSymbols.emplace_back( std::make_shared<Image>( image ), title );
+            }
+        }
+        else if ( type == "group" )
+        {
+            QJsonArray nodes = node.value( "nodes" ).toArray();
+            processLegendSymbols( nodes, legendSymbols );
+        }
+    }
 }
 
 void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level)
