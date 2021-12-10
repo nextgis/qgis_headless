@@ -242,7 +242,6 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 
     QJsonObject json;
     legendRenderer.exportLegendToJson( QgsRenderContext(), json );
-    qDebug() << "json:" << json;
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
     QJsonArray nodes = json.value( "nodes" ).toArray();
