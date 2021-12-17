@@ -20,6 +20,7 @@
 
 #include "layer.h"
 #include "crs.h"
+#include "utils.h"
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsmemoryproviderutils.h>
@@ -30,58 +31,6 @@ void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )
     QgsVectorSimplifyMethod simplifyMethod = qgsVectorLayer->simplifyMethod();
     simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
     qgsVectorLayer->setSimplifyMethod( simplifyMethod );
-}
-
-QgsWkbTypes::Type toQgsWkbType( HeadlessRender::Layer::GeometryType geometryType )
-{
-    switch( geometryType )
-    {
-    case HeadlessRender::Layer::GeometryType::Point:
-        return QgsWkbTypes::Type::Point;
-    case HeadlessRender::Layer::GeometryType::LineString:
-        return QgsWkbTypes::Type::LineString;
-    case HeadlessRender::Layer::GeometryType::Polygon:
-        return QgsWkbTypes::Type::Polygon;
-    case HeadlessRender::Layer::GeometryType::MultiPoint:
-        return QgsWkbTypes::Type::MultiPoint;
-    case HeadlessRender::Layer::GeometryType::MultiLineString:
-        return QgsWkbTypes::Type::MultiLineString;
-    case HeadlessRender::Layer::GeometryType::MultiPolygon:
-        return QgsWkbTypes::Type::MultiPolygon;
-    case HeadlessRender::Layer::GeometryType::PointZ:
-        return QgsWkbTypes::Type::PointZ;
-    case HeadlessRender::Layer::GeometryType::LineStringZ:
-        return QgsWkbTypes::Type::LineStringZ;
-    case HeadlessRender::Layer::GeometryType::PolygonZ:
-        return QgsWkbTypes::Type::PolygonZ;
-    case HeadlessRender::Layer::GeometryType::MultiPointZ:
-        return QgsWkbTypes::Type::MultiPointZ;
-    case HeadlessRender::Layer::GeometryType::MultiLineStringZ:
-        return QgsWkbTypes::Type::MultiLineStringZ;
-    case HeadlessRender::Layer::GeometryType::MultiPolygonZ:
-        return QgsWkbTypes::Type::MultiPolygonZ;
-    }
-}
-
-QVariant::Type HeadlessRender::Layer::toQVariantType( HeadlessRender::Layer::AttributeType attributeType )
-{
-    switch( attributeType )
-    {
-    case HeadlessRender::Layer::AttributeType::Integer:
-        return QVariant::Int;
-    case HeadlessRender::Layer::AttributeType::Real:
-        return QVariant::Double;
-    case HeadlessRender::Layer::AttributeType::String:
-        return QVariant::String;
-    case HeadlessRender::Layer::AttributeType::Date:
-        return QVariant::Date;
-    case HeadlessRender::Layer::AttributeType::Time:
-        return QVariant::Time;
-    case HeadlessRender::Layer::AttributeType::DateTime:
-        return QVariant::DateTime;
-    case HeadlessRender::Layer::AttributeType::Integer64:
-        return QVariant::LongLong;
-    }
 }
 
 HeadlessRender::Layer::Layer( const HeadlessRender::QgsMapLayerPtr &qgsMapLayer )
@@ -109,9 +58,9 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::Ge
 {
     QgsFields fields;
     for ( const QPair<QString, HeadlessRender::Layer::AttributeType> &attrType : attributeTypes )
-        fields.append( QgsField( attrType.first, toQVariantType( attrType.second ) ) );
+        fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
 
-    QgsVectorLayer *qgsLayer = QgsMemoryProviderUtils::createMemoryLayer( "layername", fields, toQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
+    QgsVectorLayer *qgsLayer = QgsMemoryProviderUtils::createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
     disableVectorSimplify( qgsLayer );
 
     for ( const auto &data : featureDataList )

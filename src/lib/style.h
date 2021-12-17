@@ -29,6 +29,7 @@
 #include <QSharedPointer>
 #include <QDomDocument>
 #include "exceptions.h"
+#include "layer.h"
 
 class QgsVectorLayer;
 class QgsRenderContext;
@@ -45,8 +46,8 @@ namespace HeadlessRender
         typedef long Category;
 
         Style() = default;
-        static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr  );
-        static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr  );
+        static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown  );
+        static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown  );
         std::string data() const;
         std::pair<bool, std::set<std::string>> usedAttributes() const;
 
@@ -55,8 +56,9 @@ namespace HeadlessRender
     private:
         static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );
         static void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback );
-        static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const std::string &style, QString &errorMessage );
-        static QSharedPointer<QgsVectorLayer> createTemporaryLayer( QDomDocument &style, QString &errorMessage );
+        static QSharedPointer<QgsVectorLayer> createTemporaryLayerWithStyle( const std::string &style, QString &errorMessage );
+        static QSharedPointer<QgsVectorLayer> createTemporaryLayerWithStyle( QDomDocument &style, QString &errorMessage );
+        static bool validateGeometryType( const std::string &style, Layer::GeometryType layerGeometryType );
         static bool validateStyle( const std::string &style, QString &errorMessage );
         static void removeLayerGeometryTypeElement( QDomDocument & );
         QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const;

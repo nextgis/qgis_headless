@@ -41,6 +41,11 @@ namespace HeadlessRender
         StyleValidationError( const QString &message ): QgisHeadlessError( message ) {}
     };
 
+    class GeometryTypeMismatch : public QgisHeadlessError
+    {
+    public:
+        GeometryTypeMismatch( const QString &message ): QgisHeadlessError( message ) {}
+    };
 }
 
 #endif // QGIS_HEADLESS_EXCEPTIONS_H

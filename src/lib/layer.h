@@ -49,7 +49,8 @@ namespace HeadlessRender
             PolygonZ,
             MultiPointZ,
             MultiLineStringZ,
-            MultiPolygonZ
+            MultiPolygonZ,
+            Unknown
         };
 
         enum class AttributeType
