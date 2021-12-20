@@ -42,7 +42,6 @@ target_link_libraries(${PY_LIB_NAME} PRIVATE
   Qt5::Widgets
   Qt5::Network
   ${PYTHON_LIBRARY}
-  ${QGIS_CORE_LIBRARIES}
   ${LIB_NAME}
 )
 
