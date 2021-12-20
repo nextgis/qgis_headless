@@ -174,8 +174,8 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
         .def( pybind11::init<>()  )
-        .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr, pybind11::arg("layerGeometryType") = HeadlessRender::Layer::GeometryType::Unknown )
-        .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr, pybind11::arg("layerGeometryType") = HeadlessRender::Layer::GeometryType::Unknown )
+        .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr, pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown )
+        .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr, pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown )
         .def( "used_attributes", []( const HeadlessRender::Style &style ) -> pybind11::object
         {
             const std::pair<bool, std::set<std::string>> &result = style.usedAttributes();
