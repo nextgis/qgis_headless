@@ -63,7 +63,7 @@ namespace HeadlessRender
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );
 
-        std::vector<LegendSymbol> legendSymbools( size_t index, const Size & size = Size() );
+        std::vector<LegendSymbol> legendSymbols( size_t index, const Size & size = Size() );
 
     private:
         void processLegendSymbols( QJsonArray nodes, std::vector<LegendSymbol> &legendSymbols );

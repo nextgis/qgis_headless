@@ -220,7 +220,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     return std::make_shared<HeadlessRender::Image>( img );
 }
 
-std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbools( size_t index, const HeadlessRender::Size &size /* = Size() */ )
+std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbols( size_t index, const HeadlessRender::Size &size /* = Size() */ )
 {
     if ( mLayers.size() <= index )
         throw QgisHeadlessError( "Invalid layer index" );
@@ -240,8 +240,12 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
     QgsLayerTreeModel legendModel( &qgsLayerTree );
     QgsLegendRenderer legendRenderer( &legendModel, legendSettings );
 
+#if VERSION_INT > 31600
+    QJsonObject json = legendRenderer.exportLegendToJson( QgsRenderContext() );
+#else
     QJsonObject json;
     legendRenderer.exportLegendToJson( QgsRenderContext(), json );
+#endif
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
     QJsonArray nodes = json.value( "nodes" ).toArray();

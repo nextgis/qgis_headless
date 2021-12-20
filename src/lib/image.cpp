@@ -54,7 +54,11 @@ const unsigned char *HeadlessRender::Image::bits() const
 
 std::size_t HeadlessRender::Image::sizeInBytes() const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5,10,0)
+    return mQImage->byteCount();
+#else
     return mQImage->sizeInBytes();
+#endif
 }
 
 std::pair<int, int> HeadlessRender::Image::size() const
