@@ -1,7 +1,13 @@
 import pytest
 from packaging import version
 
-from qgis_headless import Style, StyleValidationError, get_qgis_version
+from qgis_headless import (
+    Layer,
+    Style,
+    StyleValidationError,
+    GeometryTypeMismatch,
+    get_qgis_version,
+)
 
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
@@ -33,3 +39,12 @@ def test_empty_string(shared_datadir):
 def test_attributes(file, expected, shared_datadir):
     style = Style.from_file(str(shared_datadir / file))
     assert style.used_attributes() == (set(expected) if expected is not None else None)
+
+
+def test_geom_type(shared_datadir):
+    style_path = str(shared_datadir / 'point-style.qml')
+
+    Style.from_file(style_path)
+    Style.from_file(style_path, layer_geometry_type=Layer.GT_POINT)
+    with pytest.raises(GeometryTypeMismatch):
+        Style.from_file(style_path, layer_geometry_type=Layer.GT_POLYGON)
