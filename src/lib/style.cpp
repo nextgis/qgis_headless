@@ -115,7 +115,7 @@ bool HeadlessRender::Style::validateGeometryType( const std::string &style, Laye
     QDomDocument styleDomDocument;
     styleDomDocument.setContent( QString::fromStdString( style ), &errorMessage );
 
-    QDomElement geometryTypeElement = styleDomDocument.firstChildElement( LAYER_GEOMETRY_TYPE_TAG );
+    QDomElement geometryTypeElement = styleDomDocument.firstChildElement( QGIS_TAG ).firstChildElement( LAYER_GEOMETRY_TYPE_TAG );
     if ( layerGeometryType == HeadlessRender::Layer::GeometryType::Unknown || geometryTypeElement.isNull() )
         return true;
 
