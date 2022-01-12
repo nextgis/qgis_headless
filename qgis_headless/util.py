@@ -49,3 +49,22 @@ def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)
     req.add_layer(layer, style)
 
     return to_pil(req.render_image(extent, size))
+
+
+def render_raster(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)):
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(crs)
+
+    if isinstance(size, int):
+        size = (size, int(size * (extent[3] - extent[1]) / (extent[2] - extent[0])))
+
+    if not isinstance(layer, Layer):
+        layer = Layer.from_gdal(str(layer))
+
+    if not isinstance(style, Style):
+        style = Style.from_string(style)
+
+    req.add_layer(layer, style)
+
+    return to_pil(req.render_image(extent, size))

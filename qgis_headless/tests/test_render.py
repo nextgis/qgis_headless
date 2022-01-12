@@ -1,21 +1,17 @@
-import ctypes
-import json
 import os.path
 from binascii import a2b_hex
-from io import BytesIO
 from packaging import version
 
 import pytest
-from PIL import Image
 
 from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version
-from qgis_headless.util import to_pil, image_stat, render_vector, EXTENT_ONE
+from qgis_headless.util import to_pil, image_stat, render_vector, render_raster, EXTENT_ONE
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
 
 WKB_MSC = a2b_hex('01010000005070B1A206CF42409CDCEF5014E04B40')  # POINT (37.61739 55.75062)
-EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
-EPSG_3395_WKT = 'PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","3395"]]'
+EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'  # NOQA
+EPSG_3395_WKT = 'PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","3395"]]'  # NOQA
 
 
 def test_contour(shared_datadir, reset_svg_paths):
@@ -97,7 +93,8 @@ def test_marker_change(shared_datadir, reset_svg_paths):
     assert image_stat(img).green.max == 255, "Green marker is missing"
 
 
-@pytest.mark.skipif(not os.path.exists('/usr/share/qgis/svg'), reason="Builtin SVG icons are missing")
+@pytest.mark.skipif(not os.path.exists('/usr/share/qgis/svg'),
+                    reason="Builtin SVG icons are missing")
 def test_svg_builtin(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-builtin.qml').read_text()
@@ -122,7 +119,7 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
         target = str((shared_datadir / 'marker-{}'.format(color) / source).resolve())
         resolved.append(source)
         return target
-    
+
     color = 'blue'
     resolved.clear()
 
@@ -192,14 +189,14 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     req.set_crs(CRS.from_epsg(3857))
     req.add_layer(layer, style)
 
-    rendered_image  = req.render_image(EXTENT_ONE, (256, 256))
+    rendered_image = req.render_image(EXTENT_ONE, (256, 256))
     img = to_pil(rendered_image)
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
     marker.unlink()  # Remove marker file from directory
 
     # And render again
-    rendered_image  = req.render_image(EXTENT_ONE, (256, 256))
+    rendered_image = req.render_image(EXTENT_ONE, (256, 256))
     img = to_pil(rendered_image)
     assert image_stat(img).blue.max == 255, "Marker is missing in same MapRequest"
 
@@ -209,7 +206,7 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     req.add_layer(layer, style)
 
     # And render again
-    rendered_image  = req.render_image(EXTENT_ONE, (256, 256))
+    rendered_image = req.render_image(EXTENT_ONE, (256, 256))
     img = to_pil(rendered_image)
     assert image_stat(img).blue.max == 255, "Marker is missing in new MapRequest"
 
@@ -297,11 +294,11 @@ def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
     pytest.param(CRS.from_epsg(4326), (37.60, 55.74, 37.62, 55.76),
                                       (37.60, 57.74, 37.62, 57.76), id='from EPSG:4326'),
     pytest.param(CRS.from_wkt(EPSG_4326_WKT), (37.60, 55.74, 37.62, 55.76),
-                                              (37.60, 57.74, 37.62, 57.76), id='from WKT EPSG:4326'),
+                 (37.60, 57.74, 37.62, 57.76), id='from WKT EPSG:4326'),
     pytest.param(CRS.from_epsg(3857), (4187547.0, 7508930.0, 4187549.0, 7508932.0),
-                                      (4187547.0, 7473582.0, 4187549.0, 7473584.0), id='from EPSG:3857'),
+                 (4187547.0, 7473582.0, 4187549.0, 7473584.0), id='from EPSG:3857'),
     pytest.param(CRS.from_wkt(EPSG_3395_WKT), (4187547.0, 7473582.0, 4187549.0, 7473584.0),
-                                              (4187547.0, 7508930.0, 4187549.0, 7508932.0), id='from WKT EPSG:3395'),
+                 (4187547.0, 7508930.0, 4187549.0, 7508932.0), id='from WKT EPSG:3395'),
 ))
 def test_render_crs(shared_datadir, crs, extent, extent_empty):
     source_crs = CRS.from_epsg(4326)
@@ -351,3 +348,24 @@ def test_style_25d(shared_datadir):
     assert stat.red.max == 255, "Shadow is missing"
     assert stat.blue.max == 255, "Roof is missing"
     assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
+
+
+def test_raster(shared_datadir):
+    layer = Layer.from_gdal(str(shared_datadir / 'raster' / 'rounds.tif'))
+    style = Style.from_file(str(shared_datadir / 'raster' / 'rounds.qml'))
+
+    img = render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0))
+    stat = image_stat(img)
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 0, 0), "Red colour missing"
+
+    img = render_raster(layer, style, (3848936.0, 5977974.0, 5503915.0, 7505647.0))
+    stat = image_stat(img)
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 255, 0), "Green colour missing"
+
+    img = render_raster(layer, style, (251440.0, 2556073.0, 1978853.0, 4158374.0))
+    stat = image_stat(img)
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 0, 255), "Blue colour missing"
+
+    img = render_raster(layer, style, (3848936.0, 2556073.0, 5503915.0, 4158374.0))
+    stat = image_stat(img)
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 0, 0), "Black colour missing"
