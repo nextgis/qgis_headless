@@ -5,7 +5,7 @@ from qgis_headless import (
     Layer,
     Style,
     StyleValidationError,
-    GeometryTypeMismatch,
+    StyleTypeMismatch,
     get_qgis_version,
 )
 
@@ -46,5 +46,5 @@ def test_geom_type(shared_datadir):
 
     Style.from_file(style_path)
     Style.from_file(style_path, layer_geometry_type=Layer.GT_POINT)
-    with pytest.raises(GeometryTypeMismatch):
+    with pytest.raises(StyleTypeMismatch):
         Style.from_file(style_path, layer_geometry_type=Layer.GT_POLYGON)

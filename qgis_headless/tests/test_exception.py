@@ -1,12 +1,12 @@
 from qgis_headless import (
     QgisHeadlessError,
     StyleValidationError,
-    GeometryTypeMismatch,
+    StyleTypeMismatch,
 )
 
 
 def test_exception():
-    geom_type_mismatch = GeometryTypeMismatch('GeometryTypeMismatch')
+    geom_type_mismatch = StyleTypeMismatch('StyleTypeMismatch')
     assert isinstance(geom_type_mismatch, StyleValidationError)
 
     style_validation_error = StyleValidationError('StyleValidationError')

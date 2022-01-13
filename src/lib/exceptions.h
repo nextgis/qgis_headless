@@ -41,10 +41,10 @@ namespace HeadlessRender
         StyleValidationError( const QString &message ): QgisHeadlessError( message ) {}
     };
 
-    class GeometryTypeMismatch : public StyleValidationError
+    class StyleTypeMismatch : public StyleValidationError
     {
     public:
-        GeometryTypeMismatch( const QString &message ): StyleValidationError( message ) {}
+        StyleTypeMismatch( const QString &message ): StyleValidationError( message ) {}
     };
 }
 

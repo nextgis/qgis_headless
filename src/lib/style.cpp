@@ -136,7 +136,7 @@ bool HeadlessRender::Style::validateStyle( const std::string &style, QString &er
 HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Undefined */ )
 {
     if ( !validateGeometryType( string, layerGeometryType ))
-        throw GeometryTypeMismatch( "Geometry type mismatch" );
+        throw StyleTypeMismatch( "Style type mismatch" );
 
     QString errorMessage;
     if ( !validateStyle( string, errorMessage ) )
