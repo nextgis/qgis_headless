@@ -43,14 +43,6 @@ namespace HeadlessRender
     typedef std::tuple<double, double, double, double> Extent;
     typedef std::tuple<int, int> Size;
 
-    enum LogLevel
-    {
-        Debug,
-        Info,
-        Warning,
-        Critical
-    };
-
     class QGIS_HEADLESS_EXPORT MapRequest
     {
     public:

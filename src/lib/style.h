@@ -30,6 +30,7 @@
 #include <QDomDocument>
 #include "exceptions.h"
 #include "layer.h"
+#include "types.h"
 
 class QgsVectorLayer;
 class QgsRenderContext;
@@ -50,6 +51,7 @@ namespace HeadlessRender
         static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown  );
         std::string data() const;
         std::pair<bool, std::set<std::string>> usedAttributes() const;
+        DataType type() const;
 
         static const Category DefaultImportCategories;
 
@@ -64,6 +66,7 @@ namespace HeadlessRender
         QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const;
 
         std::string mData;
+        mutable DataType mType = DataType::Unknown;
     };
 }
 

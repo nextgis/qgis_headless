@@ -88,3 +88,10 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
 {
     return mLayer;
 }
+
+HeadlessRender::DataType HeadlessRender::Layer::type() const
+{
+    if ( mLayer && mLayer->isValid() )
+        mType = mLayer->type() == QgsMapLayerType::VectorLayer ? HeadlessRender::DataType::Vector : HeadlessRender::DataType::Raster;
+    return mType;
+}

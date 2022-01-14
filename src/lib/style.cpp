@@ -42,15 +42,21 @@ namespace SymbolLayerType
 {
     static const QString SvgMarker = "SvgMarker";
     static const QString SVGFill = "SVGFill";
-};
+}
 
 namespace LabelingType
 {
     static const QString RuleBased = "rule-based";
-};
+}
 
-static const QString QGIS_TAG = "qgis";
-static const QString LAYER_GEOMETRY_TYPE_TAG = "layerGeometryType";
+namespace TAGS
+{
+    static const QString QGIS = "qgis";
+    static const QString LAYER_GEOMETRY_TYPE = "layerGeometryType";
+    static const QString PIPE = "pipe";
+    static const QString RASTER_PROPERTIES = "rasterproperties";
+    static const QString RASTER_RENDERER = "rasterrenderer";
+}
 
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology
                                                                                      | QgsMapLayer::Symbology3D
@@ -74,10 +80,10 @@ QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayerWithSt
 {
     QgsVectorLayer::LayerOptions layerOptions;
 
-    QDomElement myRoot = style.firstChildElement( QGIS_TAG );
+    QDomElement myRoot = style.firstChildElement( TAGS::QGIS );
     if ( !myRoot.isNull() )
     {
-        switch( static_cast<QgsWkbTypes::GeometryType>( myRoot.firstChildElement( LAYER_GEOMETRY_TYPE_TAG ).text().toInt() ) )
+        switch( static_cast<QgsWkbTypes::GeometryType>( myRoot.firstChildElement( TAGS::LAYER_GEOMETRY_TYPE ).text().toInt() ) )
         {
         case QgsWkbTypes::GeometryType::PointGeometry:
             layerOptions.fallbackWkbType = QgsWkbTypes::Point;
@@ -111,11 +117,10 @@ QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayerWithSt
 
 bool HeadlessRender::Style::validateGeometryType( const std::string &style, Layer::GeometryType layerGeometryType )
 {
-    QString errorMessage;
     QDomDocument styleDomDocument;
-    styleDomDocument.setContent( QString::fromStdString( style ), &errorMessage );
+    styleDomDocument.setContent( QString::fromStdString( style ) );
 
-    QDomElement geometryTypeElement = styleDomDocument.firstChildElement( QGIS_TAG ).firstChildElement( LAYER_GEOMETRY_TYPE_TAG );
+    QDomElement geometryTypeElement = styleDomDocument.firstChildElement( TAGS::QGIS ).firstChildElement( TAGS::LAYER_GEOMETRY_TYPE );
     if ( layerGeometryType == HeadlessRender::Layer::GeometryType::Unknown || geometryTypeElement.isNull() )
         return true;
 
@@ -215,6 +220,32 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
     return std::make_pair( true, usedAttributes );
 }
 
+HeadlessRender::DataType HeadlessRender::Style::type() const
+{
+    if ( mType == HeadlessRender::DataType::Unknown && !mData.empty() )
+    {
+        QDomDocument styleDomDocument;
+        styleDomDocument.setContent( QString::fromStdString( mData ));
+
+        QDomElement root = styleDomDocument.firstChildElement( TAGS::QGIS );
+
+        QDomNode pipeNode = root.firstChildElement( TAGS::PIPE );
+        if ( pipeNode.isNull() ) // old project
+            pipeNode = root;
+
+        QDomElement rendererElement;
+        //rasterlayerproperties element there -> old format (1.8 and early 1.9)
+        if ( !root.firstChildElement( TAGS::RASTER_PROPERTIES ).isNull() )
+            rendererElement = root.firstChildElement( TAGS::RASTER_RENDERER );
+        else
+            rendererElement = pipeNode.firstChildElement( TAGS::RASTER_RENDERER );
+
+        mType = rendererElement.isNull() ? HeadlessRender::DataType::Vector : HeadlessRender::DataType::Raster;
+    }
+
+    return mType;
+}
+
 void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRender::SvgResolverCallback &svgResolverCallback )
 {
     for ( QgsSymbolLayer *symbolLayer : symbol->symbolLayers() )
@@ -259,8 +290,8 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     if ( !errorMessage.isEmpty() )
         throw QgisHeadlessError( errorMessage );
 
-    QDomElement myRoot = style.firstChildElement( QGIS_TAG );
-    if ( myRoot.isNull() || myRoot.firstChildElement( LAYER_GEOMETRY_TYPE_TAG ).text().isEmpty())
+    QDomElement myRoot = style.firstChildElement( TAGS::QGIS );
+    if ( myRoot.isNull() || myRoot.firstChildElement( TAGS::LAYER_GEOMETRY_TYPE ).text().isEmpty())
         removeLayerGeometryTypeElement( exportedStyle );
 
     return exportedStyle.toString().toStdString();
@@ -296,10 +327,10 @@ QSet<QString> HeadlessRender::Style::referencedFields( const QSharedPointer<QgsV
 
 void HeadlessRender::Style::removeLayerGeometryTypeElement( QDomDocument &domDocument )
 {
-    QDomElement root = domDocument.firstChildElement( QGIS_TAG );
+    QDomElement root = domDocument.firstChildElement( TAGS::QGIS );
     if ( !root.isNull() )
     {
-        QDomElement child = root.firstChildElement( LAYER_GEOMETRY_TYPE_TAG );
+        QDomElement child = root.firstChildElement( TAGS::LAYER_GEOMETRY_TYPE );
         if ( !child.isNull() )
             root.removeChild( child );
     }

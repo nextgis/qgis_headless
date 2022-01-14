@@ -26,6 +26,7 @@
 #include <QString>
 #include <QVector>
 #include "crs.h"
+#include "types.h"
 
 class QgsMapLayer;
 
@@ -79,8 +80,10 @@ namespace HeadlessRender
         static Layer fromData( GeometryType geometryType, const CRS &crs, const QVector<QPair<QString, AttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
 
         QgsMapLayerPtr qgsMapLayer() const;
+        DataType type() const;
     private:
         QgsMapLayerPtr mLayer;
+        mutable DataType mType = DataType::Unknown;
     };
 }
 
