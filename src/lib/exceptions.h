@@ -46,6 +46,13 @@ namespace HeadlessRender
     public:
         StyleTypeMismatch( const QString &message ): StyleValidationError( message ) {}
     };
+
+    class InvalidLayerSource : public QgisHeadlessError
+    {
+    public:
+        InvalidLayerSource( const QString &message ): QgisHeadlessError( message ) {}
+    };
+
 }
 
 #endif // QGIS_HEADLESS_EXCEPTIONS_H

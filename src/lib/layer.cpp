@@ -21,6 +21,7 @@
 #include "layer.h"
 #include "crs.h"
 #include "utils.h"
+#include "exceptions.h"
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsmemoryproviderutils.h>
@@ -42,13 +43,20 @@ HeadlessRender::Layer::Layer( const HeadlessRender::QgsMapLayerPtr &qgsMapLayer 
 HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 {
     QgsVectorLayer *qgsVectorLayer = new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ) );
+    if ( !qgsVectorLayer->isValid() )
+        throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
+
     disableVectorSimplify( qgsVectorLayer );
     return Layer( QgsMapLayerPtr( qgsVectorLayer ) );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
-    return Layer( QgsMapLayerPtr( new QgsRasterLayer( QString::fromStdString( uri ), "" ) ) );
+    QgsRasterLayer *qgsRasterLayer = new QgsRasterLayer( QString::fromStdString( uri ), "" );
+    if ( !qgsRasterLayer->isValid() )
+        throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
+
+    return Layer( QgsMapLayerPtr( qgsRasterLayer ) );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::GeometryType geometryType,
