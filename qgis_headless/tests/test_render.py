@@ -4,7 +4,10 @@ from packaging import version
 
 import pytest
 
-from qgis_headless import MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version
+from qgis_headless import (
+    MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version,
+    StyleTypeMismatch,
+)
 from qgis_headless.util import to_pil, image_stat, render_vector, render_raster, EXTENT_ONE
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
@@ -369,3 +372,21 @@ def test_raster(shared_datadir):
     img = render_raster(layer, style, (3848936.0, 2556073.0, 5503915.0, 4158374.0))
     stat = image_stat(img)
     assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 0, 0), "Black colour missing"
+
+
+def test_raster_layer_vector_style(shared_datadir):
+    layer = Layer.from_gdal(str(shared_datadir / 'raster' / 'rounds.tif'))
+    style = Style.from_file(str(shared_datadir / 'point-style.qml'))
+
+    mreq = MapRequest()
+    with pytest.raises(StyleTypeMismatch):
+        mreq.add_layer(layer, style)
+
+
+def test_vector_layer_raster_style(shared_datadir):
+    layer = Layer.from_ogr(str(shared_datadir / 'poly.geojson'))
+    style = Style.from_file(str(shared_datadir / 'raster' / 'rounds.qml'))
+
+    mreq = MapRequest()
+    with pytest.raises(StyleTypeMismatch):
+        mreq.add_layer(layer, style)
