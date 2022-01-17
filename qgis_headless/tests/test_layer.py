@@ -6,7 +6,7 @@ from xml.sax.saxutils import quoteattr
 from subprocess import check_call, CalledProcessError
 
 import pytest 
-from qgis_headless import Layer, CRS
+from qgis_headless import Layer, CRS, InvalidLayerSource
 from qgis_headless.util import render_vector, EXTENT_ONE, image_stat
 
 # Sample WKB geometries
@@ -127,3 +127,10 @@ def test_geometry_crash():
             failed += 1
     
     assert failed == 0, "Failed for {} times of {}".format(failed, total)
+
+
+def test_wrong_source(shared_datadir):
+    with pytest.raises(InvalidLayerSource):
+        Layer.from_ogr(str(shared_datadir / 'raster' / 'rounds.tif'))
+    with pytest.raises(InvalidLayerSource):
+        Layer.from_gdal(str(shared_datadir / 'poly.geojson'))
