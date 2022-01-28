@@ -22,7 +22,7 @@ Headless rendering library using QGIS
 3. Run the tests:
 
     ```
-    $ python -m pytest qgis_headless/tests/
+    $ python -m pytest qgis_headless/test/
     ```
 
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 -m pytest --benchmark-columns=mean,stddev,ops qgis_headless/tests
+python3 -m pytest --benchmark-columns=mean,stddev,ops qgis_headless/test
