@@ -42,9 +42,13 @@ def test_attributes(file, expected, shared_datadir):
 
 
 def test_geom_type(shared_datadir):
-    style_path = str(shared_datadir / 'point-style.qml')
-
-    Style.from_file(style_path)
-    Style.from_file(style_path, layer_geometry_type=Layer.GT_POINT)
+    point_style = str(shared_datadir / 'point-style.qml')
+    Style.from_file(point_style)
+    Style.from_file(point_style, layer_geometry_type=Layer.GT_POINT)
     with pytest.raises(StyleTypeMismatch):
-        Style.from_file(style_path, layer_geometry_type=Layer.GT_POLYGON)
+        Style.from_file(point_style, layer_geometry_type=Layer.GT_POLYGON)
+
+    raster_style = str(shared_datadir / 'raster' / 'rounds.qml')
+    Style.from_file(raster_style)
+    with pytest.raises(StyleTypeMismatch):
+        Style.from_file(raster_style, layer_geometry_type=Layer.GT_POINT)
