@@ -1,0 +1,20 @@
+{
+    "type": "FeatureCollection",
+    "name": "industries",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": { "zern": 1, "ovosch": 1, "sad": 1, "vinograd": 1, "efir": null, "skotovod": null, "svinovod": null, "ptitcevod": null, "total": 4 },
+            "geometry": { "type": "Point", "coordinates": [ 33.88131, 45.05656 ] } },
+        {
+            "type": "Feature",
+            "properties": { "zern": 1, "ovosch": null, "sad": null, "vinograd": null, "efir": null, "skotovod": 1, "svinovod": null, "ptitcevod": 1, "total": 3 },
+            "geometry": { "type": "Point", "coordinates": [ 33.86751, 45.05946 ] }
+        },
+        {
+            "type": "Feature",
+            "properties": { "zern": 6, "ovosch": 1, "sad": 1, "vinograd": 2, "efir": 2, "skotovod": 1, "svinovod": 2, "ptitcevod": null, "total": 15 },
+            "geometry": { "type": "Point", "coordinates": [ 33.87745, 45.06711 ] }
+        }
+    ]
+}

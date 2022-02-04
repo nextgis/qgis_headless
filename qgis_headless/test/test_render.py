@@ -353,6 +353,17 @@ def test_style_25d(shared_datadir):
     assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
 
 
+def test_diagram(shared_datadir):
+    layer = Layer.from_ogr(str(shared_datadir / 'diagram' / 'industries.geojson'))
+    style = Style.from_file(str(shared_datadir / 'diagram' / 'industries.qml'))
+
+    img = render_vector(layer, style, (33.86681, 45.05880, 33.86878, 45.06046),
+                        crs=CRS.from_epsg(4326))
+    assert img.getpixel((70, 138)) == (254, 221, 74, 255)
+    assert img.getpixel((111, 135)) == (41, 187, 255, 255)
+    assert img.getpixel((96, 173)) == (204, 97, 20, 255)
+
+
 def test_raster(shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / 'raster' / 'rounds.tif'))
     style = Style.from_file(str(shared_datadir / 'raster' / 'rounds.qml'))
