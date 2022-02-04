@@ -35,6 +35,7 @@ def test_empty_string(shared_datadir):
     pytest.param('attributes/osm-highway.qml', ('HIGHWAY', 'NAME_EN', 'NAME'), id='osm-highway'),
     pytest.param('attributes/data-defined.qml', ('size', ), id='data-defined'),
     pytest.param('attributes/rule-based-labeling.qml', ('a', 'b', 'c') if (QGIS_VERSION >= version.parse('3.12')) else None, id='rule-based-labeling'),
+    pytest.param('diagram/industries.qml', ('zern', 'ovosch', 'sad', 'vinograd', 'efir', 'skotovod', 'svinovod', 'ptitcevod', 'total'), id='diagram')
 ))
 def test_attributes(file, expected, shared_datadir):
     style = Style.from_file(str(shared_datadir / file))
