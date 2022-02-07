@@ -62,7 +62,8 @@ const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCatego
                                                                                      | QgsMapLayer::Symbology3D
                                                                                      | QgsMapLayer::Labeling
                                                                                      | QgsMapLayer::Rendering
-                                                                                     | QgsMapLayer::CustomProperties;
+                                                                                     | QgsMapLayer::CustomProperties
+                                                                                     | QgsMapLayer::Diagrams;
 
 static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const QgsVectorLayer::LayerOptions &layerOptions )
 {
