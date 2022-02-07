@@ -8,7 +8,8 @@ from qgis_headless import (
     MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version,
     StyleTypeMismatch,
 )
-from qgis_headless.util import to_pil, image_stat, render_vector, render_raster, EXTENT_ONE
+from qgis_headless.util import (
+    EXTENT_ONE, image_stat, render_raster, render_vector, to_pil, WKB_POINT_00)
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
 
@@ -353,15 +354,42 @@ def test_style_25d(shared_datadir):
     assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
 
 
-def test_diagram(shared_datadir):
-    layer = Layer.from_ogr(str(shared_datadir / 'diagram' / 'industries.geojson'))
+@pytest.mark.parametrize('layer', (
+    pytest.param('diagram/industries.geojson', id='industries'),
+    pytest.param('diagram/industries-copy.geojson', id='industries-copy'),
+))
+def test_diagram(shared_datadir, layer):
     style = Style.from_file(str(shared_datadir / 'diagram' / 'industries.qml'))
+    layer = Layer.from_ogr(str(shared_datadir / layer))
 
     img = render_vector(layer, style, (33.86681, 45.05880, 33.86878, 45.06046),
                         crs=CRS.from_epsg(4326))
     assert img.getpixel((70, 138)) == (254, 221, 74, 255)
     assert img.getpixel((111, 135)) == (41, 187, 255, 255)
     assert img.getpixel((96, 173)) == (204, 97, 20, 255)
+
+    # layer = Layer.from_data(
+    #     Layer.GT_POINT, CRS.from_epsg(4326), (
+    #         ('zern', Layer.FT_INTEGER),
+    #         ('ovosch', Layer.FT_INTEGER),
+    #         ('sad', Layer.FT_INTEGER),
+    #         ('vinograd', Layer.FT_INTEGER),
+    #         ('efir', Layer.FT_INTEGER),
+    #         ('skotovod', Layer.FT_INTEGER),
+    #         ('svinovod', Layer.FT_INTEGER),
+    #         ('svinovod', Layer.FT_INTEGER),
+    #         ('total', Layer.FT_INTEGER),
+    #     ), (
+    #         (1, WKB_POINT_00, (1, 1, 1, 1, 0, 0, 0, 0, 4)),
+    #     )
+    # )
+
+    # img = render_vector(layer, style, EXTENT_ONE, crs=CRS.from_epsg(3857))
+    # img.save('share/from_data.png')
+
+    # layer = Layer.from_ogr(str(shared_datadir / 'diagram' / 'ind.geojson'))
+    # img = render_vector(layer, style, EXTENT_ONE, crs=CRS.from_epsg(3857))
+    # img.save('share/from_ogr.png')
 
 
 def test_raster(shared_datadir):

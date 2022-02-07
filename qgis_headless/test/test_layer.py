@@ -1,23 +1,21 @@
 from sys import executable
 from textwrap import dedent
-from binascii import a2b_hex
 from datetime import date, time
 from xml.sax.saxutils import quoteattr
 from subprocess import check_call, CalledProcessError
 
-import pytest 
+import pytest
 from qgis_headless import Layer, CRS, InvalidLayerSource
-from qgis_headless.util import render_vector, EXTENT_ONE, image_stat
-
-# Sample WKB geometries
-
-WKB_POINT_00 = a2b_hex('010100000000000000000000000000000000000000')  # POINT(0 0)
-WKB_POINT_11 = a2b_hex('0101000000000000000000f03f000000000000f03f')  # POINT(1 1)
-
-WKB_POINTZ_000 = a2b_hex('0101000080000000000000000000000000000000000000000000000000')  # POINT Z(0 0 0)
-WKB_POINTZ_111 = a2b_hex('0101000080000000000000f03f000000000000f03f000000000000f03f')  # POINT Z(1 1 1)
-
-WKB_LINESTRING = a2b_hex('01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f')  # LINESTRING(0 0, 1 1)
+from qgis_headless.util import (
+    EXTENT_ONE,
+    image_stat,
+    render_vector,
+    WKB_POINT_00,
+    WKB_POINT_11,
+    WKB_POINTZ_000,
+    WKB_POINTZ_111,
+    WKB_LINESTRING,
+)
 
 
 @pytest.mark.parametrize('gt, pt0, pt1', (
