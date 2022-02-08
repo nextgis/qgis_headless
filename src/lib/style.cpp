@@ -186,6 +186,9 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
     if ( !qgsVectorLayer )
         throw QgisHeadlessError( errorMessage );
 
+    if ( qgsVectorLayer->diagramRenderer() )
+        return std::make_pair( false, usedAttributes );
+
     QgsRenderContext renderContext;
 
     QgsAbstractVectorLayerLabeling *abstractVectorLayerLabeling = qgsVectorLayer->labeling();
