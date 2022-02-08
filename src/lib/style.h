@@ -47,8 +47,8 @@ namespace HeadlessRender
         typedef long Category;
 
         Style() = default;
-        static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown  );
-        static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown  );
+        static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
+        static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
         std::string data() const;
         std::pair<bool, std::set<std::string>> usedAttributes() const;
         DataType type() const;

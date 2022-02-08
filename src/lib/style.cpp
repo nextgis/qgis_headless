@@ -139,7 +139,7 @@ bool HeadlessRender::Style::validateStyle( const std::string &style, QString &er
     return createTemporaryLayerWithStyle( style, errorMessage ) ? true : false;
 }
 
-HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Undefined */ )
+HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Undefined */, DataType layerType /* = DataType::Unknown */ )
 {
     if ( !validateGeometryType( string, layerGeometryType ))
         throw StyleTypeMismatch( "Style type mismatch" );
@@ -151,13 +151,16 @@ HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &stri
     Style style;
     style.mData = string;
 
+    if ( layerType != DataType::Unknown && style.type() != layerType )
+        throw StyleTypeMismatch( "Layer type and style type do not match" );
+
     if (svgResolverCallback)
         style.mData = resolveSvgPaths( style.mData, svgResolverCallback );
 
     return style;
 }
 
-HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Unknown */ )
+HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Unknown */, DataType layerType /* = DataType::Unknown */ )
 {
     std::string data;
     QFile file( QString::fromStdString( filePath) );
@@ -166,7 +169,7 @@ HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePa
         data = std::string( byteArray.constData(), byteArray.length() );
     }
 
-    return HeadlessRender::Style::fromString( data, svgResolverCallback, layerGeometryType );
+    return HeadlessRender::Style::fromString( data, svgResolverCallback, layerGeometryType, layerType );
 }
 
 std::string HeadlessRender::Style::data() const

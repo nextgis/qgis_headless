@@ -70,6 +70,11 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .value("FT_INTEGER64", HeadlessRender::Layer::AttributeType::Integer64)
         .export_values();
 
+    pybind11::enum_<HeadlessRender::DataType>( m, "LayerType" )
+        .value("LT_VECTOR", HeadlessRender::DataType::Vector)
+        .value("LT_RASTER", HeadlessRender::DataType::Raster)
+        .value("LT_UNKNOWN", HeadlessRender::DataType::Unknown)
+        .export_values();
 
     layer.def( pybind11::init<>() )
         .def_static( "from_ogr", &HeadlessRender::Layer::fromOgr )
@@ -176,8 +181,10 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Style>( m, "Style" )
         .def( pybind11::init<>()  )
-        .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr, pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown )
-        .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr, pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown )
+        .def_static( "from_string", &HeadlessRender::Style::fromString, pybind11::arg("string"), pybind11::arg("svg_resolver") = nullptr,
+                     pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
+        .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr,
+                     pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
         .def( "used_attributes", []( const HeadlessRender::Style &style ) -> pybind11::object
         {
             const std::pair<bool, std::set<std::string>> &result = style.usedAttributes();
