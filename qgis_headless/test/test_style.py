@@ -1,7 +1,12 @@
+import contextlib
+
 import pytest
 from packaging import version
 
 from qgis_headless import (
+    LT_RASTER,
+    LT_UNKNOWN,
+    LT_VECTOR,
     Layer,
     Style,
     StyleValidationError,
@@ -43,10 +48,26 @@ def test_attributes(file, expected, shared_datadir):
     assert style.used_attributes() == (set(expected) if expected is not None else None)
 
 
+@pytest.mark.parametrize('style, layer_type, exc', (
+    ('point-style.qml', LT_UNKNOWN, None),
+    ('point-style.qml', LT_VECTOR, None),
+    ('point-style.qml', LT_RASTER, StyleTypeMismatch),
+    ('raster/rounds.qml', LT_UNKNOWN, None),
+    ('raster/rounds.qml', LT_VECTOR, StyleTypeMismatch),
+    ('raster/rounds.qml', LT_RASTER, None),
+))
+def test_layer_type(style, layer_type, exc, shared_datadir):
+
+    with pytest.raises(exc) if exc is not None else contextlib.suppress():
+        params = dict()
+        if layer_type is not None:
+            params['layer_type'] = layer_type
+        Style.from_file(str(shared_datadir / style), **params)
+
+
 def test_geom_type(shared_datadir):
     point_style = str(shared_datadir / 'point-style.qml')
     Style.from_file(point_style)
     Style.from_file(point_style, layer_geometry_type=Layer.GT_POINT)
     with pytest.raises(StyleTypeMismatch):
         Style.from_file(point_style, layer_geometry_type=Layer.GT_POLYGON)
-
