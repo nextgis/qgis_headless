@@ -25,12 +25,14 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <QImage>
 
 #include "crs.h"
 #include "layer.h"
 #include "style.h"
 #include "image.h"
 #include "legend_symbol.h"
+#include "raw_data.h"
 
 class QImage;
 class QgsMapSettings;
@@ -54,11 +56,14 @@ namespace HeadlessRender
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );
+        RawDataPtr renderPdf( const Extent &extent, const Size &size );
 
         std::vector<LegendSymbol> legendSymbols( size_t index, const Size & size = Size() );
 
     private:
         void processLegendSymbols( QJsonArray nodes, std::vector<LegendSymbol> &legendSymbols );
+        QImage renderImageImpl( const Extent &extent, const Size &size );
+
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;
         std::vector<QgsMapLayerPtr> mLayers;

@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <string>
+#include "raw_data.h"
 
 class QImage;
 
@@ -30,18 +31,19 @@ namespace HeadlessRender
 {
     typedef std::shared_ptr<QImage> QImagePtr;
 
-    class QGIS_HEADLESS_EXPORT Image
+    class QGIS_HEADLESS_EXPORT Image: public IRawData
     {
     public:
         Image() = default;
-        Image( const QImage &qimage );
-        const std::string & toString();
-        const unsigned char * bits() const;
-        std::size_t sizeInBytes() const;
-        std::pair<int, int> size() const;
+        explicit Image( const QImage &qimage );
+
+        std::pair<int, int> sizeWidthHeight() const;
+
+        const uchar *data() const override;
+        std::size_t size() const override;
+
     private:
         QImagePtr mQImage;
-        std::string mData;
     };
 
     typedef std::shared_ptr<Image> ImagePtr;

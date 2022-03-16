@@ -203,10 +203,20 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
         .def( pybind11::init<>() )
-        .def( "size", &HeadlessRender::Image::size )
-        .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
-            return pybind11::memoryview::from_memory( img->bits(), img->sizeInBytes() );
+        .def( "size", &HeadlessRender::Image::sizeWidthHeight )
+        .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img )
+        {
+            return pybind11::memoryview::from_memory( img->data(), img->size() );
         });
+
+    pybind11::class_<HeadlessRender::RawData, std::shared_ptr<HeadlessRender::RawData>>( m, "RawData" )
+        .def( pybind11::init<>() )
+        .def( "size", &HeadlessRender::RawData::size )
+        .def( "to_bytes", []( std::shared_ptr<HeadlessRender::RawData> bytes )
+        {
+            return pybind11::memoryview::from_memory( bytes->data(), bytes->size() );
+        });
+
 
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
         .def( pybind11::init<>() )
@@ -215,6 +225,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
         .def( "render_image", &HeadlessRender::MapRequest::renderImage )
         .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() )
+        .def( "render_pdf", &HeadlessRender::MapRequest::renderPdf )
         .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, pybind11::arg("index"), pybind11::arg("size") = HeadlessRender::Size() );
 
     m.def("init", []( const std::vector<std::string> &args )

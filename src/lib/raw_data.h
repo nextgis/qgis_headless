@@ -3,7 +3,7 @@
 *  Purpose: NextGIS headless renderer
 *  Author:  Denis Ilyin, denis.ilyin@nextgis.com
 *******************************************************************************
-*  Copyright (C) 2020 NextGIS, info@nextgis.ru
+*  Copyright (C) 2022 NextGIS, info@nextgis.ru
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -18,33 +18,34 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include "image.h"
+#ifndef QGIS_HEADLESS_RAWDATA_H
+#define QGIS_HEADLESS_RAWDATA_H
 
-#include <cstdlib>
 #include <QByteArray>
-#include <QBuffer>
-#include <QImage>
+#include <memory>
 
-HeadlessRender::Image::Image( const QImage &qimage )
+namespace HeadlessRender
 {
-    mQImage = std::make_shared<QImage>( qimage.convertToFormat( QImage::Format_RGBA8888 ));
+    struct QGIS_HEADLESS_EXPORT IRawData
+    {
+        virtual const uchar *data() const = 0;
+        virtual std::size_t size() const = 0;
+    };
+
+    typedef std::shared_ptr<IRawData> RawDataPtr;
+
+    class QGIS_HEADLESS_EXPORT RawData: public IRawData
+    {
+    public:
+        RawData() = default;
+        explicit RawData( const QByteArray &byteArray );
+
+        const uchar *data() const override;
+        std::size_t size() const override;
+
+    private:
+        QByteArray mData;
+    };
 }
 
-const uchar *HeadlessRender::Image::data() const
-{
-    return mQImage->constBits();
-}
-
-std::size_t HeadlessRender::Image::size() const
-{
-#if QT_VERSION < QT_VERSION_CHECK(5,10,0)
-    return mQImage->byteCount();
-#else
-    return mQImage->sizeInBytes();
-#endif
-}
-
-std::pair<int, int> HeadlessRender::Image::sizeWidthHeight() const
-{
-    return std::make_pair( mQImage->size().width(), mQImage->size().height() );
-}
+#endif // QGIS_HEADLESS_RAWDATA_H

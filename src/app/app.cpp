@@ -49,34 +49,38 @@ int main( int argc, char **argv )
 
     HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel::Info );
 
+    std::shared_ptr<HeadlessRender::MapRequest> request;
+    std::shared_ptr<HeadlessRender::Layer> layer;
+
     HeadlessRender::CRS crs = HeadlessRender::CRS::fromEPSG( epsg );
-    HeadlessRender::Layer layer = HeadlessRender::Layer::fromOgr( argv[1] );
     HeadlessRender::Style style = HeadlessRender::Style::fromFile( argv[2] );
 
-    HeadlessRender::MapRequest request;
-    request.setDpi( 96 );
-    request.setCrs( crs );
-    request.addLayer( layer, style, "layername" );
+    layer.reset( new HeadlessRender::Layer( HeadlessRender::Layer::fromOgr( argv[1] )));
+    request.reset( new HeadlessRender::MapRequest );
+
+    request->setDpi( 96 );
+    request->setCrs( crs );
+    request->addLayer( *layer, style, "layername" );
 
     HeadlessRender::Extent extent = std::make_tuple(
-                stringToNum<double>( argv[4] ), // minx
-                stringToNum<double>( argv[5] ), // miny
-                stringToNum<double>( argv[6] ), // maxx
-                stringToNum<double>( argv[7] ) // maxy
-            );
+                    stringToNum<double>( argv[4] ), // minx
+                    stringToNum<double>( argv[5] ), // miny
+                    stringToNum<double>( argv[6] ), // maxx
+                    stringToNum<double>( argv[7] ) // maxy
+                    );
 
     HeadlessRender::Size size = std::make_tuple(
-                stringToNum<int>( argv[8] ), // width
-                stringToNum<int>( argv[9] )  // height
-            );
+                    stringToNum<int>( argv[8] ), // width
+                    stringToNum<int>( argv[9] )  // height
+                    );
 
-    auto image = request.renderImage( extent, size );
+    auto imageData = request->renderImage( extent, size );
 
-    QFile outFile( argv[3] + QString( ".tiff" ) );
-    if (outFile.open( QIODevice::WriteOnly )) {
-        outFile.write( image->toString().data(), image->toString().size() );
-        outFile.close();
-    }
+    QImage image( imageData->data(), imageData->sizeWidthHeight().first, imageData->sizeWidthHeight().second, QImage::Format_RGBA8888 );
+    image.save( argv[3] + QString( ".tiff" ));
+
+    request.reset();
+    layer.reset();
 
     HeadlessRender::deinit();
 }

@@ -3,7 +3,7 @@
 *  Purpose: NextGIS headless renderer
 *  Author:  Denis Ilyin, denis.ilyin@nextgis.com
 *******************************************************************************
-*  Copyright (C) 2020 NextGIS, info@nextgis.ru
+*  Copyright (C) 2022 NextGIS, info@nextgis.ru
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -18,33 +18,20 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include "image.h"
+#include "raw_data.h"
 
-#include <cstdlib>
-#include <QByteArray>
-#include <QBuffer>
-#include <QImage>
-
-HeadlessRender::Image::Image( const QImage &qimage )
+HeadlessRender::RawData::RawData(const QByteArray &byteArray)
+    : mData(byteArray)
 {
-    mQImage = std::make_shared<QImage>( qimage.convertToFormat( QImage::Format_RGBA8888 ));
+
 }
 
-const uchar *HeadlessRender::Image::data() const
+const uchar *HeadlessRender::RawData::data() const
 {
-    return mQImage->constBits();
+    return reinterpret_cast<const uchar *>( mData.constData() );
 }
 
-std::size_t HeadlessRender::Image::size() const
+std::size_t HeadlessRender::RawData::size() const
 {
-#if QT_VERSION < QT_VERSION_CHECK(5,10,0)
-    return mQImage->byteCount();
-#else
-    return mQImage->sizeInBytes();
-#endif
-}
-
-std::pair<int, int> HeadlessRender::Image::sizeWidthHeight() const
-{
-    return std::make_pair( mQImage->size().width(), mQImage->size().height() );
+    return mData.size();
 }
