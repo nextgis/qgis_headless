@@ -30,12 +30,14 @@
 #include <qgsrendercontext.h>
 #include <qgsapplication.h>
 #include <qgsvectorlayer.h>
+#include <qgslayoutexporter.h>
+#include <qgsmaprenderercustompainterjob.h>
 
 #include "exceptions.h"
 
 #include <QApplication>
 #include <QSizeF>
-#include <QPdfWriter>
+#include <QPrinter>
 #include <cstdlib>
 
 static QApplication *app = nullptr;
@@ -166,7 +168,27 @@ int HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, co
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
 {
-    return std::make_shared<HeadlessRender::Image>( renderImageImpl( extent, size ));
+    double minx = std::get<0>( extent );
+    double miny = std::get<1>( extent );
+    double maxx = std::get<2>( extent );
+    double maxy = std::get<3>( extent );
+
+    int width = std::get<0>( size );
+    int height = std::get<1>( size );
+
+    mSettings->setOutputSize( { width, height } );
+    mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+
+    QgsMapRendererParallelJob job( *mSettings );
+
+    QEventLoop eventLoop;
+    QObject::connect( &job, &QgsMapRendererParallelJob::finished, &eventLoop, &QEventLoop::quit );
+
+    job.start();
+    eventLoop.exec();
+    job.waitForFinished();
+
+    return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size /* = Size() */ )
@@ -207,22 +229,39 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
 
 HeadlessRender::RawDataPtr HeadlessRender::MapRequest::renderPdf(const Extent &extent, const HeadlessRender::Size &size)
 {
-    const QImage &image = renderImageImpl( extent, size );
+    double minx = std::get<0>( extent );
+    double miny = std::get<1>( extent );
+    double maxx = std::get<2>( extent );
+    double maxy = std::get<3>( extent );
 
-    QByteArray data;
-    QBuffer buffer( &data );
-    buffer.open( QIODevice::WriteOnly );
+    int width = std::get<0>( size );
+    int height = std::get<1>( size );
 
-    QPdfWriter pdrWriter( &buffer );
-    pdrWriter.setPageSize( QPageSize( mSettings->outputSize()  * 25.4 / mSettings->outputDpi(), QPageSize::Millimeter ) );
-    pdrWriter.setPageOrientation( QPageLayout::Portrait );
+    mSettings->setOutputSize({ width, height });
+    mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
-    QPainter painter;
-    painter.begin( &pdrWriter );
-    painter.drawImage( QRect( 0, 0, pdrWriter.width(), pdrWriter.height() ), image );
+    QTemporaryFile tempFile;
+    if ( !tempFile.open() )
+        throw QgisHeadlessError( "Cannot open temporary file" );
+
+    QPrinter printer;
+    printer.setOutputFileName( tempFile.fileName() );
+    printer.setOutputFormat( QPrinter::PdfFormat );
+    printer.setOrientation( QPrinter::Portrait );
+
+    printer.setPaperSize( mSettings->outputSize() * 25.4 / mSettings->outputDpi(), QPrinter::Millimeter );
+    printer.setPageMargins( 0, 0, 0, 0, QPrinter::Millimeter );
+    printer.setResolution( mSettings->outputDpi() );
+
+    QPainter painter( &printer );
+
+    QgsMapRendererCustomPainterJob job( *mSettings, &painter );
+    job.prepare();
+    job.renderPrepared();
+
     painter.end();
 
-    return std::make_shared<HeadlessRender::RawData>( data );
+    return std::make_shared<HeadlessRender::RawData>( tempFile.readAll() );
 }
 
 std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbols( size_t index, const HeadlessRender::Size &size /* = Size() */ )
@@ -285,31 +324,6 @@ void HeadlessRender::MapRequest::processLegendSymbols(QJsonArray nodes, std::vec
             processLegendSymbols( nodes, legendSymbols );
         }
     }
-}
-
-QImage HeadlessRender::MapRequest::renderImageImpl(const HeadlessRender::Extent &extent, const HeadlessRender::Size &size)
-{
-    double minx = std::get<0>( extent );
-    double miny = std::get<1>( extent );
-    double maxx = std::get<2>( extent );
-    double maxy = std::get<3>( extent );
-
-    int width = std::get<0>( size );
-    int height = std::get<1>( size );
-
-    mSettings->setOutputSize( { width, height } );
-    mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-
-    QgsMapRendererParallelJob job( *mSettings );
-
-    QEventLoop eventLoop;
-    QObject::connect( &job, &QgsMapRendererParallelJob::finished, &eventLoop, &QEventLoop::quit );
-
-    job.start();
-    eventLoop.exec();
-    job.waitForFinished();
-
-    return job.renderedImage();
 }
 
 void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level )

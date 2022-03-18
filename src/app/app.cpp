@@ -19,6 +19,7 @@
 ******************************************************************************/
 
 #include <QFile>
+#include <QImage>
 #include <iostream>
 #include <sstream>
 

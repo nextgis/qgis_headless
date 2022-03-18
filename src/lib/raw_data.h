@@ -26,8 +26,10 @@
 
 namespace HeadlessRender
 {
-    struct QGIS_HEADLESS_EXPORT IRawData
+    class QGIS_HEADLESS_EXPORT IRawData
     {
+    public:
+        virtual ~IRawData(){}
         virtual const uchar *data() const = 0;
         virtual std::size_t size() const = 0;
     };

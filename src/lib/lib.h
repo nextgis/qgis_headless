@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#include <QImage>
 
 #include "crs.h"
 #include "layer.h"
@@ -62,7 +61,6 @@ namespace HeadlessRender
 
     private:
         void processLegendSymbols( QJsonArray nodes, std::vector<LegendSymbol> &legendSymbols );
-        QImage renderImageImpl( const Extent &extent, const Size &size );
 
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;

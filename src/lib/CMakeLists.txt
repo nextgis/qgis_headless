@@ -55,6 +55,7 @@ target_link_libraries(${LIB_NAME}
   Qt5::Gui
   Qt5::Widgets
   Qt5::Network
+  Qt5::PrintSupport
   ${QGIS_CORE_LIBRARIES}
 )
 
