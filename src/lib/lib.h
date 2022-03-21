@@ -55,7 +55,7 @@ namespace HeadlessRender
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );
-        RawDataPtr renderPdf( const Extent &extent, const Size &size );
+        void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
 
         std::vector<LegendSymbol> legendSymbols( size_t index, const Size & size = Size() );
 

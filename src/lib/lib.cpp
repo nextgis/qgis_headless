@@ -227,7 +227,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
     return std::make_shared<HeadlessRender::Image>( img );
 }
 
-HeadlessRender::RawDataPtr HeadlessRender::MapRequest::renderPdf(const Extent &extent, const HeadlessRender::Size &size)
+void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const Extent &extent, const HeadlessRender::Size &size)
 {
     double minx = std::get<0>( extent );
     double miny = std::get<1>( extent );
@@ -240,12 +240,8 @@ HeadlessRender::RawDataPtr HeadlessRender::MapRequest::renderPdf(const Extent &e
     mSettings->setOutputSize({ width, height });
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
-    QTemporaryFile tempFile;
-    if ( !tempFile.open() )
-        throw QgisHeadlessError( "Cannot open temporary file" );
-
     QPrinter printer;
-    printer.setOutputFileName( tempFile.fileName() );
+    printer.setOutputFileName( QString::fromStdString( filepath ));
     printer.setOutputFormat( QPrinter::PdfFormat );
     printer.setOrientation( QPrinter::Portrait );
 
@@ -260,8 +256,6 @@ HeadlessRender::RawDataPtr HeadlessRender::MapRequest::renderPdf(const Extent &e
     job.renderPrepared();
 
     painter.end();
-
-    return std::make_shared<HeadlessRender::RawData>( tempFile.readAll() );
 }
 
 std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbols( size_t index, const HeadlessRender::Size &size /* = Size() */ )
