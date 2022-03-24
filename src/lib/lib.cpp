@@ -38,6 +38,7 @@
 #include <QApplication>
 #include <QSizeF>
 #include <QPrinter>
+#include <QJsonArray>
 #include <cstdlib>
 
 static QApplication *app = nullptr;
@@ -119,7 +120,11 @@ HeadlessRender::MapRequest::MapRequest()
     , mQgsLayerTree( new QgsLayerTree )
 {
     mSettings->setBackgroundColor( Qt::transparent );
+#if VERSION_INT > 32200
+    mSettings->setFlag( Qgis::MapSettingsFlag::RenderBlocking );
+#else
     mSettings->setFlag( QgsMapSettings::RenderBlocking );
+#endif
 }
 
 void HeadlessRender::MapRequest::setDpi( int dpi )
@@ -181,11 +186,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
 
     QgsMapRendererParallelJob job( *mSettings );
 
-    QEventLoop eventLoop;
-    QObject::connect( &job, &QgsMapRendererParallelJob::finished, &eventLoop, &QEventLoop::quit );
-
     job.start();
-    eventLoop.exec();
     job.waitForFinished();
 
     return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
