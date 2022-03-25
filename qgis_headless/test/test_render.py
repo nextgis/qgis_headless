@@ -1,6 +1,8 @@
+import os
 import os.path
 from binascii import a2b_hex
 from packaging import version
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -34,9 +36,25 @@ def test_contour(shared_datadir, reset_svg_paths):
     assert stat.green.max == 255, "Primary lines aren't visible"
     assert stat.blue.max == 255, "Primary lines aren't visible"
 
-    assert 4 < stat.red.mean < 5
+    assert 3 < stat.red.mean < 4
     assert 12 < stat.green.mean < 13
     assert 29 < stat.blue.mean < 30
+
+
+def test_contour_pdf(shared_datadir, reset_svg_paths):
+    layer = Layer.from_ogr(str(shared_datadir / 'contour.geojson'))
+    style = Style.from_file(str(shared_datadir / 'contour-rgb.qml'))
+
+    extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+    req.add_layer(layer, style)
+
+    with NamedTemporaryFile() as f:
+        req.export_pdf(f.name, extent, (256, 256))
+        assert os.stat(f.name).st_size > 100
 
 
 def test_opacity(shared_datadir, reset_svg_paths):
