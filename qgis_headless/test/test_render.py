@@ -410,6 +410,18 @@ def test_diagram(shared_datadir, layer):
     # img.save('share/from_ogr.png')
 
 
+def test_gradient(shared_datadir):
+    style = Style.from_file(str(shared_datadir / 'gradient.qml'))
+    layer = Layer.from_ogr(str(shared_datadir / 'landuse/landuse.geojson'))
+
+    img = render_vector(layer, style, (4189625, 7505162, 4190004, 7506081))
+
+    stat = image_stat(img)
+    assert stat.red.max == 255, "First colour is missing"
+    assert stat.green.max == 255, "Middle colour is missing"
+    assert stat.blue.max == 255, "Last colour is missing"
+
+
 def test_raster(shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / 'raster' / 'rounds.tif'))
     style = Style.from_file(str(shared_datadir / 'raster' / 'rounds.qml'))
