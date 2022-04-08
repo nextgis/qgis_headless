@@ -18,23 +18,28 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include "legend_symbol.h"
+#ifndef QGIS_HEADLESS_PROJECT_H
+#define QGIS_HEADLESS_PROJECT_H
 
-using namespace HeadlessRender;
+#include "crs.h"
+#include "layer.h"
+#include <QList>
 
-LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title )
-    : mIcon( icon )
-    , mTitle( title )
+namespace HeadlessRender
 {
+    class QGIS_HEADLESS_EXPORT Project
+    {
+    public:
+        static Project fromFile( const std::string &filename );
 
+        CRS crs() const;
+        QList<Layer> layers() const;
+
+    private:
+        CRS mCrs;
+        QList<Layer> mLayers;
+
+    };
 }
 
-ImagePtr LegendSymbol::icon() const
-{
-    return mIcon;
-}
-
-const QString & LegendSymbol::title() const
-{
-    return mTitle;
-}
+#endif // QGIS_HEADLESS_PROJECT_H

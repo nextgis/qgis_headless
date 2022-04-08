@@ -217,12 +217,16 @@ PYBIND11_MODULE(_qgis_headless, m) {
             return pybind11::memoryview::from_memory( bytes->data(), bytes->size() );
         });
 
+    pybind11::class_<HeadlessRender::Project>( m, "Project" )
+        .def( pybind11::init<>() )
+        .def_static( "from_file", &HeadlessRender::Project::fromFile );
 
     pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
         .def( pybind11::init<>() )
         .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
         .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
         .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
+        .def( "add_project", &HeadlessRender::MapRequest::addProject )
         .def( "render_image", &HeadlessRender::MapRequest::renderImage )
         .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() )
         .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf )

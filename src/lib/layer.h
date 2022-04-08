@@ -85,6 +85,8 @@ namespace HeadlessRender
 
         QgsMapLayerPtr mLayer;
         mutable DataType mType = DataType::Unknown;
+
+        friend class Project;
     };
 }
 

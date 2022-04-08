@@ -32,6 +32,7 @@
 #include "image.h"
 #include "legend_symbol.h"
 #include "raw_data.h"
+#include "project.h"
 
 class QImage;
 class QgsMapSettings;
@@ -52,6 +53,7 @@ namespace HeadlessRender
         void setDpi( int dpi );
         void setCrs( const CRS &crs );
         int addLayer( const Layer &layer, const Style &style, const std::string &label = "");
+        void addProject( const Project &project );
 
         ImagePtr renderImage( const Extent &extent, const Size &size );
         ImagePtr renderLegend( const Size &size = Size() );

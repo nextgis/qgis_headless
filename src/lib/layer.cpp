@@ -52,9 +52,9 @@ HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 
 HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
-    QgsRasterLayer *qgsRasterLayer = new QgsRasterLayer( QString::fromStdString( uri ), "" );
+    QgsRasterLayer *qgsRasterLayer = new QgsRasterLayer( QString::fromStdString( uri ));
     if ( !qgsRasterLayer->isValid() )
-        throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
+        throw HeadlessRender::InvalidLayerSource( "Layer source is invalid, error message:" + qgsRasterLayer->error().message( QgsErrorMessage::Text ));
 
     return Layer( QgsMapLayerPtr( qgsRasterLayer ) );
 }

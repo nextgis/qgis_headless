@@ -171,6 +171,16 @@ int HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, co
     return addedLayerIndex;
 }
 
+void HeadlessRender::MapRequest::addProject( const Project &project )
+{
+    setCrs( project.crs() );
+
+    QList<QgsMapLayer *> layers;
+    for ( const HeadlessRender::Layer &layer : project.layers() )
+        layers.push_back( layer.qgsMapLayer().get() );
+    mSettings->setLayers( layers );
+}
+
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
 {
     double minx = std::get<0>( extent );
