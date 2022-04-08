@@ -173,11 +173,16 @@ int HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, co
 
 void HeadlessRender::MapRequest::addProject( const Project &project )
 {
+    mLayers.clear();
+
     setCrs( project.crs() );
 
     QList<QgsMapLayer *> layers;
     for ( const HeadlessRender::Layer &layer : project.layers() )
+    {
         layers.push_back( layer.qgsMapLayer().get() );
+        mLayers.push_back( layer.qgsMapLayer() );
+    }
     mSettings->setLayers( layers );
 }
 
