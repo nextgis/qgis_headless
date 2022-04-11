@@ -30,6 +30,7 @@ void EmptryDeleter(QgsMapLayer *ptr)
 }
 
 HeadlessRender::Project HeadlessRender::Project::fromFile( const std::string &filename )
+// Layers stored in QgsProject singleton, so we can't use more than one Project for now
 {
     QgsProject *qgsProject = QgsProject::instance();
     bool res = qgsProject->read( QString::fromStdString( filename ));
