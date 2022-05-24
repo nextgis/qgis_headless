@@ -23,6 +23,7 @@
 #include <functional.h>
 #include <numpy.h>
 #include <QDateTime>
+#include <QColor>
 
 #include <lib.h>
 #include <exceptions.h>
@@ -192,6 +193,21 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 return pybind11::cast( result.second );
             else
                 return pybind11::none();
+        })
+        .def_static( "from_defaults", []( const pybind11::object &color )
+        {
+            QColor qcolor;
+            if ( !color.is_none() )
+            {
+                const pybind11::tuple &colorTuple = color.cast<pybind11::tuple>();
+                int r = colorTuple[0].cast<int>();
+                int g = colorTuple[1].cast<int>();
+                int b = colorTuple[2].cast<int>();
+                int a = colorTuple[3].cast<int>();
+
+                qcolor = { r, g, b, a };
+            }
+            return HeadlessRender::Style::fromDefaults( qcolor );
         });
 
     pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )

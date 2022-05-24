@@ -28,6 +28,7 @@
 #include <QString>
 #include <QSharedPointer>
 #include <QDomDocument>
+#include <QColor>
 #include "exceptions.h"
 #include "layer.h"
 #include "types.h"
@@ -47,11 +48,17 @@ namespace HeadlessRender
         typedef long Category;
 
         Style() = default;
+
         static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
         static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
+        static Style fromDefaults( const QColor &color );
+
         std::string data() const;
         std::pair<bool, std::set<std::string>> usedAttributes() const;
         DataType type() const;
+
+        bool isDefaultStyle() const;
+        QColor defaultStyleColor() const;
 
         static const Category DefaultImportCategories;
 
@@ -67,6 +74,9 @@ namespace HeadlessRender
 
         std::string mData;
         mutable DataType mType = DataType::Unknown;
+
+        bool mDefault = false;
+        QColor mColor;
     };
 }
 

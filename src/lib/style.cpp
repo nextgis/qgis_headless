@@ -172,6 +172,14 @@ HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePa
     return HeadlessRender::Style::fromString( data, svgResolverCallback, layerGeometryType, layerType );
 }
 
+HeadlessRender::Style HeadlessRender::Style::fromDefaults( const QColor &color  )
+{
+    HeadlessRender::Style style;
+    style.mDefault = true;
+    style.mColor = color;
+    return style;
+}
+
 std::string HeadlessRender::Style::data() const
 {
     return mData;
@@ -251,6 +259,16 @@ HeadlessRender::DataType HeadlessRender::Style::type() const
     }
 
     return mType;
+}
+
+bool HeadlessRender::Style::isDefaultStyle() const
+{
+    return mDefault;
+}
+
+QColor HeadlessRender::Style::defaultStyleColor() const
+{
+    return mColor;
 }
 
 void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRender::SvgResolverCallback &svgResolverCallback )

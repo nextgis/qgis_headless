@@ -137,24 +137,31 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-int HeadlessRender::MapRequest::addLayer( const HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
+int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
         throw QgisHeadlessError( "Layer is null" );
 
-    if ( layer.type() != style.type() )
-        throw StyleTypeMismatch( "Layer type and style type do not match" );
+    if ( style.isDefaultStyle())
+    {
+        layer.setRendererSymbolColor( style.defaultStyleColor() );
+    }
+    else
+    {
+        if ( layer.type() != style.type() )
+            throw StyleTypeMismatch( "Layer type and style type do not match" );
 
-    QString readStyleError;
-    QDomDocument domDocument;
-    domDocument.setContent( QString::fromStdString( style.data() ) );
-    QgsReadWriteContext context;
+        QString readStyleError;
+        QDomDocument domDocument;
+        domDocument.setContent( QString::fromStdString( style.data() ) );
+        QgsReadWriteContext context;
 
-    bool importStyleStatus = qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+        bool importStyleStatus = qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
 
-    if ( !importStyleStatus )
-        throw QgisHeadlessError( readStyleError );
+        if ( !importStyleStatus )
+            throw QgisHeadlessError( readStyleError );
+    }
 
     qgsMapLayer->setName( QString::fromStdString( label ) );
 

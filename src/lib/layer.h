@@ -80,6 +80,8 @@ namespace HeadlessRender
 
         QgsMapLayerPtr qgsMapLayer() const;
         DataType type() const;
+        void setRendererSymbolColor( const QColor &color );
+
     private:
         explicit Layer( const QgsMapLayerPtr &qgsMapLayer );
 

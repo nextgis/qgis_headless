@@ -25,6 +25,8 @@
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsmemoryproviderutils.h>
+#include <qgssinglesymbolrenderer.h>
+#include <qgssymbol.h>
 #include <QByteArray>
 
 void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )
@@ -42,7 +44,10 @@ HeadlessRender::Layer::Layer( const HeadlessRender::QgsMapLayerPtr &qgsMapLayer 
 
 HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 {
-    QgsVectorLayer *qgsVectorLayer = new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ) );
+    QgsVectorLayer::LayerOptions layerOptions;
+    layerOptions.loadDefaultStyle = false;
+
+    QgsVectorLayer *qgsVectorLayer = new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ), layerOptions );
     if ( !qgsVectorLayer->isValid() )
         throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
 
@@ -102,4 +107,41 @@ HeadlessRender::DataType HeadlessRender::Layer::type() const
     if ( mLayer && mLayer->isValid() )
         mType = mLayer->type() == QgsMapLayerType::VectorLayer ? HeadlessRender::DataType::Vector : HeadlessRender::DataType::Raster;
     return mType;
+}
+
+void HeadlessRender::Layer::setRendererSymbolColor(const QColor &color)
+{
+    if ( type() != HeadlessRender::DataType::Vector )
+        return;
+
+    QgsVectorLayer *layer = dynamic_cast< QgsVectorLayer * >( mLayer.get() );
+    if ( !layer )
+        return;
+
+    QgsSingleSymbolRenderer *singleRenderer = dynamic_cast< QgsSingleSymbolRenderer * >( layer->renderer() );
+    QgsSymbol *newSymbol = nullptr;
+
+    if ( singleRenderer && singleRenderer->symbol() )
+        newSymbol = singleRenderer->symbol()->clone();
+
+    const QgsSingleSymbolRenderer *embeddedRenderer = nullptr;
+    if ( !newSymbol && layer->renderer()->embeddedRenderer() )
+    {
+        embeddedRenderer = dynamic_cast< const QgsSingleSymbolRenderer * >( layer->renderer()->embeddedRenderer() );
+        if ( embeddedRenderer && embeddedRenderer->symbol() )
+            newSymbol = embeddedRenderer->symbol()->clone();
+    }
+
+    if ( newSymbol )
+    {
+        newSymbol->setColor( color );
+        if ( singleRenderer )
+            singleRenderer->setSymbol( newSymbol );
+        else if ( embeddedRenderer )
+        {
+            QgsSingleSymbolRenderer *newRenderer = embeddedRenderer->clone();
+            newRenderer->setSymbol( newSymbol );
+            layer->renderer()->setEmbeddedRenderer( newRenderer );
+        }
+    }
 }
