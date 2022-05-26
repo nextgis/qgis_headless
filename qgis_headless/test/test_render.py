@@ -459,3 +459,20 @@ def test_vector_layer_raster_style(shared_datadir):
     mreq = MapRequest()
     with pytest.raises(StyleTypeMismatch):
         mreq.add_layer(layer, style)
+
+
+@pytest.mark.parametrize('color', (
+    (0, 0, 0, 0),
+    (0, 0, 0, 255),
+    (42, 24, 33, 255),
+))
+def test_default_style(color, shared_datadir):
+    style = Style.from_defaults(color)
+
+    data = shared_datadir / 'zero.geojson'
+    style = Style.from_defaults(color)
+
+    img = render_vector(data, style, EXTENT_ONE, 256)
+
+    stat = image_stat(img)
+    assert (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max) == color
