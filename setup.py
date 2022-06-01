@@ -47,10 +47,13 @@ class CMakeBuild(build_ext):
                 cwd=self.build_temp, env=env)
 
 
+with open('VERSION', 'r') as fd:
+    VERSION = fd.read().rstrip()
+
 setup(
     name='qgis_headless',
     description='QGIS headless rendering library',
-    version='0.1',
+    version=VERSION,
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4',
     author='NextGIS',
     author_email='info@nextgis.com',

@@ -25,35 +25,28 @@
 ################################################################################
 
 function(check_version major minor patch)
-
-    # parse the version number from gdal_version.h and include in
-    # major, minor and rev parameters
-    set(VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/version.h)
+    set(VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/VERSION)
     file(READ ${VERSION_FILE} VERSION_H_CONTENTS)
 
-    string(REGEX MATCH "QGIS_HEADLESS_LIB_MAJOR_VERSION[ \t]+([0-9]+)"
-      MAJOR_VERSION ${VERSION_H_CONTENTS})
-    string (REGEX MATCH "([0-9]+)"
-      MAJOR_VERSION ${MAJOR_VERSION})
-    string(REGEX MATCH "QGIS_HEADLESS_LIB_MINOR_VERSION[ \t]+([0-9]+)"
-      MINOR_VERSION ${VERSION_H_CONTENTS})
-    string (REGEX MATCH "([0-9]+)"
-      MINOR_VERSION ${MINOR_VERSION})
-    string(REGEX MATCH "QGIS_HEADLESS_LIB_PATCH_NUMBER[ \t]+([0-9]+)"
-        PATCH_NUMBER ${VERSION_H_CONTENTS})
-    string (REGEX MATCH "([0-9]+)"
-        PATCH_NUMBER ${PATCH_NUMBER})
+    # VERSION file uses PEP-440 version syntax, but here we use only
+    # MAJOR.MINOR.PATCH and strip .devXXX part.
+    string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)"
+        VERSION ${VERSION_H_CONTENTS})
 
-    set(${major} ${MAJOR_VERSION} PARENT_SCOPE)
-    set(${minor} ${MINOR_VERSION} PARENT_SCOPE)
-    set(${patch} ${PATCH_NUMBER} PARENT_SCOPE)
+    set(${major} ${CMAKE_MATCH_1} PARENT_SCOPE)
+    set(${minor} ${CMAKE_MATCH_2} PARENT_SCOPE)
+    set(${patch} ${CMAKE_MATCH_3} PARENT_SCOPE)
 
     # Store version string in file for installer needs
     file(TIMESTAMP ${VERSION_FILE} VERSION_DATETIME "%Y-%m-%d %H:%M:%S" UTC)
-    set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_NUMBER})
     get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
     file(WRITE ${CMAKE_BINARY_DIR}/version.str "${VERSION}\n${VERSION_DATETIME}\n${PROJECT_CPACK_FILENAME}")
 
+    # Write version.h
+    set(QGIS_HEADLESS_LIB_VERSION_STRING "${VERSION}")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/lib/version.h.in
+        ${CMAKE_BINARY_DIR}/src/lib/version.h)
 endfunction(check_version)
 
 function(report_version name ver)
