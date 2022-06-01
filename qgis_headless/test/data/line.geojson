@@ -1,15 +1,21 @@
 {
-    "type": "FeatureCollection",
-    "name": "line",
-    "features": [{
-        "type": "Feature", "properties": { }, "geometry": {
-            "type": "LineString",
-            "coordinates": [
-                [ 131.897485, 43.116220 ],
-                [ 131.896655, 43.115678 ],
-                [ 131.896463, 43.114984 ],
-                [ 131.896123, 43.101295 ]
-            ]
-        }
-    }]
+  "type": "FeatureCollection",
+  "name": "line",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:EPSG::3857" }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.5, 0],
+          [0.5, 0]
+        ]
+      }
+    }
+  ]
 }

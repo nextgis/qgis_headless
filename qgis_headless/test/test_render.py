@@ -3,6 +3,7 @@ import os.path
 from binascii import a2b_hex
 from packaging import version
 from tempfile import NamedTemporaryFile
+from itertools import product
 
 import pytest
 from pytest import approx
@@ -462,36 +463,28 @@ def test_vector_layer_raster_style(shared_datadir):
         mreq.add_layer(layer, style)
 
 
-def param_product():
-    for geom_type, data, extent in (
-        (Layer.GT_POINT, 'zero.geojson', EXTENT_ONE),
-        # (Layer.GT_LINESTRING, 'line.geojson', (14681368.0, 5326342.0, 14683044.0, 5330855.0)),
-        (Layer.GT_POLYGON, 'poly.geojson', (7298419.0, 7795268.0, 7298536.0, 7795397.0))
-    ):
-        for color in (
-            (0, 0, 0, 0),
-            (0, 0, 0, 255),
-            (70, 180, 150, 255),
-            (42, 24, 33, 180),
-        ):
-            yield pytest.param(geom_type, data, extent, color, id=f'{data}-{color}')
-
-
-@pytest.mark.parametrize('geom_type, data, extent, color', param_product())
-def test_vector_default_style(geom_type, data, extent, color, shared_datadir):
+@pytest.mark.parametrize('data, color', [
+    pytest.param(data, color, id=f"{data}-{color}")
+    for data, color in product(['zero', 'line', 'poly'],(
+        (0, 0, 0, 0),
+        (0, 0, 0, 255),
+        (70, 180, 150, 255),
+        (42, 24, 33, 180),
+    ))
+])
+def test_vector_default_style(data, color, shared_datadir):
+    data = shared_datadir / (data + '.geojson')
     style = Style.from_defaults(color)
 
-    data = shared_datadir / data
-    style = Style.from_defaults(color)
+    size = 64
 
-    size = 63
-    img = render_vector(data, style, extent, size)
+    # QGIS uses length units (not pixels!) for line styles by default. For 96
+    # dpi (default) antialiasing blurs lines and there are no solid filled
+    # pixels there. That's why setting a higher resolution does the trick and
+    # makes lines thicker.
 
-    if geom_type == Layer.GT_LINESTRING:
-        stat = image_stat(img)
-        pick_color = (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max)
-    else:
-        pick_color = img.getpixel((size // 2, size // 2))
+    img = render_vector(data, style, EXTENT_ONE, size, dpi=600)
+    pick_color = img.getpixel((size // 2, size // 2))
 
     for i, band in enumerate(('red', 'green', 'blue', 'alpha')):
        assert approx(pick_color[i], abs=1) == color[i], f"{band.capitalize()} band value mismatch"

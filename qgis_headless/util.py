@@ -42,9 +42,9 @@ def image_stat(image):
     ])
 
 
-def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857), svg_resolver=None):
+def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857), svg_resolver=None, dpi=96):
     req = MapRequest()
-    req.set_dpi(96)
+    req.set_dpi(dpi)
     req.set_crs(crs)
 
     if isinstance(size, int):

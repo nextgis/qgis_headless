@@ -1,8 +1,26 @@
 {
-"type": "FeatureCollection",
-"name": "poly_from_3857",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
-"features": [
-{ "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 7298455.643563821911812, 7795360.21634276676923 ], [ 7298496.124894781969488, 7795365.385947210714221 ], [ 7298503.66553486417979, 7795312.099254585802555 ], [ 7298463.184203900396824, 7795306.134326211176813 ], [ 7298455.643563821911812, 7795360.21634276676923 ] ] ] } }
-]
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:EPSG::3857" }
+  },
+
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-0.25, -0.25],
+            [-0.25, 0.25],
+            [0.25, 0.25],
+            [0.25, -0.25],
+            [-0.25, -0.25]
+          ]
+        ]
+      }
+    }
+  ]
 }
