@@ -5,6 +5,7 @@ from packaging import version
 from tempfile import NamedTemporaryFile
 
 import pytest
+from pytest import approx
 
 from qgis_headless import (
     MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version,
@@ -369,7 +370,7 @@ def test_style_25d(shared_datadir):
 
     assert stat.red.max == 255, "Shadow is missing"
     assert stat.blue.max == 255, "Roof is missing"
-    assert stat.green.max == pytest.approx(255, abs=1), "Walls are missing"
+    assert stat.green.max == approx(255, abs=1), "Walls are missing"
 
 
 @pytest.mark.parametrize('layer', (
@@ -461,18 +462,67 @@ def test_vector_layer_raster_style(shared_datadir):
         mreq.add_layer(layer, style)
 
 
-@pytest.mark.parametrize('color', (
-    (0, 0, 0, 0),
-    (0, 0, 0, 255),
-    (42, 24, 33, 255),
-))
-def test_default_style(color, shared_datadir):
+def param_product():
+    for geom_type, data, extent in (
+        (Layer.GT_POINT, 'zero.geojson', EXTENT_ONE),
+        # (Layer.GT_LINESTRING, 'line.geojson', (14681368.0, 5326342.0, 14683044.0, 5330855.0)),
+        (Layer.GT_POLYGON, 'poly.geojson', (7298419.0, 7795268.0, 7298536.0, 7795397.0))
+    ):
+        for color in (
+            (0, 0, 0, 0),
+            (0, 0, 0, 255),
+            (70, 180, 150, 255),
+            (42, 24, 33, 180),
+        ):
+            yield pytest.param(geom_type, data, extent, color, id=f'{data}-{color}')
+
+
+@pytest.mark.parametrize('geom_type, data, extent, color', param_product())
+def test_vector_default_style(geom_type, data, extent, color, shared_datadir):
     style = Style.from_defaults(color)
 
-    data = shared_datadir / 'zero.geojson'
+    data = shared_datadir / data
     style = Style.from_defaults(color)
 
-    img = render_vector(data, style, EXTENT_ONE, 256)
+    size = 63
+    img = render_vector(data, style, extent, size)
 
+    if geom_type == Layer.GT_LINESTRING:
+        stat = image_stat(img)
+        pick_color = (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max)
+    else:
+        pick_color = img.getpixel((size // 2, size // 2))
+
+    for i, band in enumerate(('red', 'green', 'blue', 'alpha')):
+       assert approx(pick_color[i], abs=1) == color[i], f"{band.capitalize()} band value mismatch"
+
+
+def test_raster_rgb_default_style(shared_datadir):
+    layer = Layer.from_gdal(str(shared_datadir / 'raster/rounds.tif'))
+    style = Style.from_defaults(None)
+
+    stat = image_stat(render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 0, 0), "Red colour missing"
+
+    stat = image_stat(render_raster(layer, style, (3848936.0, 5977974.0, 5503915.0, 7505647.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 255, 0), "Green colour missing"
+
+    stat = image_stat(render_raster(layer, style, (251440.0, 2556073.0, 1978853.0, 4158374.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 0, 255), "Blue colour missing"
+
+    stat = image_stat(render_raster(layer, style, (3848936.0, 2556073.0, 5503915.0, 4158374.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 0, 0), "Black colour missing"
+
+
+def test_raster_dem_default_style(shared_datadir):
+    layer = Layer.from_gdal(str(shared_datadir / 'raster/sochi-aster-dem.tif'))
+    style = Style.from_defaults(None)
+
+    img = render_raster(layer, style, (40.0, 43.0, 41.0, 44.0), crs=CRS.from_epsg(4326))
     stat = image_stat(img)
-    assert (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max) == color
+
+    assert stat.alpha.min == stat.alpha.max == 255
+    assert stat.red.min == stat.green.min == stat.blue.min, "Bands min not equal"
+    assert stat.red.max == stat.green.max == stat.blue.max, "Bands max not equal"
+
+    assert approx(stat.red.mean) == approx(stat.green.mean) == approx(stat.blue.mean)
