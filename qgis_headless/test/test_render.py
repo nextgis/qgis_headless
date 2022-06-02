@@ -474,7 +474,7 @@ def test_vector_layer_raster_style(shared_datadir):
 ])
 def test_vector_default_style(data, color, shared_datadir):
     data = shared_datadir / (data + '.geojson')
-    style = Style.from_defaults(color)
+    style = Style.from_defaults(color=color)
 
     size = 64
 
@@ -492,7 +492,7 @@ def test_vector_default_style(data, color, shared_datadir):
 
 def test_raster_rgb_default_style(shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / 'raster/rounds.tif'))
-    style = Style.from_defaults(None)
+    style = Style.from_defaults()
 
     stat = image_stat(render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0)))
     assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 0, 0), "Red colour missing"
@@ -509,7 +509,7 @@ def test_raster_rgb_default_style(shared_datadir):
 
 def test_raster_dem_default_style(shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / 'raster/sochi-aster-dem.tif'))
-    style = Style.from_defaults(None)
+    style = Style.from_defaults()
 
     img = render_raster(layer, style, (40.0, 43.0, 41.0, 44.0), crs=CRS.from_epsg(4326))
     stat = image_stat(img)
