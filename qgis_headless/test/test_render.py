@@ -365,7 +365,7 @@ def test_style_25d(shared_datadir):
 
     style = (shared_datadir / '25d' / 'poly_25d.qml').read_text()
 
-    img = render_vector(layer, style, (7298419.0, 7795268.0, 7298536.0, 7795397.0))
+    img = render_vector(layer, style, (-10, -10, 10, 10))
 
     stat = image_stat(img)
 
