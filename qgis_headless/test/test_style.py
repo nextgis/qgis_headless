@@ -48,6 +48,11 @@ def test_attributes(file, expected, shared_datadir):
     assert style.used_attributes() == (set(expected) if expected is not None else None)
 
 
+def test_attributes_default():
+    style = Style.from_defaults()
+    assert style.used_attributes() is None
+
+
 @pytest.mark.parametrize('style, layer_type, exc', (
     ('point-style.qml', LT_UNKNOWN, None),
     ('point-style.qml', LT_VECTOR, None),
