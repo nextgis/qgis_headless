@@ -50,7 +50,8 @@ def test_attributes(file, expected, shared_datadir):
 
 def test_attributes_default():
     style = Style.from_defaults()
-    assert style.used_attributes() is None
+    attrs = style.used_attributes()
+    assert attrs == set()
 
 
 @pytest.mark.parametrize('style, layer_type, exc', (

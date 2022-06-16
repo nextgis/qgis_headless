@@ -189,6 +189,9 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
 {
     std::set<std::string> usedAttributes;
 
+    if ( isDefaultStyle() )
+        return std::make_pair( true, usedAttributes );
+
     QString errorMessage;
     QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayerWithStyle( mData, errorMessage );
     if ( !qgsVectorLayer )
