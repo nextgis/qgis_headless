@@ -198,7 +198,9 @@ def test_marker_url(shared_datadir, reset_svg_paths, capfd):
 
     assert capfd.readouterr().out.strip() == '', "QGIS stdout output was captured"
     assert capfd.readouterr().err.strip() == '', "QGIS stderr output was captured"
-    assert image_stat(img).red.max == 255, "Red marker is missing"
+
+    stat = image_stat(img)
+    assert stat.red.max == 255 and stat.green.max == stat.blue.max == 0, "Red marker is missing"
 
 
 def test_svg_cache(shared_datadir, reset_svg_paths):
