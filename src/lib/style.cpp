@@ -22,7 +22,9 @@
 
 #include "layer.h"
 #include "utils.h"
+
 #include <qgsvectorlayer.h>
+#include <qgsrasterlayer.h>
 #include <qgsrenderer.h>
 #include <qgsrendercontext.h>
 #include <qgsmarkersymbollayer.h>
@@ -31,8 +33,15 @@
 #include <qgspallabeling.h>
 #include <qgscallout.h>
 #include <qgssymbol.h>
+#include <qgslinesymbol.h>
+#include <qgsfillsymbol.h>
+#include <qgsmarkersymbol.h>
+#include <qgslinesymbollayer.h>
+#include <qgssinglesymbolrenderer.h>
+
 #include <QFile>
 #include <QString>
+#include <QTextStream>
 
 #if VERSION_INT >= 31200
 #	include <qgsrulebasedlabeling.h>
@@ -65,19 +74,27 @@ const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCatego
                                                                                      | QgsMapLayer::CustomProperties
                                                                                      | QgsMapLayer::Diagrams;
 
-static QSharedPointer<QgsVectorLayer> createTemporaryLayer( const QgsVectorLayer::LayerOptions &layerOptions )
+static QSharedPointer<QgsVectorLayer> createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions )
 {
     return QSharedPointer<QgsVectorLayer>( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
 }
 
-QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayerWithStyle( const std::string &style, QString &errorMessage )
+static QSharedPointer<QgsRasterLayer> createTemporaryRasterLayer()
+{
+    QgsRasterLayer::LayerOptions layerOptions;
+    layerOptions.loadDefaultStyle = false;
+    return QSharedPointer<QgsRasterLayer>( new QgsRasterLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
+}
+
+
+QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryVectorLayerWithStyle( const std::string &style, QString &errorMessage )
 {
     QDomDocument document;
     document.setContent( QString::fromStdString( style ), &errorMessage );
-    return createTemporaryLayerWithStyle( document, errorMessage );
+    return createTemporaryVectorLayerWithStyle( document, errorMessage );
 }
 
-QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayerWithStyle( QDomDocument &style, QString &errorMessage )
+QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryVectorLayerWithStyle( QDomDocument &style, QString &errorMessage )
 {
     QgsVectorLayer::LayerOptions layerOptions;
 
@@ -108,12 +125,26 @@ QSharedPointer<QgsVectorLayer> HeadlessRender::Style::createTemporaryLayerWithSt
         layerOptions.fallbackWkbType = QgsWkbTypes::Point;
     }
 
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( layerOptions );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryVectorLayer( layerOptions );
     bool importStyleStatus = qgsVectorLayer->importNamedStyle( style, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
     if ( !importStyleStatus )
         return nullptr;
 
     return qgsVectorLayer;
+}
+
+QSharedPointer<QgsRasterLayer> HeadlessRender::Style::createTemporaryRasterLayerWithStyle(const std::string &style, QString &errorMessage)
+{
+    QSharedPointer<QgsRasterLayer> qgsRasterLayer = createTemporaryRasterLayer();
+
+    QDomDocument styleDomDocument;
+    styleDomDocument.setContent( QString::fromStdString( style ), &errorMessage );
+
+    bool importStyleStatus = qgsRasterLayer->importNamedStyle( styleDomDocument, errorMessage, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ));
+    if ( !importStyleStatus )
+        return nullptr;
+
+    return qgsRasterLayer;
 }
 
 bool HeadlessRender::Style::validateGeometryType( const std::string &style, Layer::GeometryType layerGeometryType )
@@ -127,7 +158,7 @@ bool HeadlessRender::Style::validateGeometryType( const std::string &style, Laye
 
     QgsVectorLayer::LayerOptions layerOptions;
     layerOptions.fallbackWkbType = layerGeometryTypeToQgsWkbType( layerGeometryType );
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayer( layerOptions );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryVectorLayer( layerOptions );
 
     QgsWkbTypes::GeometryType importLayerGeometryType = static_cast<QgsWkbTypes::GeometryType>( geometryTypeElement.text().toInt() );
 
@@ -136,10 +167,13 @@ bool HeadlessRender::Style::validateGeometryType( const std::string &style, Laye
 
 bool HeadlessRender::Style::validateStyle( const std::string &style, QString &errorMessage )
 {
-    return createTemporaryLayerWithStyle( style, errorMessage ) ? true : false;
+    return createTemporaryVectorLayerWithStyle( style, errorMessage ) ? true : false;
 }
 
-HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Undefined */, DataType layerType /* = DataType::Unknown */ )
+HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &string,
+                                                         const SvgResolverCallback &svgResolverCallback /* = nullptr */,
+                                                         Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Undefined */,
+                                                         DataType layerType /* = DataType::Unknown */ )
 {
     if ( !validateGeometryType( string, layerGeometryType ))
         throw StyleTypeMismatch( "Style type mismatch" );
@@ -160,7 +194,10 @@ HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &stri
     return style;
 }
 
-HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback /* = nullptr */, Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Unknown */, DataType layerType /* = DataType::Unknown */ )
+HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePath,
+                                                       const SvgResolverCallback &svgResolverCallback /* = nullptr */,
+                                                       Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Unknown */,
+                                                       DataType layerType /* = DataType::Unknown */ )
 {
     std::string data;
     QFile file( QString::fromStdString( filePath) );
@@ -172,11 +209,13 @@ HeadlessRender::Style HeadlessRender::Style::fromFile( const std::string &filePa
     return HeadlessRender::Style::fromString( data, svgResolverCallback, layerGeometryType, layerType );
 }
 
-HeadlessRender::Style HeadlessRender::Style::fromDefaults( const QColor &color  )
+HeadlessRender::Style HeadlessRender::Style::fromDefaults( const QColor &color,
+                                                           Layer::GeometryType layerGeometryType /* = Layer::GeometryType::Undefined */,
+                                                           DataType layerType /* = DataType::Unknown */  )
 {
     HeadlessRender::Style style;
     style.mDefault = true;
-    style.mColor = color;
+    style.mDefaultStyleParams = { color, layerGeometryType, layerType };
     return style;
 }
 
@@ -193,7 +232,7 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
         return std::make_pair( true, usedAttributes );
 
     QString errorMessage;
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayerWithStyle( mData, errorMessage );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryVectorLayerWithStyle( mData, errorMessage );
     if ( !qgsVectorLayer )
         throw QgisHeadlessError( errorMessage );
 
@@ -271,7 +310,90 @@ bool HeadlessRender::Style::isDefaultStyle() const
 
 QColor HeadlessRender::Style::defaultStyleColor() const
 {
-    return mColor;
+    return mDefaultStyleParams.color;
+}
+
+QString HeadlessRender::Style::exportToQML() const
+{
+    QSharedPointer<QgsMapLayer> qgsMapLayer;
+    QString errorMessage;
+
+    if ( isDefaultStyle() )
+    {
+        if ( mDefaultStyleParams.layerType == HeadlessRender::DataType::Raster )
+        {
+            qgsMapLayer = createTemporaryRasterLayer();
+        }
+        else
+        {
+            QgsVectorLayer::LayerOptions layerOptions;
+            layerOptions.fallbackWkbType = layerGeometryTypeToQgsWkbType( mDefaultStyleParams.layerGeometryType );
+            qgsMapLayer = createTemporaryVectorLayer( layerOptions );
+        }
+
+        if ( !qgsMapLayer )
+            throw QgisHeadlessError( errorMessage );
+
+        if ( mDefaultStyleParams.layerType != HeadlessRender::DataType::Raster )
+        {
+            QgsSymbol *qgsSymbol;
+            QgsSymbolLayer *qgsSymbolLayer;
+
+            QVariantMap props;
+            props[QStringLiteral( "color" )] = mDefaultStyleParams.color.name( QColor::NameFormat::HexArgb );
+
+            switch( mDefaultStyleParams.layerGeometryType )
+            {
+            case HeadlessRender::Layer::GeometryType::Point:
+            case HeadlessRender::Layer::GeometryType::PointZ:
+            case HeadlessRender::Layer::GeometryType::MultiPoint:
+            case HeadlessRender::Layer::GeometryType::MultiPointZ:
+                qgsSymbol = new QgsMarkerSymbol;
+                qgsSymbolLayer = QgsSimpleMarkerSymbolLayer::create( props );
+                break;
+            case HeadlessRender::Layer::GeometryType::LineString:
+            case HeadlessRender::Layer::GeometryType::LineStringZ:
+            case HeadlessRender::Layer::GeometryType::MultiLineString:
+            case HeadlessRender::Layer::GeometryType::MultiLineStringZ:
+                qgsSymbol = new QgsLineSymbol;
+                qgsSymbolLayer = QgsSimpleLineSymbolLayer::create( props );
+                break;
+            case HeadlessRender::Layer::GeometryType::Polygon:
+            case HeadlessRender::Layer::GeometryType::PolygonZ:
+            case HeadlessRender::Layer::GeometryType::MultiPolygon:
+            case HeadlessRender::Layer::GeometryType::MultiPolygonZ:
+                qgsSymbol = new QgsFillSymbol;
+                qgsSymbolLayer = QgsSimpleFillSymbolLayer::create( props );
+                break;
+            case HeadlessRender::Layer::GeometryType::Unknown:
+                qgsSymbol = nullptr;
+                qgsSymbolLayer = nullptr;
+                break;
+            }
+
+            if ( qgsSymbol && qgsSymbolLayer )
+            {
+                qgsSymbol->changeSymbolLayer( 0, qgsSymbolLayer );
+                QgsSingleSymbolRenderer *qgsSingleSymbolRenderer = new QgsSingleSymbolRenderer( qgsSymbol );
+                static_cast<QgsVectorLayer *>( qgsMapLayer.get() )->setRenderer( qgsSingleSymbolRenderer );
+            }
+        }
+    }
+    else
+    {
+        if ( mDefaultStyleParams.layerType == HeadlessRender::DataType::Raster )
+            qgsMapLayer = createTemporaryRasterLayerWithStyle( mData, errorMessage );
+        else
+            qgsMapLayer = createTemporaryVectorLayerWithStyle( mData, errorMessage );
+
+        if ( !qgsMapLayer )
+            throw QgisHeadlessError( errorMessage );
+    }
+
+    QDomDocument exportedStyle;
+    qgsMapLayer->exportNamedStyle( exportedStyle, errorMessage );
+
+    return exportedStyle.toString();
 }
 
 void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRender::SvgResolverCallback &svgResolverCallback )
@@ -306,7 +428,7 @@ std::string HeadlessRender::Style::resolveSvgPaths( const std::string &data, con
     if ( !errorMessage.isEmpty() )
         throw QgisHeadlessError( errorMessage );
 
-    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryLayerWithStyle( style, errorMessage );
+    QSharedPointer<QgsVectorLayer> qgsVectorLayer = createTemporaryVectorLayerWithStyle( style, errorMessage );
     if ( !qgsVectorLayer )
         throw QgisHeadlessError( errorMessage );
 

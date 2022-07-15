@@ -34,6 +34,7 @@
 #include "types.h"
 
 class QgsVectorLayer;
+class QgsRasterLayer;
 class QgsRenderContext;
 class QgsSymbol;
 
@@ -51,7 +52,7 @@ namespace HeadlessRender
 
         static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
         static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
-        static Style fromDefaults( const QColor &color );
+        static Style fromDefaults( const QColor &color, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
 
         std::string data() const;
         std::pair<bool, std::set<std::string>> usedAttributes() const;
@@ -60,13 +61,16 @@ namespace HeadlessRender
         bool isDefaultStyle() const;
         QColor defaultStyleColor() const;
 
+        QString exportToQML() const;
+
         static const Category DefaultImportCategories;
 
     private:
         static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );
         static void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback );
-        static QSharedPointer<QgsVectorLayer> createTemporaryLayerWithStyle( const std::string &style, QString &errorMessage );
-        static QSharedPointer<QgsVectorLayer> createTemporaryLayerWithStyle( QDomDocument &style, QString &errorMessage );
+        static QSharedPointer<QgsVectorLayer> createTemporaryVectorLayerWithStyle( const std::string &style, QString &errorMessage );
+        static QSharedPointer<QgsVectorLayer> createTemporaryVectorLayerWithStyle( QDomDocument &style, QString &errorMessage );
+        static QSharedPointer<QgsRasterLayer> createTemporaryRasterLayerWithStyle( const std::string &style, QString &errorMessage );
         static bool validateGeometryType( const std::string &style, Layer::GeometryType layerGeometryType );
         static bool validateStyle( const std::string &style, QString &errorMessage );
         static void removeLayerGeometryTypeElement( QDomDocument & );
@@ -75,8 +79,15 @@ namespace HeadlessRender
         std::string mData;
         mutable DataType mType = DataType::Unknown;
 
+        struct DefaultStyleParams
+        {
+            QColor color;
+            Layer::GeometryType layerGeometryType;
+            DataType layerType;
+        };
+
+        DefaultStyleParams mDefaultStyleParams;
         bool mDefault = false;
-        QColor mColor;
     };
 }
 

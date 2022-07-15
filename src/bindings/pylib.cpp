@@ -194,7 +194,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
             else
                 return pybind11::none();
         })
-        .def_static( "from_defaults", []( const pybind11::object &color )
+        .def_static( "from_defaults", []( const pybind11::object &color, HeadlessRender::Layer::GeometryType layer_geometry_type, HeadlessRender::DataType layer_type )
         {
             QColor qcolor;
             if ( !color.is_none() )
@@ -207,8 +207,12 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
                 qcolor = { r, g, b, a };
             }
-            return HeadlessRender::Style::fromDefaults( qcolor );
-        }, pybind11::arg("color") = pybind11::none() );
+            return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type );
+        }, pybind11::arg("color") = pybind11::none(), pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
+        .def( "to_string", []( const HeadlessRender::Style &style )
+        {
+            return style.exportToQML().toStdString();
+        });
 
     pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
         .def( "icon", &HeadlessRender::LegendSymbol::icon )
