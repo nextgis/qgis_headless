@@ -64,6 +64,7 @@ setup(
     zip_safe=False,
     extras_require={
         'tests': [
+            'lxml',
             'pytest',
             'pytest-datadir',
             'pytest-benchmark',

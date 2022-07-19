@@ -1,6 +1,8 @@
 import contextlib
+from io import StringIO
 
 import pytest
+from lxml import etree
 from packaging import version
 
 from qgis_headless import (
@@ -31,6 +33,37 @@ def test_invalid_file(shared_datadir):
 def test_empty_string(shared_datadir):
     with pytest.raises(StyleValidationError):
         Style.from_string('')
+
+
+@pytest.mark.parametrize('params', (
+    dict(layer_type=LT_RASTER),
+    dict(layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_POINT, color=(14, 15, 16, 250)),
+    dict(layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_LINESTRING, color=(7, 6, 5, 4)),
+    dict(layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_POLYGON, color=(7, 6, 5, 4)),
+))
+def test_default(params):
+    style = Style.from_defaults(**params)
+    qml = style.to_string()
+
+    root = etree.parse(StringIO(qml), parser=etree.XMLParser()).getroot()
+
+    assert root.tag == 'qgis'
+
+    if color := params.get('color'):
+        gt = params['layer_geometry_type']
+        if gt in (Layer.GT_POINT, Layer.GT_POLYGON):
+            attr = 'color'
+        elif gt == Layer.GT_LINESTRING:
+            attr = 'line_color'
+        else:
+            raise NotImplementedError()
+
+        search = f'''//Option[@name='{attr}']'''
+        result = root.xpath(search)
+        assert len(result) == 1, "Color option missing"
+
+        qml_color = tuple(map(int, result[0].attrib['value'].split(',')))
+        assert qml_color == color
 
 
 @pytest.mark.parametrize('file, expected', (
