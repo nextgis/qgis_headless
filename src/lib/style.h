@@ -42,6 +42,7 @@ namespace HeadlessRender
 {
     class Layer;
     typedef std::function<std::string(const std::string &)> SvgResolverCallback;
+    typedef std::pair<bool, std::set<std::string>> UsedAttributes;
 
     class QGIS_HEADLESS_EXPORT Style
     {
@@ -55,7 +56,7 @@ namespace HeadlessRender
         static Style fromDefaults( const QColor &color, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
 
         std::string data() const;
-        std::pair<bool, std::set<std::string>> usedAttributes() const;
+        HeadlessRender::UsedAttributes usedAttributes();
         DataType type() const;
 
         bool isDefaultStyle() const;
@@ -75,6 +76,7 @@ namespace HeadlessRender
         static bool validateStyle( const std::string &style, QString &errorMessage );
         static void removeLayerGeometryTypeElement( QDomDocument & );
         QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const;
+        HeadlessRender::UsedAttributes readUsedAttributes() const;
 
         std::string mData;
         mutable DataType mType = DataType::Unknown;
@@ -88,6 +90,9 @@ namespace HeadlessRender
 
         DefaultStyleParams mDefaultStyleParams;
         bool mDefault = false;
+
+        HeadlessRender::UsedAttributes mUsedAttributesCache;
+        bool mUsedAttributesCached = false;
     };
 }
 

@@ -224,7 +224,7 @@ std::string HeadlessRender::Style::data() const
     return mData;
 }
 
-std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() const
+HeadlessRender::UsedAttributes HeadlessRender::Style::readUsedAttributes() const
 {
     std::set<std::string> usedAttributes;
 
@@ -275,6 +275,16 @@ std::pair<bool, std::set<std::string>> HeadlessRender::Style::usedAttributes() c
         usedAttributes.insert( attr.toStdString() );
 
     return std::make_pair( true, usedAttributes );
+}
+
+HeadlessRender::UsedAttributes HeadlessRender::Style::usedAttributes()
+{
+    if (!mUsedAttributesCached)
+    {
+        mUsedAttributesCache = readUsedAttributes();
+        mUsedAttributesCached = true;
+    }
+    return mUsedAttributesCache;
 }
 
 HeadlessRender::DataType HeadlessRender::Style::type() const
