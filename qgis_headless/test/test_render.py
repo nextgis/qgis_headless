@@ -1,5 +1,6 @@
 import os
 import os.path
+import random
 from binascii import a2b_hex
 from packaging import version
 from tempfile import NamedTemporaryFile
@@ -9,7 +10,7 @@ import pytest
 from pytest import approx
 
 from qgis_headless import (
-    MapRequest, CRS, Layer, Style, set_svg_paths, get_qgis_version,
+    MapRequest, CRS, Layer, LT_VECTOR, Style, set_svg_paths, get_qgis_version,
     StyleTypeMismatch,
 )
 from qgis_headless.util import (
@@ -269,6 +270,61 @@ def test_legend(shared_datadir, reset_svg_paths):
 
     assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
         "Higher DPI should produce bigger legend"
+    
+
+legend_symbols_params = []
+for (id, gt, style, sizes, expected) in [
+    (
+        "zero_red_circle", Layer.GT_POINT, dict(file='zero-red-circle.qml'),
+        [(16, 18), ],
+        [(None, (255, 0, 0, 255)), ],
+    ),
+    (
+        "default_style", Layer.GT_LINESTRING, dict(color=(128, 128, 128, 128)),
+        [(16, 18), ],
+        ((None, (128, 128, 128, 128)), ),
+    ),
+    (
+        "contour_rgb", Layer.GT_LINESTRING, dict(file='contour-rgb.qml'),
+        [(16, 18), 24],
+        (
+            ('primary horizontals', (0, 255, 0, 255)),
+            ('secondary horizontals', (0, 0, 255, 255)),
+        ),
+    ),
+]:
+    for size in sizes:
+        if type(size) == int:
+            size = (size, size)
+        legend_symbols_params.append(pytest.param(
+            gt, style, size, expected, id=f"{id}-{size[0]}x{size[1]}"
+        ))
+
+
+@pytest.mark.parametrize('gt, style_params, sizes, expected', legend_symbols_params)
+def test_legend_symbols(gt, style_params, sizes, expected, shared_datadir):
+    if 'file' in style_params:
+        style = Style.from_file(str(shared_datadir / style_params['file']))
+    else:
+        style = Style.from_defaults(
+            layer_type=LT_VECTOR, layer_geometry_type=gt,
+            color=style_params['color'])
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(Layer.from_data(gt, CRS.from_epsg(3857), (), ()), style)
+
+    symbols = req.legend_symbols(0, size)
+    symbols_count = len(symbols)
+    expected_count = len(expected)
+    assert symbols_count == expected_count, "count mismatch"
+
+    for symbol, (title, color) in zip(symbols, expected):
+        assert symbol.title() == title, "symbol title mismatch"
+        image = to_pil(symbol.icon())
+        center_color = image.getpixel((image.size[0] // 2, image.size[1] // 2))
+        assert center_color == color, "center color mismatch"
+        assert image.size == size, "size mismatch"
 
 
 def test_legend_svg_path(shared_datadir, reset_svg_paths):
