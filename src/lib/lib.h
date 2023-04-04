@@ -59,10 +59,11 @@ namespace HeadlessRender
         ImagePtr renderLegend( const Size &size = Size() );
         void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
 
-        std::vector<LegendSymbol> legendSymbols( size_t index, const Size & size = Size() );
+        std::vector<LegendSymbol> legendSymbols( size_t index, const Size &size = Size() );
 
     private:
-        void processLegendSymbols( QJsonArray nodes, std::vector<LegendSymbol> &legendSymbols );
+        void processLegendSymbols( const QJsonArray &nodes, std::vector<LegendSymbol> &legendSymbols );
+        void processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols );
 
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;

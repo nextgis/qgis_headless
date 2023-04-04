@@ -44,6 +44,21 @@
 static QApplication *app = nullptr;
 static HeadlessRender::LogLevel appLogLevel = HeadlessRender::LogLevel::Debug;
 
+namespace KEYS
+{
+    static const QString TYPE = "type";
+    static const QString SYMBOLS = "symbols";
+    static const QString NODES = "nodes";
+    static const QString ICON = "icon";
+    static const QString TITLE = "title";
+}
+
+namespace NodeType
+{
+    static const QString LAYER = "layer";
+    static const QString GROUP = "group";
+}
+
 static void messageHandler( QtMsgType msgType, const QMessageLogContext &, const QString &msg )
 {
     const QByteArray &logMessage = msg.toLocal8Bit();
@@ -305,38 +320,42 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 #endif
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
-    QJsonArray nodes = json.value( "nodes" ).toArray();
+    QJsonArray nodes = json.value( KEYS::NODES ).toArray();
     processLegendSymbols( nodes, legendSymbols );
     return legendSymbols;
 }
 
-void HeadlessRender::MapRequest::processLegendSymbols(QJsonArray nodes, std::vector<HeadlessRender::LegendSymbol> &legendSymbols)
+void HeadlessRender::MapRequest::processLegendSymbols( const QJsonArray &nodes, std::vector<HeadlessRender::LegendSymbol> &legendSymbols )
 {
-    for ( const auto &item : nodes)
+    for ( const auto &item : nodes )
     {
         QJsonObject node = item.toObject();
-
-        QString type = node.value( "type" ).toString();
-        if ( type == "layer" )
+        QString type = node.value( KEYS::TYPE ).toString();
+        if ( type == NodeType::LAYER )
         {
-            QJsonArray symbols = node.value( "symbols" ).toArray();
-            for ( const auto &symbolItem : symbols)
-            {
-                QJsonObject symbol = symbolItem.toObject();
-                QString iconBase64 = symbol.value( "icon" ).toString();
-                QString title = symbol.value( "title" ).toString();
-
-                QImage image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
-
-                legendSymbols.emplace_back( std::make_shared<Image>( image ), title );
-            }
+            QJsonArray symbols = node.value( KEYS::SYMBOLS ).toArray();
+            if ( !symbols.empty() )
+                for ( const auto &symbolItem : symbols )
+                    processLegendSymbol( symbolItem.toObject(), legendSymbols );
+            else
+                processLegendSymbol( node, legendSymbols );
         }
-        else if ( type == "group" )
+        else if ( type == NodeType::GROUP )
         {
-            QJsonArray nodes = node.value( "nodes" ).toArray();
+            QJsonArray nodes = node.value( KEYS::NODES ).toArray();
             processLegendSymbols( nodes, legendSymbols );
         }
     }
+}
+
+void HeadlessRender::MapRequest::processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols )
+{
+    QString iconBase64 = object.value( KEYS::ICON ).toString();
+    QString title = object.value( KEYS::TITLE ).toString();
+
+    QImage image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
+
+    legendSymbols.emplace_back( std::make_shared<Image>( image ), title );
 }
 
 void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level )
