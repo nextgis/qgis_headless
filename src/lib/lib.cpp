@@ -167,12 +167,10 @@ int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, const St
         if ( layer.type() != style.type() )
             throw StyleTypeMismatch( "Layer type and style type do not match" );
 
-        QString readStyleError;
-        QDomDocument domDocument;
-        domDocument.setContent( QString::fromStdString( style.data() ) );
         QgsReadWriteContext context;
-
-        bool importStyleStatus = qgsMapLayer->importNamedStyle( domDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+        QString readStyleError;
+        QDomDocument styleDocument = style.data();
+        bool importStyleStatus = qgsMapLayer->importNamedStyle( styleDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
 
         if ( !importStyleStatus )
             throw QgisHeadlessError( readStyleError );

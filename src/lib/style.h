@@ -55,8 +55,8 @@ namespace HeadlessRender
         static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
         static Style fromDefaults( const QColor &color, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
 
-        std::string data() const;
-        HeadlessRender::UsedAttributes usedAttributes();
+        QDomDocument data() const;
+        HeadlessRender::UsedAttributes usedAttributes() const;
         DataType type() const;
 
         bool isDefaultStyle() const;
@@ -67,18 +67,17 @@ namespace HeadlessRender
         static const Category DefaultImportCategories;
 
     private:
-        static std::string resolveSvgPaths( const std::string &data, const SvgResolverCallback &svgResolverCallback );
-        static void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback );
-        static QSharedPointer<QgsVectorLayer> createTemporaryVectorLayerWithStyle( const std::string &style, QString &errorMessage );
-        static QSharedPointer<QgsVectorLayer> createTemporaryVectorLayerWithStyle( QDomDocument &style, QString &errorMessage );
-        static QSharedPointer<QgsRasterLayer> createTemporaryRasterLayerWithStyle( const std::string &style, QString &errorMessage );
-        static bool validateGeometryType( const std::string &style, Layer::GeometryType layerGeometryType );
-        static bool validateStyle( const std::string &style, QString &errorMessage );
-        static void removeLayerGeometryTypeElement( QDomDocument & );
+        bool validateGeometryType( Layer::GeometryType layerGeometryType ) const;
+        void removeLayerGeometryTypeElement( QDomDocument & ) const;
+        void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback ) const;
+        QDomDocument resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const;
+        bool validateStyle( QString &errorMessage ) const;
+        QSharedPointer<QgsVectorLayer> createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
+        QSharedPointer<QgsRasterLayer> createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
         QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const;
         HeadlessRender::UsedAttributes readUsedAttributes() const;
 
-        std::string mData;
+        QDomDocument mData;
         mutable DataType mType = DataType::Unknown;
 
         struct DefaultStyleParams
@@ -91,8 +90,10 @@ namespace HeadlessRender
         DefaultStyleParams mDefaultStyleParams;
         bool mDefault = false;
 
-        HeadlessRender::UsedAttributes mUsedAttributesCache;
-        bool mUsedAttributesCached = false;
+        mutable HeadlessRender::UsedAttributes mUsedAttributesCache;
+        mutable bool mUsedAttributesCached = false;
+
+        mutable QSharedPointer<QgsMapLayer> mCachedTemporaryLayer;
     };
 }
 

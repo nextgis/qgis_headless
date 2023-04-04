@@ -186,7 +186,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                      pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
         .def_static( "from_file", &HeadlessRender::Style::fromFile, pybind11::arg("filePath"), pybind11::arg("svg_resolver") = nullptr,
                      pybind11::arg("layer_geometry_type") = HeadlessRender::Layer::GeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
-        .def( "used_attributes", []( HeadlessRender::Style &style ) -> pybind11::object
+        .def( "used_attributes", []( const HeadlessRender::Style &style ) -> pybind11::object
         {
             const HeadlessRender::UsedAttributes &result = style.usedAttributes();
             if ( result.first )
