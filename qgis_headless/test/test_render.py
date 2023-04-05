@@ -301,8 +301,8 @@ for (id, gt, style, sizes, expected) in [
         ))
 
 
-@pytest.mark.parametrize('gt, style_params, sizes, expected', legend_symbols_params)
-def test_legend_symbols(gt, style_params, sizes, expected, shared_datadir):
+@pytest.mark.parametrize('gt, style_params, size, expected', legend_symbols_params)
+def test_legend_symbols(gt, style_params, size, expected, shared_datadir):
     if 'file' in style_params:
         style = Style.from_file(str(shared_datadir / style_params['file']))
     else:
