@@ -320,11 +320,19 @@ def test_legend_symbols(gt, style_params, size, expected, shared_datadir):
     assert symbols_count == expected_count, "count mismatch"
 
     for symbol, (title, color) in zip(symbols, expected):
-        assert symbol.title() == title, "symbol title mismatch"
+        assert symbol.title() == title, "title mismatch"
+
         image = to_pil(symbol.icon())
-        center_color = image.getpixel((image.size[0] // 2, image.size[1] // 2))
+        im_size = image.size
+
+        im_width, im_height = im_size
+        assert im_width != 0, "zero width"
+        assert im_height != 0, "zero height"
+
+        center_color = image.getpixel((im_width // 2, im_height // 2))
         assert center_color == color, "center color mismatch"
-        assert image.size == size, "size mismatch"
+
+        assert im_size == size, "size mismatch"
 
 
 def test_legend_svg_path(shared_datadir, reset_svg_paths):
