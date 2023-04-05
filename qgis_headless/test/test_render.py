@@ -280,7 +280,17 @@ for (id, gt, style, sizes, expected) in [
         [(None, (255, 0, 0, 255)), ],
     ),
     (
-        "default_style", Layer.GT_LINESTRING, dict(color=(128, 128, 128, 128)),
+        "default_point", Layer.GT_POINT, dict(color=(128, 128, 128, 128)),
+        [(16, 18), ],
+        ((None, (128, 128, 128, 128)), ),
+    ),
+    (
+        "default_linestring", Layer.GT_LINESTRING, dict(color=(128, 128, 128, 128)),
+        [(16, 18), ],
+        ((None, (128, 128, 128, 128)), ),
+    ),
+    (
+        "default_polygon", Layer.GT_POLYGON, dict(color=(128, 128, 128, 128)),
         [(16, 18), ],
         ((None, (128, 128, 128, 128)), ),
     ),
