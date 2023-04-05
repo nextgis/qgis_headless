@@ -63,7 +63,7 @@ namespace HeadlessRender
 
     private:
         void processLegendSymbols( const QJsonArray &nodes, std::vector<LegendSymbol> &legendSymbols );
-        void processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols );
+        void processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols, bool skipTitle = false );
 
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;
