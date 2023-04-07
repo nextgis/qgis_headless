@@ -159,20 +159,16 @@ int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, const St
         throw QgisHeadlessError( "Layer is null" );
 
     if ( style.isDefaultStyle())
-    {
         layer.setRendererSymbolColor( style.defaultStyleColor() );
-    }
     else
     {
         if ( layer.type() != style.type() )
             throw StyleTypeMismatch( "Layer type and style type do not match" );
 
-        QgsReadWriteContext context;
         QString readStyleError;
-        QDomDocument styleDocument = style.data();
-        bool importStyleStatus = qgsMapLayer->importNamedStyle( styleDocument, readStyleError, static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ) );
+        bool addStyleStatus = layer.addStyle( style, readStyleError );
 
-        if ( !importStyleStatus )
+        if ( !addStyleStatus )
             throw QgisHeadlessError( readStyleError );
     }
 
@@ -241,9 +237,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &s
         img = QImage( QSize( minSize.width() * dpmm, minSize.height() * dpmm ), QImage::Format_ARGB32_Premultiplied );
     }
     else
-    {
         img = QImage( width, height, QImage::Format_ARGB32_Premultiplied );
-    }
 
     img.fill( Qt::transparent );
 

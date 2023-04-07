@@ -26,7 +26,6 @@
 #include <set>
 #include <QSet>
 #include <QString>
-#include <QSharedPointer>
 #include <QDomDocument>
 #include <QColor>
 #include "exceptions.h"
@@ -37,12 +36,16 @@ class QgsVectorLayer;
 class QgsRasterLayer;
 class QgsRenderContext;
 class QgsSymbol;
+class QgsVectorLayer;
+class QgsRasterLayer;
 
 namespace HeadlessRender
 {
     class Layer;
     typedef std::function<std::string(const std::string &)> SvgResolverCallback;
     typedef std::pair<bool, std::set<std::string>> UsedAttributes;
+    typedef std::shared_ptr<QgsVectorLayer> QgsVectorLayerPtr;
+    typedef std::shared_ptr<QgsRasterLayer> QgsRasterLayerPtr;
 
     class QGIS_HEADLESS_EXPORT Style
     {
@@ -65,6 +68,7 @@ namespace HeadlessRender
         QString exportToQML() const;
 
         static const Category DefaultImportCategories;
+        static bool importToLayer( QgsMapLayerPtr &layer, QDomDocument &styleData, QString &errorMessage );
 
     private:
         bool validateGeometryType( Layer::GeometryType layerGeometryType ) const;
@@ -72,9 +76,9 @@ namespace HeadlessRender
         void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback ) const;
         QDomDocument resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const;
         bool validateStyle( QString &errorMessage ) const;
-        QSharedPointer<QgsVectorLayer> createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
-        QSharedPointer<QgsRasterLayer> createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
-        QSet<QString> referencedFields( const QSharedPointer<QgsVectorLayer> &layer, const QgsRenderContext &context, const QString &providerId ) const;
+        QgsVectorLayerPtr createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
+        QgsRasterLayerPtr createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
+        QSet<QString> referencedFields( const QgsVectorLayerPtr &layer, const QgsRenderContext &context, const QString &providerId ) const;
         HeadlessRender::UsedAttributes readUsedAttributes() const;
 
         QDomDocument mData;
@@ -93,7 +97,9 @@ namespace HeadlessRender
         mutable HeadlessRender::UsedAttributes mUsedAttributesCache;
         mutable bool mUsedAttributesCached = false;
 
-        mutable QSharedPointer<QgsMapLayer> mCachedTemporaryLayer;
+        mutable QgsMapLayerPtr mCachedTemporaryLayer;
+
+        friend class Layer;
     };
 }
 

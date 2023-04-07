@@ -32,6 +32,7 @@ class QgsMapLayer;
 
 namespace HeadlessRender
 {
+    class Style;
     typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
     class QGIS_HEADLESS_EXPORT Layer
@@ -81,6 +82,7 @@ namespace HeadlessRender
         QgsMapLayerPtr qgsMapLayer() const;
         DataType type() const;
         void setRendererSymbolColor( const QColor &color );
+        bool addStyle( const Style &style, QString &error );
 
     private:
         explicit Layer( const QgsMapLayerPtr &qgsMapLayer );

@@ -22,11 +22,13 @@
 #include "crs.h"
 #include "utils.h"
 #include "exceptions.h"
+#include "style.h"
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsmemoryproviderutils.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
+#include <qgsmaplayerstylemanager.h>
 #include <QByteArray>
 
 void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )
@@ -144,4 +146,28 @@ void HeadlessRender::Layer::setRendererSymbolColor(const QColor &color)
             layer->renderer()->setEmbeddedRenderer( newRenderer );
         }
     }
+}
+
+bool HeadlessRender::Layer::addStyle( const HeadlessRender::Style &style, QString &error )
+{
+    bool success = false;
+
+    if ( style.mCachedTemporaryLayer && !style.mCachedTemporaryLayer->styleManager()->styles().empty() )
+    {
+        const QString currentStyleName = style.mCachedTemporaryLayer->styleManager()->currentStyle();
+        const QgsMapLayerStyle currentStyle = style.mCachedTemporaryLayer->styleManager()->style( currentStyleName );
+        const QString styleName = "StyleName_" + QString::number(mLayer->styleManager()->styles().size());
+
+        mLayer->styleManager()->addStyle( styleName, currentStyle );
+        success = mLayer->styleManager()->setCurrentStyle( styleName );
+        if ( !success )
+            error = "addStyle error";
+    }
+    else
+    {
+        QDomDocument styleDocument = style.data();
+        success = Style::importToLayer( mLayer, styleDocument, error );
+    }
+
+    return success;
 }
