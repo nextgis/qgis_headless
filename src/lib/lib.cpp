@@ -330,7 +330,7 @@ void HeadlessRender::MapRequest::processLegendSymbols( const QJsonArray &nodes, 
                 for ( const auto &symbolItem : symbols )
                     processLegendSymbol( symbolItem.toObject(), legendSymbols );
             else
-                processLegendSymbol( node, legendSymbols, true );
+                processLegendSymbol( node, legendSymbols );
         }
         else if ( type == NodeType::GROUP )
         {
@@ -340,14 +340,11 @@ void HeadlessRender::MapRequest::processLegendSymbols( const QJsonArray &nodes, 
     }
 }
 
-void HeadlessRender::MapRequest::processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols, bool skipTitle /* = false */ )
+void HeadlessRender::MapRequest::processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols )
 {
     QString iconBase64 = object.value( KEYS::ICON ).toString();
     QString title = object.value( KEYS::TITLE ).toString();
-
-    QImage image;
-    if ( !skipTitle )
-        image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
+    QImage image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
 
     legendSymbols.emplace_back( std::make_shared<Image>( image ), title );
 }
