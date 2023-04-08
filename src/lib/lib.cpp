@@ -326,11 +326,18 @@ void HeadlessRender::MapRequest::processLegendSymbols( const QJsonArray &nodes, 
         if ( type == NodeType::LAYER )
         {
             QJsonArray symbols = node.value( KEYS::SYMBOLS ).toArray();
+
             if ( !symbols.empty() )
+            {
                 for ( const auto &symbolItem : symbols )
-                    processLegendSymbol( symbolItem.toObject(), legendSymbols );
+                    legendSymbols.push_back( processLegendSymbol( symbolItem.toObject() ));
+            }
             else
-                processLegendSymbol( node, legendSymbols );
+            {
+                HeadlessRender::LegendSymbol legendSymbol = processLegendSymbol( node );
+                legendSymbol.setHasCategory( false );
+                legendSymbols.push_back( legendSymbol );
+            }
         }
         else if ( type == NodeType::GROUP )
         {
@@ -340,13 +347,13 @@ void HeadlessRender::MapRequest::processLegendSymbols( const QJsonArray &nodes, 
     }
 }
 
-void HeadlessRender::MapRequest::processLegendSymbol( const QJsonObject &object, std::vector<HeadlessRender::LegendSymbol> &legendSymbols )
+HeadlessRender::LegendSymbol HeadlessRender::MapRequest::processLegendSymbol( const QJsonObject &object )
 {
     QString iconBase64 = object.value( KEYS::ICON ).toString();
     QString title = object.value( KEYS::TITLE ).toString();
     QImage image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
 
-    legendSymbols.emplace_back( std::make_shared<Image>( image ), title );
+    return { std::make_shared<Image>( image ), title };
 }
 
 void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level )

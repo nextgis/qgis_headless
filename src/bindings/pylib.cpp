@@ -216,12 +216,13 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
         .def( "icon", &HeadlessRender::LegendSymbol::icon )
-        .def( "title", []( const HeadlessRender::LegendSymbol &style ) -> pybind11::object
+        .def( "title", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> pybind11::object
         {
-            std::string title = style.title().toStdString();
-            if ( !title.empty() )
-                return pybind11::cast( title );
-            return pybind11::none();
+            const QString title = legendSymbol.title();
+            if ( !legendSymbol.hasCategory() && title.isEmpty() )
+                return pybind11::none();
+            else
+                return pybind11::cast( title.toStdString() );
         });
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )

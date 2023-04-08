@@ -38,3 +38,13 @@ const QString & LegendSymbol::title() const
 {
     return mTitle;
 }
+
+bool LegendSymbol::hasCategory() const
+{
+    return mHasCategory;
+}
+
+void LegendSymbol::setHasCategory( bool hasCategory )
+{
+    mHasCategory = hasCategory;
+}

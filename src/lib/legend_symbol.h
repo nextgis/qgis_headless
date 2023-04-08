@@ -30,11 +30,15 @@ namespace HeadlessRender
     {
     public:
         LegendSymbol( const ImagePtr icon, const QString &title );
+
         ImagePtr icon() const;
         const QString & title() const;
+        bool hasCategory() const;
+        void setHasCategory( bool hasCategory );
     private:
         ImagePtr mIcon;
         QString mTitle;
+        bool mHasCategory = true;
     };
 }
 
