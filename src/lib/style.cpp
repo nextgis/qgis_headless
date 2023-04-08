@@ -46,6 +46,10 @@
 #	include <qgsrulebasedlabeling.h>
 #endif
 
+#if VERSION_INT >= 33000
+#	include <qgsdiagramrenderer.h>
+#endif
+
 namespace SymbolLayerType
 {
     static const QString SvgMarker = "SvgMarker";
@@ -64,6 +68,8 @@ namespace TAGS
     static const QString PIPE = "pipe";
     static const QString RASTER_PROPERTIES = "rasterproperties";
     static const QString RASTER_RENDERER = "rasterrenderer";
+    static const QString DIAGRAM_CATEGORY = "DiagramCategory";
+    static const QString ENABLED = "enabled";
 }
 
 const HeadlessRender::Style::Category HeadlessRender::Style::DefaultImportCategories = QgsMapLayer::Symbology
@@ -240,7 +246,7 @@ HeadlessRender::UsedAttributes HeadlessRender::Style::readUsedAttributes() const
     if ( !qgsVectorLayer )
         throw QgisHeadlessError( errorMessage );
 
-    if ( qgsVectorLayer->diagramRenderer() )
+    if ( hasEnabledDiagrams( qgsVectorLayer ))
         return std::make_pair( false, usedAttributes );
 
     QgsRenderContext renderContext;
@@ -279,6 +285,37 @@ HeadlessRender::UsedAttributes HeadlessRender::Style::readUsedAttributes() const
         usedAttributes.insert( attr.toStdString() );
 
     return std::make_pair( true, usedAttributes );
+}
+
+bool HeadlessRender::Style::hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const
+{
+    bool enabled = false;
+
+#if VERSION_INT >= 33000
+    const QgsDiagramRenderer *diagramRenderer = layer->diagramRenderer();
+    if ( diagramRenderer )
+        for (const auto &item: diagramRenderer->diagramSettings())
+        {
+            enabled = item.enabled;
+            if (enabled)
+                break;
+        }
+#else
+    Q_UNUSED( layer )
+
+    const QDomNodeList nodes = mData.elementsByTagName( TAGS::DIAGRAM_CATEGORY );
+    for ( int i = 0; i < nodes.size(); ++i )
+    {
+        const QDomElement element = nodes.item( i ).toElement();
+        const QString enabledStr = element.attribute( TAGS::ENABLED, "0" );
+
+        enabled = enabledStr.toInt();
+        if ( enabled )
+            break;
+    }
+#endif
+
+    return enabled;
 }
 
 HeadlessRender::UsedAttributes HeadlessRender::Style::usedAttributes() const

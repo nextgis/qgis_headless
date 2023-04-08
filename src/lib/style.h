@@ -80,6 +80,7 @@ namespace HeadlessRender
         QgsRasterLayerPtr createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
         QSet<QString> referencedFields( const QgsVectorLayerPtr &layer, const QgsRenderContext &context, const QString &providerId ) const;
         HeadlessRender::UsedAttributes readUsedAttributes() const;
+        bool hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const;
 
         QDomDocument mData;
         mutable DataType mType = DataType::Unknown;
