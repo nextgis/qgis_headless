@@ -70,6 +70,7 @@ def test_default(params):
     pytest.param('contour-simple.qml', (), id='contour-simple'),
     pytest.param('contour-rgb.qml', ('level', ), id='contour-rgb'),
     pytest.param('contour-rbl.qml', ('level', ) if (QGIS_VERSION >= version.parse('3.12')) else None, id='contour-rbl'),
+    pytest.param('attributes/qgis_default.qml', (), id='qgis_default'),
     pytest.param('attributes/osm-highway.qml', ('HIGHWAY', 'NAME_EN', 'NAME'), id='osm-highway'),
     pytest.param('attributes/data-defined.qml', ('size', ), id='data-defined'),
     pytest.param('attributes/rule-based-labeling.qml', ('a', 'b', 'c') if (QGIS_VERSION >= version.parse('3.12')) else None, id='rule-based-labeling'),
