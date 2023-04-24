@@ -583,6 +583,23 @@ def test_raster_rgb_default_style(shared_datadir):
     assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 0, 0), "Black colour missing"
 
 
+def test_raster_rgb_inverted_style(shared_datadir):
+    layer = Layer.from_gdal(str(shared_datadir / 'raster/rounds.tif'))
+    style = Style.from_file(str(shared_datadir / 'raster/inverted.qml'))
+
+    stat = image_stat(render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 255, 255), "Cyan colour missing"
+
+    stat = image_stat(render_raster(layer, style, (3848936.0, 5977974.0, 5503915.0, 7505647.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 0, 255), "Magenta colour missing"
+
+    stat = image_stat(render_raster(layer, style, (251440.0, 2556073.0, 1978853.0, 4158374.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 255, 0), "Yellow colour missing"
+
+    stat = image_stat(render_raster(layer, style, (3848936.0, 2556073.0, 5503915.0, 4158374.0)))
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 255, 255), "White colour missing"
+
+
 def test_raster_dem_default_style(shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / 'raster/sochi-aster-dem.tif'))
     style = Style.from_defaults()
