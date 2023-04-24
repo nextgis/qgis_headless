@@ -152,7 +152,9 @@ bool HeadlessRender::Layer::addStyle( const HeadlessRender::Style &style, QStrin
 {
     bool success = false;
 
-    if ( style.mCachedTemporaryLayer && !style.mCachedTemporaryLayer->styleManager()->styles().empty() )
+    if ( style.mCachedTemporaryLayer &&
+         style.mCachedTemporaryLayer->type() == mLayer->type() &&
+         !style.mCachedTemporaryLayer->styleManager()->styles().empty() )
     {
         const QString currentStyleName = style.mCachedTemporaryLayer->styleManager()->currentStyle();
         const QgsMapLayerStyle currentStyle = style.mCachedTemporaryLayer->styleManager()->style( currentStyleName );
