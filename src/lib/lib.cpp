@@ -53,12 +53,6 @@ namespace KEYS
     static const QString TITLE = "title";
 }
 
-namespace NodeType
-{
-    static const QString LAYER = "layer";
-    static const QString GROUP = "group";
-}
-
 static void messageHandler( QtMsgType msgType, const QMessageLogContext &, const QString &msg )
 {
     const QByteArray &logMessage = msg.toLocal8Bit();
@@ -284,76 +278,65 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
     painter.end();
 }
 
+static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image)
+{
+    for ( const auto &it : group )
+    {
+        if ( QgsLayerTree::isLayer( it ))
+        {
+            QgsLayerTreeLayer *nodeLayer = QgsLayerTree::toLayer( it );
+            const auto nodes = model.layerLegendNodes( nodeLayer );
+            for ( const auto &node : nodes )
+            {
+                node->draw( settings, &context );
+
+                QString title = node->data( Qt::DisplayRole ).toString();
+                HeadlessRender::LegendSymbol item = { std::make_shared<HeadlessRender::Image>( image ), title };
+                if (nodes.size() == 1 && result.empty())
+                    item.setHasCategory( false );
+
+                result.push_back( item );
+            }
+        }
+        else
+        {
+            const auto group = QgsLayerTree::toGroup( it );
+            processLegendGroup( group->children(), result, model, settings, context, image );
+        }
+    }
+}
+
 std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbols( size_t index, const HeadlessRender::Size &size /* = Size() */ )
 {
     if ( mLayers.size() <= index )
         throw QgisHeadlessError( "Invalid layer index" );
 
-    QgsMapLayerPtr layer = mLayers.at( index );
-
     int width = std::get<0>( size );
     int height = std::get<1>( size );
 
-    QgsLegendSettings legendSettings;
-    if ( width && height )
-        legendSettings.setSymbolSize( QSize( width, height ));
-
+    QgsMapLayerPtr layer = mLayers.at( index );
     QgsLayerTree qgsLayerTree;
     qgsLayerTree.addLayer( layer.get() );
 
     QgsLayerTreeModel legendModel( &qgsLayerTree );
-    QgsLegendRenderer legendRenderer( &legendModel, legendSettings );
 
-#if VERSION_INT > 31600
-    QJsonObject json = legendRenderer.exportLegendToJson( QgsRenderContext() );
-#else
-    QJsonObject json;
-    legendRenderer.exportLegendToJson( QgsRenderContext(), json );
-#endif
+    QImage image = QImage( width, height, QImage::Format_ARGB32_Premultiplied );
+    QPainter p(&image);
+
+    QgsRenderContext context = QgsRenderContext::fromQPainter( &p );
+
+    QgsLayerTreeModelLegendNode::ItemContext ctx;
+    ctx.context = &context;
+    ctx.painter = context.painter();
+
+    QgsLegendSettings legendSettings;
+    legendSettings.setSymbolSize( QSize( width, height ));
+    legendSettings.setMaximumSymbolSize( width > height ? width : height );
+    legendSettings.setMinimumSymbolSize( width < height ? width : height );
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
-    QJsonArray nodes = json.value( KEYS::NODES ).toArray();
-    processLegendSymbols( nodes, legendSymbols );
+    processLegendGroup(legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image);
     return legendSymbols;
-}
-
-void HeadlessRender::MapRequest::processLegendSymbols( const QJsonArray &nodes, std::vector<HeadlessRender::LegendSymbol> &legendSymbols )
-{
-    for ( const auto &item : nodes )
-    {
-        QJsonObject node = item.toObject();
-        QString type = node.value( KEYS::TYPE ).toString();
-        if ( type == NodeType::LAYER )
-        {
-            QJsonArray symbols = node.value( KEYS::SYMBOLS ).toArray();
-
-            if ( !symbols.empty() )
-            {
-                for ( const auto &symbolItem : symbols )
-                    legendSymbols.push_back( processLegendSymbol( symbolItem.toObject() ));
-            }
-            else
-            {
-                HeadlessRender::LegendSymbol legendSymbol = processLegendSymbol( node );
-                legendSymbol.setHasCategory( false );
-                legendSymbols.push_back( legendSymbol );
-            }
-        }
-        else if ( type == NodeType::GROUP )
-        {
-            QJsonArray nodes = node.value( KEYS::NODES ).toArray();
-            processLegendSymbols( nodes, legendSymbols );
-        }
-    }
-}
-
-HeadlessRender::LegendSymbol HeadlessRender::MapRequest::processLegendSymbol( const QJsonObject &object )
-{
-    QString iconBase64 = object.value( KEYS::ICON ).toString();
-    QString title = object.value( KEYS::TITLE ).toString();
-    QImage image = QImage::fromData( QByteArray::fromBase64( iconBase64.toUtf8() ));
-
-    return { std::make_shared<Image>( image ), title };
 }
 
 void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level )

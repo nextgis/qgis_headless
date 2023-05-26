@@ -62,9 +62,6 @@ namespace HeadlessRender
         std::vector<LegendSymbol> legendSymbols( size_t index, const Size &size = Size() );
 
     private:
-        void processLegendSymbols( const QJsonArray &nodes, std::vector<LegendSymbol> &legendSymbols );
-        LegendSymbol processLegendSymbol( const QJsonObject &object );
-
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;
         std::vector<QgsMapLayerPtr> mLayers;
