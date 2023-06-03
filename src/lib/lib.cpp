@@ -278,7 +278,7 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
     painter.end();
 }
 
-static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image)
+static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image )
 {
     for ( const auto &it : group )
     {
@@ -320,22 +320,27 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 
     QgsLayerTreeModel legendModel( &qgsLayerTree );
 
-    QImage image = QImage( width, height, QImage::Format_ARGB32_Premultiplied );
-    QPainter p(&image);
+    QImage image( width, height, QImage::Format_ARGB32_Premultiplied );
+    image.fill( Qt::transparent );
 
+    QPainter p(&image);
     QgsRenderContext context = QgsRenderContext::fromQPainter( &p );
+
+    int dpi = mSettings->outputDpi();
+    qreal dpmm = dpi / 25.4;
+    context.painter()->scale( dpmm, dpmm );
 
     QgsLayerTreeModelLegendNode::ItemContext ctx;
     ctx.context = &context;
     ctx.painter = context.painter();
 
     QgsLegendSettings legendSettings;
-    legendSettings.setSymbolSize( QSize( width, height ));
-    legendSettings.setMaximumSymbolSize( width > height ? width : height );
-    legendSettings.setMinimumSymbolSize( width < height ? width : height );
+    legendSettings.setSymbolSize( QSize( width / dpmm, height / dpmm ));
+//    legendSettings.setMaximumSymbolSize( width > height ? width : height );
+//    legendSettings.setMinimumSymbolSize( width < height ? width : height );
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
-    processLegendGroup(legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image);
+    processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image );
     return legendSymbols;
 }
 
