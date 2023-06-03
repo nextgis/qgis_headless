@@ -41,6 +41,9 @@ def image_stat(image):
         for b in range(4)
     ])
 
+def cmp_colors(a, b):
+    return float(sum((ca - cb)**2 for ca, cb in zip(a, b)))
+
 
 def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857), svg_resolver=None, dpi=96):
     req = MapRequest()

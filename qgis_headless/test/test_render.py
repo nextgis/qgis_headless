@@ -14,7 +14,7 @@ from qgis_headless import (
     StyleTypeMismatch,
 )
 from qgis_headless.util import (
-    EXTENT_ONE, image_stat, render_raster, render_vector, to_pil, WKB_POINT_00)
+    EXTENT_ONE, image_stat, render_raster, render_vector, to_pil, WKB_POINT_00, cmp_colors)
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
 
@@ -270,49 +270,58 @@ def test_legend(shared_datadir, reset_svg_paths):
 
     assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], \
         "Higher DPI should produce bigger legend"
-    
+
+
+RED = (255, 0, 0, 255)
+GREEN = (0, 255, 0, 255)
+BLUE = (0, 0, 255, 255)
+TRANSPARENT = (0, 0, 0, 0)
+GRAY_128 = (128, 128, 128, 128)
+
+LEGEND_DEFAULT_SIZES = [(16, 18), (18, 18), ]
 
 legend_symbols_params = []
 for (id, gt, style, sizes, expected) in [
     (
         "zero_red_circle", Layer.GT_POINT, dict(file='zero-red-circle.qml'),
-        [(16, 18), ],
-        [(None, (255, 0, 0, 255)), ],
+        LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
+        [(None, dict({k: TRANSPARENT for k in ('lt', 'rt', 'lb', 'rb')}, c=RED)), ],
     ),
     (
-        "default_point", Layer.GT_POINT, dict(color=(128, 128, 128, 128)),
-        [(16, 18), ],
-        ((None, (128, 128, 128, 128)), ),
+        "default_point", Layer.GT_POINT, dict(color=GRAY_128),
+        LEGEND_DEFAULT_SIZES,
+        ((None, dict({k: TRANSPARENT for k in ('lt', 'rt', 'lb', 'rb')}, c=GRAY_128)), ),
     ),
     (
-        "default_linestring", Layer.GT_LINESTRING, dict(color=(128, 128, 128, 128)),
-        [(16, 18), ],
-        ((None, (128, 128, 128, 128)), ),
+        "default_linestring", Layer.GT_LINESTRING, dict(color=GRAY_128),
+        LEGEND_DEFAULT_SIZES,
+        ((None, dict(ct=TRANSPARENT, cb=TRANSPARENT)), ),
     ),
     (
-        "default_polygon", Layer.GT_POLYGON, dict(color=(128, 128, 128, 128)),
-        [(16, 18), ],
-        ((None, (128, 128, 128, 128)), ),
+        "default_polygon", Layer.GT_POLYGON, dict(color=GRAY_128),
+        LEGEND_DEFAULT_SIZES,
+        ((None, GRAY_128), ),
     ),
     (
         "contour_rgb", Layer.GT_LINESTRING, dict(file='contour-rgb.qml'),
-        [(16, 18), 24],
+        LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
-            ('primary horizontals', (0, 255, 0, 255)),
-            ('secondary horizontals', (0, 0, 255, 255)),
+            ('primary horizontals', dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
+            ('secondary horizontals', dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
     ),
 ]:
     for size in sizes:
         if type(size) == int:
             size = (size, size)
+        param_id = f"{id}-{size[0]}x{size[1]}"
         legend_symbols_params.append(pytest.param(
-            gt, style, size, expected, id=f"{id}-{size[0]}x{size[1]}"
+            param_id, gt, style, size, expected, id=param_id
         ))
 
 
-@pytest.mark.parametrize('gt, style_params, size, expected', legend_symbols_params)
-def test_legend_symbols(gt, style_params, size, expected, shared_datadir):
+@pytest.mark.parametrize('param_id, gt, style_params, size, expected', legend_symbols_params)
+def test_legend_symbols(param_id, gt, style_params, size, expected, shared_datadir):
     if 'file' in style_params:
         style = Style.from_file(str(shared_datadir / style_params['file']))
     else:
@@ -333,16 +342,30 @@ def test_legend_symbols(gt, style_params, size, expected, shared_datadir):
         assert symbol.title() == title, "title mismatch"
 
         image = to_pil(symbol.icon())
+        # image.save(f"test_legeng_symbols-{param_id}.png")
         im_size = image.size
 
         im_width, im_height = im_size
         assert im_width != 0, "zero width"
         assert im_height != 0, "zero height"
 
-        center_color = image.getpixel((im_width // 2, im_height // 2))
-        assert center_color == color, "center color mismatch"
+        pixel_coord = (
+            dict(l=0, r=im_width - 1, c=im_width // 2),
+            dict(t=0, b=im_height - 1, c=im_height // 2),
+        )
 
-        assert im_size == size, "size mismatch"
+        if isinstance(color, tuple):
+            color = dict(c=color)
+
+        for k, v in color.items():
+            if k == 'c':
+                k = 'cc'
+            p = tuple(b[i] for i, b in zip(k, pixel_coord))
+            color = image.getpixel(p)
+            delta = cmp_colors(color, v)
+            assert delta < 20, f"{k}{p} color mismatch ({delta}): {color} != {v} "
+
+        assert im_size == size, f"size mismatch: {im_size} != {size}"
 
 
 def test_legend_svg_path(shared_datadir, reset_svg_paths):
