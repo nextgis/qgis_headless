@@ -288,6 +288,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
             const auto nodes = model.layerLegendNodes( nodeLayer );
             for ( const auto &node : nodes )
             {
+                image.fill(Qt::transparent);
                 node->draw( settings, &context );
 
                 QString title = node->data( Qt::DisplayRole ).toString();
@@ -321,7 +322,6 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
     QgsLayerTreeModel legendModel( &qgsLayerTree );
 
     QImage image( width, height, QImage::Format_ARGB32_Premultiplied );
-    image.fill( Qt::transparent );
 
     QPainter p(&image);
     QgsRenderContext context = QgsRenderContext::fromQPainter( &p );
