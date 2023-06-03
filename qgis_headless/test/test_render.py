@@ -23,15 +23,13 @@ EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.
 EPSG_3395_WKT = 'PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","3395"]]'  # NOQA
 
 
-def test_contour(shared_datadir, reset_svg_paths):
+def test_contour(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rgb.qml').read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
-    img = render_vector(data, style, extent, 1024, svg_resolver=lambda x: x)
-    # img.save('test_contour.png')
-
+    img = save_img(render_vector(data, style, extent, 1024, svg_resolver=lambda x: x))
     stat = image_stat(img)
 
     assert stat.alpha.min == 0, "There are no transparent pixels found"
@@ -60,45 +58,40 @@ def test_contour_pdf(shared_datadir, reset_svg_paths):
         assert os.stat(f.name).st_size > 100
 
 
-def test_opacity(shared_datadir, reset_svg_paths):
+def test_opacity(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-opacity.qml').read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
-    img = render_vector(data, style, extent, 1024)
-    # img.save('test_opacity.png')
-
+    img = save_img(render_vector(data, style, extent, 1024))
     stat = image_stat(img)
 
     assert stat.alpha.min == 0, "There are no transparent pixels found"
     assert stat.alpha.max == 127, "Maximum alpha must be 127 (50%)"
 
 
-def test_rule_based_labeling(shared_datadir, reset_svg_paths):
+def test_rule_based_labeling(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rbl.qml').read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
-    img = render_vector(data, style, extent, 1024)
-    # img.save('test_rule_based_labeling.png')
+    img = save_img(render_vector(data, style, extent, 1024))
 
     stat = image_stat(img)
     assert stat.green.max == 255, "Green labels aren't visible"
     assert stat.blue.max == 255, "Blue labels aren't visible"
 
 
-def test_marker_simple(shared_datadir, reset_svg_paths):
+def test_marker_simple(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
 
     set_svg_paths([str(shared_datadir / 'marker-blue'), ])
-    img = render_vector(data, style, EXTENT_ONE, 256)
-    # img.save('test_marker_simple.png')
+    img = save_img(render_vector(data, style, EXTENT_ONE, 256))
 
     stat = image_stat(img)
-
     assert stat.red.max == stat.green.max == 0, "Unexpected data in red or green channel"
     assert stat.blue.max == 255, "Blue marker is missing"
 
@@ -190,12 +183,11 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     QGIS_VERSION < version.parse('3.14'),
     reason="Fetching marker by URL may fail in QGIS < 3.14",
 )
-def test_marker_url(shared_datadir, reset_svg_paths, capfd):
+def test_marker_url(save_img, shared_datadir, reset_svg_paths, capfd):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker-url.qml').read_text()
 
-    img = render_vector(data, style, EXTENT_ONE, 256)
-    # img.save('test_marker_url.png')
+    img = save_img(render_vector(data, style, EXTENT_ONE, 256))
 
     assert capfd.readouterr().out.strip() == '', "QGIS stdout output was captured"
     assert capfd.readouterr().err.strip() == '', "QGIS stderr output was captured"
@@ -238,7 +230,7 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     assert image_stat(img).blue.max == 255, "Marker is missing in new MapRequest"
 
 
-def test_legend(shared_datadir, reset_svg_paths):
+def test_legend(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'contour.geojson'
     style = (shared_datadir / 'contour-rgb.qml').read_text()
 
@@ -252,8 +244,7 @@ def test_legend(shared_datadir, reset_svg_paths):
         label="Contour")
 
     rendered_legend = req.render_legend()
-    img = to_pil(rendered_legend)
-    # img.save('test_legend.png')
+    img = save_img(to_pil(rendered_legend))
 
     assert img.size == (223, 92), "Expected size is 223 x 92"
 
@@ -316,12 +307,12 @@ for (id, gt, style, sizes, expected) in [
             size = (size, size)
         param_id = f"{id}-{size[0]}x{size[1]}"
         legend_symbols_params.append(pytest.param(
-            param_id, gt, style, size, expected, id=param_id
+            gt, style, size, expected, id=param_id
         ))
 
 
-@pytest.mark.parametrize('param_id, gt, style_params, size, expected', legend_symbols_params)
-def test_legend_symbols(param_id, gt, style_params, size, expected, shared_datadir):
+@pytest.mark.parametrize('gt, style_params, size, expected', legend_symbols_params)
+def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datadir):
     if 'file' in style_params:
         style = Style.from_file(str(shared_datadir / style_params['file']))
     else:
@@ -341,8 +332,7 @@ def test_legend_symbols(param_id, gt, style_params, size, expected, shared_datad
     for symbol, (title, color) in zip(symbols, expected):
         assert symbol.title() == title, "title mismatch"
 
-        image = to_pil(symbol.icon())
-        # image.save(f"test_legeng_symbols-{param_id}.png")
+        image = save_img(to_pil(symbol.icon()), symbol.title())
         im_size = image.size
 
         im_width, im_height = im_size
@@ -350,8 +340,8 @@ def test_legend_symbols(param_id, gt, style_params, size, expected, shared_datad
         assert im_height != 0, "zero height"
 
         pixel_coord = (
-            dict(l=0, r=im_width - 1, c=im_width // 2),
-            dict(t=0, b=im_height - 1, c=im_height // 2),
+            dict(l=0, r=im_width - 1, c=(im_width - 1) // 2),
+            dict(t=0, b=im_height - 1, c=(im_height - 1) // 2),
         )
 
         if isinstance(color, tuple):
@@ -368,7 +358,7 @@ def test_legend_symbols(param_id, gt, style_params, size, expected, shared_datad
         assert im_size == size, f"size mismatch: {im_size} != {size}"
 
 
-def test_legend_svg_path(shared_datadir, reset_svg_paths):
+def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
 
@@ -384,14 +374,13 @@ def test_legend_svg_path(shared_datadir, reset_svg_paths):
         label="Marker")
 
     rendered_legend = req.render_legend()
-    img = to_pil(rendered_legend)
-    # img.save('test_legend_svg_path.png')
+    img = save_img(to_pil(rendered_legend))
 
     stat = image_stat(img)
     assert stat.blue.max == 255, "Blue marker is missing"
 
 
-def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
+def test_legend_svg_resolver(save_img, shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style = (shared_datadir / 'zero-marker.qml').read_text()
     marker = (shared_datadir / 'marker-blue' / 'marker.svg').resolve()
@@ -406,8 +395,7 @@ def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
         label="Marker")
 
     rendered_legend = req.render_legend()
-    img = to_pil(rendered_legend)
-    # img.save('test_legend_svg_resolver.png')
+    img = save_img(to_pil(rendered_legend))
 
     stat = image_stat(img)
     assert stat.blue.max == 255, "Blue marker is missing"
@@ -423,7 +411,7 @@ def test_legend_svg_resolver(shared_datadir, reset_svg_paths):
     pytest.param(CRS.from_wkt(EPSG_3395_WKT), (4187547.0, 7473582.0, 4187549.0, 7473584.0),
                  (4187547.0, 7508930.0, 4187549.0, 7508932.0), id='from WKT EPSG:3395'),
 ))
-def test_render_crs(shared_datadir, crs, extent, extent_empty):
+def test_render_crs(crs, extent, extent_empty, save_img, shared_datadir):
     source_crs = CRS.from_epsg(4326)
     layer = Layer.from_data(Layer.GT_POINT, source_crs, tuple(), (
         (1, WKB_MSC, tuple()),
@@ -431,25 +419,25 @@ def test_render_crs(shared_datadir, crs, extent, extent_empty):
 
     style = (shared_datadir / 'zero-red-circle.qml').read_text()
 
-    img = render_vector(layer, style, extent, 1024, crs=crs)
-
+    img = save_img(render_vector(layer, style, extent, 1024, crs=crs), 'vector')
     stat = image_stat(img)
     assert stat.green.max == stat.blue.max == 0, "Unexpected data in blue or green channel"
     assert stat.red.max == 255, "Red marker is missing"
 
-    img_empty = render_vector(layer, style, extent_empty, 256, crs=crs)
+    img_empty = save_img(render_vector(layer, style, extent_empty, 256, crs=crs), 'raster')
     stat = image_stat(img_empty)
     assert stat.red.max == stat.green.max == stat.blue.max == 0, "Unexpected non-empty image"
 
 
-def test_attribute_color(shared_datadir):
+def test_attribute_color(save_img, shared_datadir):
     data = shared_datadir / 'landuse' / 'landuse.geojson'
     layer = Layer.from_ogr(str(data))
 
     style = (shared_datadir / 'landuse' / 'landuse.qml').read_text()
 
-    img = render_vector(layer, style, (4189314.0, 7505071.0, 4190452.0, 7506101.0),
-                        svg_resolver=lambda x: x)
+    img = save_img(
+        render_vector(layer, style, (4189314.0, 7505071.0, 4190452.0, 7506101.0),
+        svg_resolver=lambda x: x))
 
     stat = image_stat(img)
 
@@ -458,13 +446,13 @@ def test_attribute_color(shared_datadir):
     assert stat.blue.max == 0, "Blue band is not expected"
 
 
-def test_style_25d(shared_datadir):
+def test_style_25d(save_img, shared_datadir):
     data = shared_datadir / 'poly.geojson'
     layer = Layer.from_ogr(str(data))
 
     style = (shared_datadir / '25d' / 'poly_25d.qml').read_text()
 
-    img = render_vector(layer, style, (-10, -10, 10, 10))
+    img = save_img(render_vector(layer, style, (-10, -10, 10, 10)))
 
     stat = image_stat(img)
 
@@ -477,12 +465,14 @@ def test_style_25d(shared_datadir):
     pytest.param('diagram/industries.geojson', id='industries'),
     pytest.param('diagram/industries-copy.geojson', id='industries-copy'),
 ))
-def test_diagram(shared_datadir, layer):
+def test_diagram(layer, save_img, shared_datadir):
     style = Style.from_file(str(shared_datadir / 'diagram' / 'industries.qml'))
     layer = Layer.from_ogr(str(shared_datadir / layer))
 
-    img = render_vector(layer, style, (33.86681, 45.05880, 33.86878, 45.06046),
-                        crs=CRS.from_epsg(4326))
+    img = save_img(
+        render_vector(layer, style, (33.86681, 45.05880, 33.86878, 45.06046),
+        crs=CRS.from_epsg(4326)))
+
     assert img.getpixel((70, 138)) == (254, 221, 74, 255)
     assert img.getpixel((111, 135)) == (41, 187, 255, 255)
     assert img.getpixel((96, 173)) == (204, 97, 20, 255)
@@ -511,13 +501,13 @@ def test_diagram(shared_datadir, layer):
     # img.save('share/from_ogr.png')
 
 
-def test_gradient(shared_datadir):
+def test_gradient(save_img, shared_datadir):
     style = Style.from_file(str(shared_datadir / 'gradient.qml'))
     layer = Layer.from_ogr(str(shared_datadir / 'landuse/landuse.geojson'))
 
-    img = render_vector(layer, style, (4189625, 7505162, 4190004, 7506081))
-
+    img = save_img(render_vector(layer, style, (4189625, 7505162, 4190004, 7506081)))
     stat = image_stat(img)
+
     assert stat.red.max == 255, "First colour is missing"
     assert stat.green.max == 255, "Middle colour is missing"
     assert stat.blue.max == 255, "Last colour is missing"
@@ -571,7 +561,7 @@ def test_vector_layer_raster_style(shared_datadir):
         (42, 24, 33, 180),
     ))
 ])
-def test_vector_default_style(data, color, shared_datadir):
+def test_vector_default_style(data, color, save_img, shared_datadir):
     data = shared_datadir / (data + '.geojson')
     style = Style.from_defaults(color=color)
 
@@ -582,7 +572,7 @@ def test_vector_default_style(data, color, shared_datadir):
     # pixels there. That's why setting a higher resolution does the trick and
     # makes lines thicker.
 
-    img = render_vector(data, style, EXTENT_ONE, size, dpi=600)
+    img = save_img(render_vector(data, style, EXTENT_ONE, size, dpi=600))
     pick_color = img.getpixel((size // 2, size // 2))
 
     for i, band in enumerate(('red', 'green', 'blue', 'alpha')):
@@ -623,11 +613,11 @@ def test_raster_rgb_inverted_style(shared_datadir):
     assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 255, 255), "White colour missing"
 
 
-def test_raster_dem_default_style(shared_datadir):
+def test_raster_dem_default_style(save_img, shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / 'raster/sochi-aster-dem.tif'))
     style = Style.from_defaults()
 
-    img = render_raster(layer, style, (40.0, 43.0, 41.0, 44.0), crs=CRS.from_epsg(4326))
+    img = save_img(render_raster(layer, style, (40.0, 43.0, 41.0, 44.0), crs=CRS.from_epsg(4326)))
     stat = image_stat(img)
 
     assert stat.alpha.min == stat.alpha.max == 255

@@ -2,7 +2,13 @@ import re
 import json
 import pytest
 import requests
+from pathlib import Path
 import _qgis_headless
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--img-output", type=str, default=None,
+        help="dump output images into this directory")
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -49,3 +55,27 @@ def fetch(cache):
             return fn
 
     return do
+
+
+@pytest.fixture()
+def save_img(request):
+    def _do(img, name=None):
+        return img
+
+
+    if opt := request.config.getoption('--img-output'):
+        base = Path(opt) / request.function.__name__
+        rid = request.node.callspec.id if hasattr(request.node, 'callspec') else None
+        if rid:
+            base = base / rid
+
+        def _do(img, name=None):
+            out = base
+            if name:
+                out = out / name
+            
+            out.parent.mkdir(parents=True, exist_ok=True)
+            img.save(out.with_suffix('.png'))
+            return img
+
+    return _do
