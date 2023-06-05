@@ -325,6 +325,7 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 
     QPainter p(&image);
     QgsRenderContext context = QgsRenderContext::fromQPainter( &p );
+    context.setFlag( Qgis::RenderContextFlag::Antialiasing, true );
 
     int dpi = mSettings->outputDpi();
     qreal dpmm = dpi / 25.4;
@@ -336,8 +337,6 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 
     QgsLegendSettings legendSettings;
     legendSettings.setSymbolSize( QSize( width / dpmm, height / dpmm ));
-//    legendSettings.setMaximumSymbolSize( width > height ? width : height );
-//    legendSettings.setMinimumSymbolSize( width < height ? width : height );
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
     processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image );
