@@ -301,6 +301,13 @@ for (id, gt, style, sizes, expected) in [
             ('secondary horizontals', dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
     ),
+    (
+        "thick_outline", Layer.GT_POLYGON, dict(file='thick-outline.qml'),
+        LEGEND_DEFAULT_SIZES,
+        (
+            (None, dict()),
+        ),
+    ),
 ]:
     for size in sizes:
         if type(size) == int:
