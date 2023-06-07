@@ -341,6 +341,7 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 
     QgsLegendSettings legendSettings;
     legendSettings.setSymbolSize( QSizeF( canvasFrac * width / dpmm, canvasFrac * height / dpmm ));
+    legendSettings.setMaximumSymbolSize( canvasFrac * height / dpmm );
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
     processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image );
