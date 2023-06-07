@@ -331,12 +331,16 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
     qreal dpmm = dpi / 25.4;
     context.painter()->scale( dpmm, dpmm );
 
+    qreal canvasFrac = 0.8;
+
     QgsLayerTreeModelLegendNode::ItemContext ctx;
     ctx.context = &context;
     ctx.painter = context.painter();
+    ctx.columnLeft = (1 - canvasFrac) / 2 * width / dpmm;
+    ctx.top = (1 - canvasFrac) / 2 * height / dpmm;
 
     QgsLegendSettings legendSettings;
-    legendSettings.setSymbolSize( QSize( width / dpmm, height / dpmm ));
+    legendSettings.setSymbolSize( QSizeF( canvasFrac * width / dpmm, canvasFrac * height / dpmm ));
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
     processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image );
