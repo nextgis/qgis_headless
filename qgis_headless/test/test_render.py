@@ -308,6 +308,13 @@ for (id, gt, style, sizes, expected) in [
             (None, dict()),
         ),
     ),
+    (
+        "big_symbol", Layer.GT_POINT, dict(file='big-symbol.qml'),
+        LEGEND_DEFAULT_SIZES,
+        (
+            (None, dict()),
+        ),
+    ),
 ]:
     for size in sizes:
         if type(size) == int:
