@@ -269,7 +269,7 @@ BLUE = (0, 0, 255, 255)
 TRANSPARENT = (0, 0, 0, 0)
 GRAY_128 = (128, 128, 128, 128)
 
-LEGEND_DEFAULT_SIZES = [(16, 18), (18, 18), ]
+LEGEND_DEFAULT_SIZES = [20, 40]
 
 legend_symbols_params = []
 for (id, gt, style, sizes, expected) in [
