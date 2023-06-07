@@ -625,3 +625,42 @@ def test_raster_dem_default_style(save_img, shared_datadir):
     assert stat.red.max == stat.green.max == stat.blue.max, "Bands max not equal"
 
     assert approx(stat.red.mean) == approx(stat.green.mean) == approx(stat.blue.mean)
+
+
+def test_label_variables(save_img, shared_datadir):
+    layer = Layer.from_ogr(str(shared_datadir / 'zero.geojson'))
+    style = Style.from_file(str(shared_datadir / 'label_variables.qml'))
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE))
+
+    stat = image_stat(img)
+
+    assert stat.red.max == 255, "Point is missing"
+    assert stat.green.max == 255, "Map unit label is missing"
+    assert stat.blue.max == 255, "Map scale label is missing"
+
+
+@pytest.mark.parametrize('qml, resolve', [
+    pytest.param('label_marker_svg.qml', True, id='svg'),
+    pytest.param('label_marker_symbol_svg.qml', True, id='symbol_svg'),
+    pytest.param('label_marker_symbol_embedded.qml', False, id='symbol_embedded'),
+])
+def test_label_marker(qml, resolve, save_img, shared_datadir):
+    layer = Layer.from_ogr(str(shared_datadir / 'zero.geojson'))
+    style = Style.from_file(str(shared_datadir / qml))
+
+    resolved = list()
+
+    def _resolver(source):
+        target = str((shared_datadir / 'marker-green' / source).resolve())
+        resolved.append(source)
+        return target
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE, svg_resolver=_resolver))
+
+    assert not resolve or resolved == ['marker.svg'], "Marker isn't resolved"
+
+    stat = image_stat(img)
+
+    assert stat.red.max == 255, "Point is missing"
+    assert stat.green.max == 255, "Label marker is missing"
