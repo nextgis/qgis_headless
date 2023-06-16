@@ -126,6 +126,21 @@ def test_svg_builtin(shared_datadir, reset_svg_paths):
     assert image_stat(img).red.max == 255, "Red marker is missing"
 
 
+@pytest.mark.parametrize('icon, svg_resolver', [
+    pytest.param('rect', None, id="rect-none"),
+    pytest.param('camera', None, id="camera-none"),
+    pytest.param('rect', lambda p: p, id="rect-dummy"),
+    pytest.param('camera', lambda p: p, id="camera-dummy"),
+])
+def test_svg_colorize(icon, svg_resolver, save_img, shared_datadir, reset_svg_paths):
+    layer = shared_datadir / 'zero.geojson'
+    style = (shared_datadir / f'zero-svg-colorize-{icon}.qml').read_text()
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE, 256, svg_resolver=svg_resolver))
+    assert image_stat(img).red.max == 255, "Red fill is missing"
+    assert image_stat(img).green.max == 255, "Green outline is missing"
+
+
 def test_svg_resolver(shared_datadir, reset_svg_paths):
     data = shared_datadir / 'zero.geojson'
     style_marker = (shared_datadir / 'zero-marker.qml').read_text()
