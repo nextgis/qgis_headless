@@ -675,8 +675,8 @@ def test_label_variables(save_img, shared_datadir):
     pytest.param('label_marker_symbol_embedded.qml', False, id='symbol_embedded'),
 ])
 def test_label_marker(qml, resolve, save_img, shared_datadir):
-    layer = Layer.from_ogr(str(shared_datadir / 'zero.geojson'))
-    style = Style.from_file(str(shared_datadir / qml))
+    layer = shared_datadir / 'zero.geojson'
+    style = (shared_datadir / qml).read_text()
 
     resolved = list()
 

@@ -58,6 +58,9 @@ def render_vector(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)
 
     if not isinstance(style, Style):
         style = Style.from_string(style, svg_resolver=svg_resolver)
+    else:
+        assert svg_resolver is None, f"ignoring svg_resolver: {svg_resolver!r}"
+
 
     req.add_layer(layer, style)
 
