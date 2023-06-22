@@ -452,7 +452,16 @@ void HeadlessRender::Style::resolveSymbol( QgsSymbol *symbol, const HeadlessRend
         {
             QgsSvgMarkerSymbolLayer *svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>( symbolLayer );
             const std::string &resolvedPath = svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
+            
+            const QColor fillColor = svgMarkerSymbolLayer->fillColor();
+            const QColor strokeColor = svgMarkerSymbolLayer->strokeColor();
+            const double strokeWidth = svgMarkerSymbolLayer->strokeWidth();
+
             svgMarkerSymbolLayer->setPath( QString::fromStdString( resolvedPath ) );
+            
+            svgMarkerSymbolLayer->setFillColor( fillColor );
+            svgMarkerSymbolLayer->setStrokeColor( strokeColor );
+            svgMarkerSymbolLayer->setStrokeWidth( strokeWidth );
         }
         else if ( symbolLayer->layerType() == SymbolLayerType::SVGFill )
         {
