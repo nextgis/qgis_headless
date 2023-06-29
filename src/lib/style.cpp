@@ -439,7 +439,7 @@ QString HeadlessRender::Style::exportToQML() const
     }
 
     QDomDocument exportedStyle;
-    qgsMapLayer->exportNamedStyle( exportedStyle, errorMessage );
+    qgsMapLayer->exportNamedStyle( exportedStyle, errorMessage,  QgsReadWriteContext(),  static_cast<QgsMapLayer::StyleCategory>( HeadlessRender::Style::DefaultImportCategories ));
 
     return exportedStyle.toString();
 }
