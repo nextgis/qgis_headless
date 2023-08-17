@@ -1,8 +1,7 @@
-import sys
 import io
 from argparse import ArgumentParser
 
-from qgis_headless import init, deinit, MapRequest, CRS, Layer, Style
+from qgis_headless import CRS, Layer, MapRequest, Style, deinit, init
 
 
 def main():

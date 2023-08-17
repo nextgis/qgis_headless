@@ -1,8 +1,4 @@
-from qgis_headless import (
-    QgisHeadlessError,
-    StyleValidationError,
-    StyleTypeMismatch,
-)
+from qgis_headless import QgisHeadlessError, StyleTypeMismatch, StyleValidationError
 
 
 def test_exception():

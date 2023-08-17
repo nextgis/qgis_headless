@@ -1,20 +1,32 @@
 import os
 import os.path
-import random
 from binascii import a2b_hex
-from packaging import version
-from tempfile import NamedTemporaryFile
 from itertools import product
+from tempfile import NamedTemporaryFile
 
 import pytest
+from packaging import version
 from pytest import approx
 
 from qgis_headless import (
-    MapRequest, CRS, Layer, LT_VECTOR, Style, set_svg_paths, get_qgis_version,
-    StyleTypeMismatch, StyleFormat,
+    CRS,
+    LT_VECTOR,
+    Layer,
+    MapRequest,
+    Style,
+    StyleFormat,
+    StyleTypeMismatch,
+    get_qgis_version,
+    set_svg_paths,
 )
 from qgis_headless.util import (
-    EXTENT_ONE, image_stat, render_raster, render_vector, to_pil, WKB_POINT_00, cmp_colors)
+    EXTENT_ONE,
+    cmp_colors,
+    image_stat,
+    render_raster,
+    render_vector,
+    to_pil,
+)
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
 

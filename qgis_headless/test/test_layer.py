@@ -1,20 +1,20 @@
+from subprocess import CalledProcessError, check_call
 from sys import executable
 from textwrap import dedent
-from datetime import date, time
 from xml.sax.saxutils import quoteattr
-from subprocess import check_call, CalledProcessError
 
 import pytest
-from qgis_headless import Layer, CRS, InvalidLayerSource
+
+from qgis_headless import CRS, InvalidLayerSource, Layer
 from qgis_headless.util import (
     EXTENT_ONE,
-    image_stat,
-    render_vector,
+    WKB_LINESTRING,
     WKB_POINT_00,
     WKB_POINT_11,
     WKB_POINTZ_000,
     WKB_POINTZ_111,
-    WKB_LINESTRING,
+    image_stat,
+    render_vector,
 )
 
 
@@ -121,7 +121,7 @@ def test_geometry_crash():
 
                 layer = Layer.from_data(Layer.GT_MULTILINESTRING, CRS.from_epsg(3857), (), (FEATURE, ))
             """)])
-        except CalledProcessError as exc:
+        except CalledProcessError:
             failed += 1
     
     assert failed == 0, "Failed for {} times of {}".format(failed, total)

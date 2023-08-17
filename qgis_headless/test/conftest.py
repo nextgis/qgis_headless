@@ -1,9 +1,11 @@
-import re
 import json
+import re
+from pathlib import Path
+
+import _qgis_headless
 import pytest
 import requests
-from pathlib import Path
-import _qgis_headless
+
 
 def pytest_addoption(parser):
     parser.addoption(

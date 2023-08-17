@@ -1,7 +1,7 @@
 import pytest
-from qgis_headless import MapRequest, CRS, Layer, Style, LT_VECTOR
-from qgis_headless.util import to_pil
 
+from qgis_headless import CRS, LT_VECTOR, Layer, MapRequest, Style
+from qgis_headless.util import to_pil
 
 SIZES = (256, 362, 512, 724, 1024)
 

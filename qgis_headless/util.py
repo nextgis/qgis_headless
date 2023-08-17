@@ -1,8 +1,7 @@
 from binascii import a2b_hex
 from collections import namedtuple
 
-from qgis_headless import MapRequest, CRS, Layer, Style, StyleFormat
-
+from qgis_headless import CRS, Layer, MapRequest, Style, StyleFormat
 
 BandStat = namedtuple("BandStat", ['min', 'max', 'mean'])
 ImageStat = namedtuple("ImageStat", ['red', 'green', 'blue', 'alpha'])

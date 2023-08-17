@@ -1,5 +1,9 @@
 from qgis_headless import (
-    CRS, Layer, MapRequest, Project, Style,
+    CRS,
+    Layer,
+    MapRequest,
+    Project,
+    Style,
 )
 from qgis_headless.util import image_stat, to_pil
 

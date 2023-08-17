@@ -12,11 +12,10 @@ from qgis_headless import (
     Layer,
     Style,
     StyleFormat,
-    StyleValidationError,
     StyleTypeMismatch,
+    StyleValidationError,
     get_qgis_version,
 )
-
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
 
