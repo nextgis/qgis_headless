@@ -28,7 +28,6 @@
 #include <qgsmemoryproviderutils.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
-#include <qgsmaplayerstylemanager.h>
 #include <QByteArray>
 
 void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )
@@ -66,13 +65,13 @@ HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
     return Layer( QgsMapLayerPtr( qgsRasterLayer ) );
 }
 
-HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::Layer::GeometryType geometryType,
+HeadlessRender::Layer HeadlessRender::Layer::fromData( HeadlessRender::LayerGeometryType geometryType,
                                                        const CRS &crs,
-                                                       const QVector<QPair<QString, HeadlessRender::Layer::AttributeType>> &attributeTypes,
+                                                       const QVector<QPair<QString, HeadlessRender::LayerAttributeType>> &attributeTypes,
                                                        const QVector<HeadlessRender::Layer::FeatureData> &featureDataList )
 {
     QgsFields fields;
-    for ( const QPair<QString, HeadlessRender::Layer::AttributeType> &attrType : attributeTypes )
+    for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
         fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
 
     QgsVectorLayer *qgsLayer = QgsMemoryProviderUtils::createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
@@ -148,28 +147,10 @@ void HeadlessRender::Layer::setRendererSymbolColor(const QColor &color)
     }
 }
 
-bool HeadlessRender::Layer::addStyle( const HeadlessRender::Style &style, QString &error )
+bool HeadlessRender::Layer::addStyle( HeadlessRender::Style &style, QString &error )
 {
-    bool success = false;
+    if ( style.format() != StyleFormat::SLD && type() != style.type() )
+        throw StyleTypeMismatch( "Layer type and style type do not match" );
 
-    if ( style.mCachedTemporaryLayer &&
-         style.mCachedTemporaryLayer->type() == mLayer->type() &&
-         !style.mCachedTemporaryLayer->styleManager()->styles().empty() )
-    {
-        const QString currentStyleName = style.mCachedTemporaryLayer->styleManager()->currentStyle();
-        const QgsMapLayerStyle currentStyle = style.mCachedTemporaryLayer->styleManager()->style( currentStyleName );
-        const QString styleName = "StyleName_" + QString::number(mLayer->styleManager()->styles().size());
-
-        mLayer->styleManager()->addStyle( styleName, currentStyle );
-        success = mLayer->styleManager()->setCurrentStyle( styleName );
-        if ( !success )
-            error = "addStyle error";
-    }
-    else
-    {
-        QDomDocument styleDocument = style.data();
-        success = Style::importToLayer( mLayer, styleDocument, error );
-    }
-
-    return success;
+    return style.importToLayer( mLayer, error );
 }

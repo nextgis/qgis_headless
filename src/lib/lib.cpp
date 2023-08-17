@@ -146,24 +146,21 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, const Style &style, const std::string &label /* = "" */ )
+int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &style, const std::string &label /* = "" */ )
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
         throw QgisHeadlessError( "Layer is null" );
 
     if ( style.isDefaultStyle())
+    {
         layer.setRendererSymbolColor( style.defaultStyleColor() );
+    }
     else
     {
-        if ( layer.type() != style.type() )
-            throw StyleTypeMismatch( "Layer type and style type do not match" );
-
         QString readStyleError;
-        bool addStyleStatus = layer.addStyle( style, readStyleError );
-
-        if ( !addStyleStatus )
-            throw QgisHeadlessError( readStyleError );
+        if ( !layer.addStyle( style, readStyleError ))
+            throw QgisHeadlessError( "Cannot add style, error message: " + readStyleError );
     }
 
     qgsMapLayer->setName( QString::fromStdString( label ) );
@@ -204,6 +201,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
 
     mSettings->setOutputSize( { width, height } );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+//    mSettings->setExtent( mSettings->fullExtent() );
 
     QgsMapRendererParallelJob job( *mSettings );
 

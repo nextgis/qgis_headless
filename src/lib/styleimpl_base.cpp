@@ -1,9 +1,8 @@
 /******************************************************************************
 *  Project: NextGIS GIS libraries
 *  Purpose: NextGIS headless renderer
-*  Author:  Denis Ilyin, denis.ilyin@nextgis.com
 *******************************************************************************
-*  Copyright (C) 2021 NextGIS, info@nextgis.ru
+*  Copyright (C) 2023 NextGIS, info@nextgis.ru
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -18,20 +17,50 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef QGIS_HEADLESS_UTILS_H
-#define QGIS_HEADLESS_UTILS_H
+#include "styleimpl_base.h"
 
-#include <qgswkbtypes.h>
-#include <qgsvectorlayer.h>
-#include <QVariant>
-#include "types.h"
+using namespace HeadlessRender;
 
-namespace HeadlessRender
+const QDomDocument &StyleImplBase::data() const
 {
-    QgsWkbTypes::Type layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType );
-    QVariant::Type layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType );
-
-    QgsMapLayerPtr createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions );
+    return mData;
 }
 
-#endif // QGIS_HEADLESS_UTILS_H
+QDomDocument &StyleImplBase::data()
+{
+    return mData;
+}
+
+QColor StyleImplBase::defaultStyleColor() const
+{
+    return mDefaultStyleParams.color;
+}
+
+bool StyleImplBase::isDefaultStyle() const
+{
+    return mDefault;
+}
+
+UsedAttributes StyleImplBase::usedAttributes() const
+{
+    return {};
+}
+
+StyleFormat StyleImplBase::format() const
+{
+    return mFormat;
+}
+
+StyleImplBase::StyleImplBase( StyleFormat format )
+    : mFormat( format )
+{
+
+}
+
+StyleImplBase::StyleImplBase( StyleFormat format, const DefaultStyleParams &params )
+    : mFormat( format )
+    , mDefault( true )
+    , mDefaultStyleParams( params )
+{
+
+}

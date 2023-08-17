@@ -38,34 +38,6 @@ namespace HeadlessRender
     class QGIS_HEADLESS_EXPORT Layer
     {
     public:
-        enum class GeometryType
-        {
-            Point,
-            LineString,
-            Polygon,
-            MultiPoint,
-            MultiLineString,
-            MultiPolygon,
-            PointZ,
-            LineStringZ,
-            PolygonZ,
-            MultiPointZ,
-            MultiLineStringZ,
-            MultiPolygonZ,
-            Unknown
-        };
-
-        enum class AttributeType
-        {
-            Integer,
-            Real,
-            String,
-            Date,
-            Time,
-            DateTime,
-            Integer64
-        };
-
         struct FeatureData
         {
             qint64 id;
@@ -77,12 +49,12 @@ namespace HeadlessRender
 
         static Layer fromOgr( const std::string &uri );
         static Layer fromGdal( const std::string &uri );
-        static Layer fromData( GeometryType geometryType, const CRS &crs, const QVector<QPair<QString, AttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
+        static Layer fromData( LayerGeometryType geometryType, const CRS &crs, const QVector<QPair<QString, LayerAttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
 
         QgsMapLayerPtr qgsMapLayer() const;
         DataType type() const;
         void setRendererSymbolColor( const QColor &color );
-        bool addStyle( const Style &style, QString &error );
+        bool addStyle( Style &style, QString &error );
 
     private:
         explicit Layer( const QgsMapLayerPtr &qgsMapLayer );

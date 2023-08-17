@@ -52,7 +52,7 @@ namespace HeadlessRender
 
         void setDpi( int dpi );
         void setCrs( const CRS &crs );
-        int addLayer( Layer &layer, const Style &style, const std::string &label = "");
+        int addLayer( Layer &layer, Style &style, const std::string &label = "");
         void addProject( const Project &project );
 
         ImagePtr renderImage( const Extent &extent, const Size &size );

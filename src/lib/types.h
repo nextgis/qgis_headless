@@ -21,6 +21,12 @@
 #ifndef QGIS_HEADLESS_TYPES_H
 #define QGIS_HEADLESS_TYPES_H
 
+#include <string>
+#include <set>
+#include <memory>
+
+class QgsMapLayer;
+
 namespace HeadlessRender
 {
     enum class DataType
@@ -37,6 +43,46 @@ namespace HeadlessRender
         Warning,
         Critical
     };
+
+    enum class LayerGeometryType
+    {
+        Point,
+        LineString,
+        Polygon,
+        MultiPoint,
+        MultiLineString,
+        MultiPolygon,
+        PointZ,
+        LineStringZ,
+        PolygonZ,
+        MultiPointZ,
+        MultiLineStringZ,
+        MultiPolygonZ,
+        Unknown
+    };
+
+    enum class LayerAttributeType
+    {
+        Integer,
+        Real,
+        String,
+        Date,
+        Time,
+        DateTime,
+        Integer64
+    };
+
+    enum class StyleFormat
+    {
+        QML,
+        SLD
+    };
+
+    typedef std::pair<bool, std::set<std::string>> UsedAttributes;
+
+    typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
+
+    typedef long StyleCategory;
 }
 
 #endif // QGIS_HEADLESS_TYPES_H

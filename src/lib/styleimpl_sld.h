@@ -1,9 +1,8 @@
 /******************************************************************************
 *  Project: NextGIS GIS libraries
 *  Purpose: NextGIS headless renderer
-*  Author:  Denis Ilyin, denis.ilyin@nextgis.com
 *******************************************************************************
-*  Copyright (C) 2021 NextGIS, info@nextgis.ru
+*  Copyright (C) 2023 NextGIS, info@nextgis.ru
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -18,20 +17,28 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef QGIS_HEADLESS_UTILS_H
-#define QGIS_HEADLESS_UTILS_H
+#ifndef QGIS_HEADLESS_SLDSTYLE_IMPL_H
+#define QGIS_HEADLESS_SLDSTYLE_IMPL_H
 
-#include <qgswkbtypes.h>
-#include <qgsvectorlayer.h>
-#include <QVariant>
-#include "types.h"
+#include "styleimpl_base.h"
 
+class QString;
 namespace HeadlessRender
 {
-    QgsWkbTypes::Type layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType );
-    QVariant::Type layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType );
+    class SLDStyleImpl : public StyleImplBase
+    {
+    public:
+        static StyleImplPtr Create( const QString &data );
 
-    QgsMapLayerPtr createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions );
+        DataType type() const override;
+        QString exportToString() const override;
+        bool importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const override;
+
+    private:
+        explicit SLDStyleImpl( const QString &data );
+
+        mutable QgsMapLayerPtr mCachedLayer; //for export
+    };
 }
 
-#endif // QGIS_HEADLESS_UTILS_H
+#endif QGIS_HEADLESS_SLDSTYLE_IMPL_H

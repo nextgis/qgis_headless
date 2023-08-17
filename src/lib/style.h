@@ -23,84 +23,56 @@
 
 #include <string>
 #include <functional>
-#include <set>
-#include <QSet>
+#include <memory>
 #include <QString>
-#include <QDomDocument>
 #include <QColor>
-#include "exceptions.h"
-#include "layer.h"
+
 #include "types.h"
 
-class QgsVectorLayer;
-class QgsRasterLayer;
-class QgsRenderContext;
-class QgsSymbol;
-class QgsVectorLayer;
-class QgsRasterLayer;
+class QDomDocument;
 
 namespace HeadlessRender
 {
-    class Layer;
+    class StyleImplBase;
     typedef std::function<std::string(const std::string &)> SvgResolverCallback;
-    typedef std::pair<bool, std::set<std::string>> UsedAttributes;
-    typedef std::shared_ptr<QgsVectorLayer> QgsVectorLayerPtr;
-    typedef std::shared_ptr<QgsRasterLayer> QgsRasterLayerPtr;
+    typedef std::shared_ptr<StyleImplBase> StyleImplPtr;
 
     class QGIS_HEADLESS_EXPORT Style
     {
     public:
-        typedef long Category;
+        static Style fromString( const std::string &string,
+                                 const SvgResolverCallback &svgResolverCallback = nullptr,
+                                 LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
+                                 DataType layerType = DataType::Unknown,
+                                 StyleFormat format = StyleFormat::QML );
 
-        Style() = default;
+        static Style fromFile( const std::string &filePath,
+                               const SvgResolverCallback &svgResolverCallback = nullptr,
+                               LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
+                               DataType layerType = DataType::Unknown,
+                               StyleFormat format = StyleFormat::QML );
 
-        static Style fromString( const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
-        static Style fromFile( const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
-        static Style fromDefaults( const QColor &color, Layer::GeometryType layerGeometryType = Layer::GeometryType::Unknown, DataType layerType = DataType::Unknown );
+        static Style fromDefaults( const QColor &color,
+                                   LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
+                                   DataType layerType = DataType::Unknown ,
+                                   StyleFormat format = StyleFormat::QML );
 
-        QDomDocument data() const;
-        HeadlessRender::UsedAttributes usedAttributes() const;
+        const QDomDocument & data() const;
+        QDomDocument & data();
+        UsedAttributes usedAttributes() const;
         DataType type() const;
+        StyleFormat format() const;
 
         bool isDefaultStyle() const;
         QColor defaultStyleColor() const;
 
-        QString exportToQML() const;
+        QString exportToString() const;
 
-        static const Category DefaultImportCategories;
-        static bool importToLayer( QgsMapLayerPtr &layer, QDomDocument &styleData, QString &errorMessage );
+        bool importToLayer( QgsMapLayerPtr &layer, QString &errorMessage );
 
     private:
-        bool validateGeometryType( Layer::GeometryType layerGeometryType ) const;
-        void removeLayerGeometryTypeElement( QDomDocument & ) const;
-        void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback ) const;
-        QDomDocument resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const;
-        bool validateStyle( QString &errorMessage ) const;
-        QgsVectorLayerPtr createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
-        QgsRasterLayerPtr createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
-        QSet<QString> referencedFields( const QgsVectorLayerPtr &layer, const QgsRenderContext &context, const QString &providerId ) const;
-        HeadlessRender::UsedAttributes readUsedAttributes() const;
-        bool hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const;
-
-        QDomDocument mData;
-        mutable DataType mType = DataType::Unknown;
-
-        struct DefaultStyleParams
-        {
-            QColor color;
-            Layer::GeometryType layerGeometryType;
-            DataType layerType;
-        };
-
-        DefaultStyleParams mDefaultStyleParams;
-        bool mDefault = false;
-
-        mutable HeadlessRender::UsedAttributes mUsedAttributesCache;
-        mutable bool mUsedAttributesCached = false;
-
-        mutable QgsMapLayerPtr mCachedTemporaryLayer;
-
-        friend class Layer;
+        Style() = default;
+        StyleImplPtr mStyleImpl;
     };
 }
 

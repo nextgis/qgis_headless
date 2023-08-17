@@ -20,56 +20,61 @@
 
 #include "utils.h"
 
-QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::Layer::GeometryType geometryType )
+QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
 {
     switch( geometryType )
     {
-    case HeadlessRender::Layer::GeometryType::Point:
+    case HeadlessRender::LayerGeometryType::Point:
         return QgsWkbTypes::Type::Point;
-    case HeadlessRender::Layer::GeometryType::LineString:
+    case HeadlessRender::LayerGeometryType::LineString:
         return QgsWkbTypes::Type::LineString;
-    case HeadlessRender::Layer::GeometryType::Polygon:
+    case HeadlessRender::LayerGeometryType::Polygon:
         return QgsWkbTypes::Type::Polygon;
-    case HeadlessRender::Layer::GeometryType::MultiPoint:
+    case HeadlessRender::LayerGeometryType::MultiPoint:
         return QgsWkbTypes::Type::MultiPoint;
-    case HeadlessRender::Layer::GeometryType::MultiLineString:
+    case HeadlessRender::LayerGeometryType::MultiLineString:
         return QgsWkbTypes::Type::MultiLineString;
-    case HeadlessRender::Layer::GeometryType::MultiPolygon:
+    case HeadlessRender::LayerGeometryType::MultiPolygon:
         return QgsWkbTypes::Type::MultiPolygon;
-    case HeadlessRender::Layer::GeometryType::PointZ:
+    case HeadlessRender::LayerGeometryType::PointZ:
         return QgsWkbTypes::Type::PointZ;
-    case HeadlessRender::Layer::GeometryType::LineStringZ:
+    case HeadlessRender::LayerGeometryType::LineStringZ:
         return QgsWkbTypes::Type::LineStringZ;
-    case HeadlessRender::Layer::GeometryType::PolygonZ:
+    case HeadlessRender::LayerGeometryType::PolygonZ:
         return QgsWkbTypes::Type::PolygonZ;
-    case HeadlessRender::Layer::GeometryType::MultiPointZ:
+    case HeadlessRender::LayerGeometryType::MultiPointZ:
         return QgsWkbTypes::Type::MultiPointZ;
-    case HeadlessRender::Layer::GeometryType::MultiLineStringZ:
+    case HeadlessRender::LayerGeometryType::MultiLineStringZ:
         return QgsWkbTypes::Type::MultiLineStringZ;
-    case HeadlessRender::Layer::GeometryType::MultiPolygonZ:
+    case HeadlessRender::LayerGeometryType::MultiPolygonZ:
         return QgsWkbTypes::Type::MultiPolygonZ;
-    case HeadlessRender::Layer::GeometryType::Unknown:
+    case HeadlessRender::LayerGeometryType::Unknown:
         return QgsWkbTypes::Type::Unknown;
     }
 }
 
-QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType( HeadlessRender::Layer::AttributeType attributeType )
+QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType )
 {
     switch( attributeType )
     {
-    case HeadlessRender::Layer::AttributeType::Integer:
+    case HeadlessRender::LayerAttributeType::Integer:
         return QVariant::Int;
-    case HeadlessRender::Layer::AttributeType::Real:
+    case HeadlessRender::LayerAttributeType::Real:
         return QVariant::Double;
-    case HeadlessRender::Layer::AttributeType::String:
+    case HeadlessRender::LayerAttributeType::String:
         return QVariant::String;
-    case HeadlessRender::Layer::AttributeType::Date:
+    case HeadlessRender::LayerAttributeType::Date:
         return QVariant::Date;
-    case HeadlessRender::Layer::AttributeType::Time:
+    case HeadlessRender::LayerAttributeType::Time:
         return QVariant::Time;
-    case HeadlessRender::Layer::AttributeType::DateTime:
+    case HeadlessRender::LayerAttributeType::DateTime:
         return QVariant::DateTime;
-    case HeadlessRender::Layer::AttributeType::Integer64:
+    case HeadlessRender::LayerAttributeType::Integer64:
         return QVariant::LongLong;
     }
+}
+
+HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions )
+{
+    return QgsMapLayerPtr( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
 }
