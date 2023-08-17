@@ -11,6 +11,7 @@ from qgis_headless import (
     LT_VECTOR,
     Layer,
     Style,
+    StyleFormat,
     StyleValidationError,
     StyleTypeMismatch,
     get_qgis_version,
@@ -111,3 +112,20 @@ def test_geom_type(shared_datadir):
     Style.from_file(point_style, layer_geometry_type=Layer.GT_POINT)
     with pytest.raises(StyleTypeMismatch):
         Style.from_file(point_style, layer_geometry_type=Layer.GT_POLYGON)
+
+
+@pytest.mark.parametrize('style, fmt, exc', (
+    ('contour-red.qml', 'QML', None),
+    ('contour-red.qml', 'SLD', StyleValidationError),
+    ('contour-red.sld', 'SLD', None),
+    ('contour-red.sld', 'QML', StyleValidationError),
+))
+def test_format(style, fmt, exc, shared_datadir):
+    style_file = shared_datadir / style
+    sfmt = getattr(StyleFormat, fmt)
+    with pytest.raises(exc) if exc is not None else contextlib.suppress():
+        Style.from_file(str(style_file), format=sfmt)
+
+    style_content = style_file.read_text()
+    with pytest.raises(exc) if exc is not None else contextlib.suppress():
+        Style.from_string(style_content, format=sfmt)
