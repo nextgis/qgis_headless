@@ -11,7 +11,7 @@ from pytest import approx
 
 from qgis_headless import (
     MapRequest, CRS, Layer, LT_VECTOR, Style, set_svg_paths, get_qgis_version,
-    StyleTypeMismatch,
+    StyleTypeMismatch, StyleFormat,
 )
 from qgis_headless.util import (
     EXTENT_ONE, image_stat, render_raster, render_vector, to_pil, WKB_POINT_00, cmp_colors)
@@ -40,6 +40,25 @@ def test_contour(save_img, shared_datadir, reset_svg_paths):
     assert 3 < stat.red.mean < 4
     assert 12 < stat.green.mean < 13
     assert 29 < stat.blue.mean < 30
+
+
+@pytest.mark.parametrize('format', ['qml', 'sld'])
+def test_format(format, save_img, shared_datadir, reset_svg_paths):
+    data = shared_datadir / 'contour.geojson'
+    style = (shared_datadir / f'contour-red.{format}').read_text()
+
+    extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
+
+    img = save_img(render_vector(
+        data, style, extent, 1024,
+        svg_resolver=lambda value: value,
+        style_format=getattr(StyleFormat, format.upper())))
+    stat = image_stat(img)
+
+    assert stat.alpha.min == 0, "No transparent pixels found"
+    assert stat.red.max == 255, "Red lines aren't visible"
+    assert stat.green.max == 0, "Green channel not empty"
+    assert stat.blue.max == 0, "Blue channel not empty"
 
 
 def test_contour_pdf(shared_datadir, reset_svg_paths):
