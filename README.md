@@ -28,11 +28,6 @@ Headless rendering library using QGIS
 
 ## Running Python Tests in Docker
 
-Ubuntu Focal Fossa:
-
-    $ docker build -t qgis_headless:focal -f Dockerfile.focal .
-    $ docker run --rm qgis_headless:focal ./pytest-runner
-
 Ubuntu Bionic Beaver:
 
     $ docker build -t qgis_headless:bionic -f Dockerfile.bionic .
