@@ -1,23 +1,26 @@
-import contextlib
+from contextlib import suppress
 from io import StringIO
 
 import pytest
 from lxml import etree
 from packaging import version
+from pytest import param
 
 from qgis_headless import (
     LT_RASTER,
     LT_UNKNOWN,
     LT_VECTOR,
+    SF_QML,
+    SF_SLD,
     Layer,
     Style,
-    StyleFormat,
     StyleTypeMismatch,
     StyleValidationError,
     get_qgis_version,
 )
 
 QGIS_VERSION = version.parse(get_qgis_version().split('-')[0])
+QGIS_312 = QGIS_VERSION >= version.parse('3.12')
 
 
 def test_non_existent_file(shared_datadir):
@@ -66,20 +69,33 @@ def test_default(params):
         assert qml_color == color
 
 
-@pytest.mark.parametrize('file, expected', (
-    pytest.param('contour-simple.qml', (), id='contour-simple'),
-    pytest.param('contour-rgb.qml', ('level', ), id='contour-rgb'),
-    pytest.param('contour-rbl.qml', ('level', ) if (QGIS_VERSION >= version.parse('3.12')) else None, id='contour-rbl'),
-    pytest.param('attributes/qgis_default.qml', (), id='qgis_default'),
-    pytest.param('attributes/osm-highway.qml', ('HIGHWAY', 'NAME_EN', 'NAME'), id='osm-highway'),
-    pytest.param('attributes/data-defined.qml', ('size', ), id='data-defined'),
-    pytest.param('attributes/rule-based-labeling.qml', ('a', 'b', 'c') if (QGIS_VERSION >= version.parse('3.12')) else None, id='rule-based-labeling'),
-    pytest.param('diagram/industries.qml', ('zern', 'ovosch', 'sad', 'vinograd', 'efir', 'skotovod', 'svinovod', 'ptitcevod', 'total'),
-                 id='diagram', marks=pytest.mark.xfail(reason='https://github.com/qgis/QGIS/issues/33810'))
+@pytest.mark.parametrize("file, expected", (
+    param("contour-simple.qml", [], id="contour-simple"),
+    param("contour-rgb.qml", ["level"], id="contour-rgb"),
+    param("contour-rbl.qml", ["level"] if QGIS_312 else None, id="contour-rbl"),
+    param("boston/highway.qml", ["HIGHWAY"], id="boston-highway-qml"),
+    param("boston/highway.sld", ["HIGHWAY"], id="boston-highway-sld"),
+    param("attributes/default.qml", [], id="default"),
+    param("attributes/osm-highway.qml", ["HIGHWAY", "NAME_EN", "NAME"], id="osm-highway"),
+    param("attributes/data-defined.qml", ["size"], id="data-defined"),
+    param("attributes/rule-based-labeling.qml", ["a", "b", "c"] if QGIS_312 else None, id="rule-based-labeling"),
+    param(
+        "diagram/industries.qml",
+        ["zern", "ovosch", "sad", "vinograd", "efir", "skotovod", "svinovod", "ptitcevod", "total"],
+        id="diagram", marks=pytest.mark.xfail(reason="https://github.com/qgis/QGIS/issues/33810"),
+    ),
 ))
 def test_attributes(file, expected, shared_datadir):
-    style = Style.from_file(str(shared_datadir / file))
+    if file.endswith(".qml"):
+        format = SF_QML
+    elif file.endswith(".sld"):
+        format = SF_SLD
+    else:
+        raise ValueError
+
+    style = Style.from_file(str(shared_datadir / file), format=format)
     assert style.used_attributes() == (set(expected) if expected is not None else None)
+
 
 
 def test_attributes_default():
@@ -97,8 +113,7 @@ def test_attributes_default():
     ('raster/rounds.qml', LT_RASTER, None),
 ))
 def test_layer_type(style, layer_type, exc, shared_datadir):
-
-    with pytest.raises(exc) if exc is not None else contextlib.suppress():
+    with pytest.raises(exc) if exc is not None else suppress():
         params = dict()
         if layer_type is not None:
             params['layer_type'] = layer_type
@@ -114,17 +129,16 @@ def test_geom_type(shared_datadir):
 
 
 @pytest.mark.parametrize('style, fmt, exc', (
-    ('contour-red.qml', 'QML', None),
-    ('contour-red.qml', 'SLD', StyleValidationError),
-    ('contour-red.sld', 'SLD', None),
-    ('contour-red.sld', 'QML', StyleValidationError),
+    ('contour-red.qml', SF_QML, None),
+    ('contour-red.qml', SF_SLD, StyleValidationError),
+    ('contour-red.sld', SF_SLD, None),
+    ('contour-red.sld', SF_QML, StyleValidationError),
 ))
 def test_format(style, fmt, exc, shared_datadir):
     style_file = shared_datadir / style
-    sfmt = getattr(StyleFormat, fmt)
-    with pytest.raises(exc) if exc is not None else contextlib.suppress():
-        Style.from_file(str(style_file), format=sfmt)
+    with pytest.raises(exc) if exc is not None else suppress():
+        Style.from_file(str(style_file), format=fmt)
 
     style_content = style_file.read_text()
-    with pytest.raises(exc) if exc is not None else contextlib.suppress():
-        Style.from_string(style_content, format=sfmt)
+    with pytest.raises(exc) if exc is not None else suppress():
+        Style.from_string(style_content, format=fmt)
