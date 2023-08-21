@@ -51,32 +51,33 @@ namespace HeadlessRender
 {
     namespace TAGS
     {
-        static const QString QGIS = "qgis";
-        static const QString LAYER_GEOMETRY_TYPE = "layerGeometryType";
-        static const QString PIPE = "pipe";
-        static const QString RASTER_PROPERTIES = "rasterproperties";
-        static const QString RASTER_RENDERER = "rasterrenderer";
-        static const QString DIAGRAM_CATEGORY = "DiagramCategory";
-        static const QString ENABLED = "enabled";
+        const QString QGIS = "qgis";
+        const QString LAYER_GEOMETRY_TYPE = "layerGeometryType";
+        const QString PIPE = "pipe";
+        const QString RASTER_PROPERTIES = "rasterproperties";
+        const QString RASTER_RENDERER = "rasterrenderer";
+        const QString DIAGRAM_CATEGORY = "DiagramCategory";
+        const QString ENABLED = "enabled";
+        const QString STYLED_LAYER_DESCRIPTOR = "StyledLayerDescriptor";
+        const QString NAMED_LAYER = "NamedLayer";
     }
 
     namespace SymbolLayerType
     {
-        static const QString SvgMarker = "SvgMarker";
-        static const QString SVGFill = "SVGFill";
+        const QString SvgMarker = "SvgMarker";
+        const QString SVGFill = "SVGFill";
     }
 
     namespace LabelingType
     {
-        static const QString RuleBased = "rule-based";
+        const QString RuleBased = "rule-based";
     }
 
     namespace ErrorString
     {
-        static const QString StyleMismatch = "Style type mismatch";
-        static const QString LayerStyleMismatch = "Layer type and style type do not match";
-        static const QString AddStyleFailed = "AddStyle failed";
-
+        const QString StyleMismatch = "Style type mismatch";
+        const QString LayerStyleMismatch = "Layer type and style type do not match";
+        const QString AddStyleFailed = "AddStyle failed";
     }
 }
 
@@ -116,30 +117,34 @@ HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &data
         break;
     case StyleFormat::SLD:
 
-        QgsVectorLayer::LayerOptions layerOptions;
-        layerOptions.fallbackWkbType = QgsWkbTypes::Point;
-
-        HeadlessRender::QgsMapLayerPtr layer = createTemporaryVectorLayer( layerOptions );
-
         QDomDocument styleDom;
         styleDom.setContent( QString::fromStdString(data), true );
 
-        const QDomElement myRoot = styleDom.firstChildElement( "StyledLayerDescriptor" );
-        const QDomElement namedLayerElem = myRoot.firstChildElement( "NamedLayer" );
+        const QDomElement myRoot = styleDom.firstChildElement( TAGS::STYLED_LAYER_DESCRIPTOR );
+        const QDomElement namedLayerElem = myRoot.firstChildElement( TAGS::NAMED_LAYER );
+
+        QgsVectorLayer::LayerOptions layerOptions;
+        if ( namedLayerElem.elementsByTagName("LineSymbolizer").size() != 0)
+            layerOptions.fallbackWkbType = QgsWkbTypes::LineString;
+        else
+            layerOptions.fallbackWkbType = QgsWkbTypes::Point;
+        HeadlessRender::QgsMapLayerPtr layer = createTemporaryVectorLayer( layerOptions );
 
         QString errorMessage;
-        bool result = layer->readSld( namedLayerElem, errorMessage );
-		//if (!result)
-		//	throw
-
-        layer->exportNamedStyle( styleDom, errorMessage,  {},  static_cast<QgsMapLayer::StyleCategory>( DefaultImportCategories ));
-
-        style.init({
-               styleDom.toString(),
-               svgResolverCallback,
-               layerGeometryType,
-               layerType
-           });
+        if (layer->readSld( namedLayerElem, errorMessage ))
+        {
+            layer->exportNamedStyle( styleDom, errorMessage,  {},  static_cast<QgsMapLayer::StyleCategory>( DefaultImportCategories ));
+            style.init({
+                   styleDom.toString(),
+                   svgResolverCallback,
+                   layerGeometryType,
+                   layerType
+               });
+        }
+        else
+        {
+            throw StyleValidationError( "Cannot import SLD style" );
+        }
 
         break;
     }
