@@ -26,20 +26,27 @@
 #include <memory>
 #include <QString>
 #include <QColor>
+#include <QDomDocument>
 
 #include "types.h"
 
 class QDomDocument;
+class QgsVectorLayer;
+class QgsRasterLayer;
+class QgsSymbol;
+class QgsRenderContext;
 
 namespace HeadlessRender
 {
-    class StyleImplBase;
     typedef std::function<std::string(const std::string &)> SvgResolverCallback;
-    typedef std::shared_ptr<StyleImplBase> StyleImplPtr;
+    typedef std::shared_ptr<QgsVectorLayer> QgsVectorLayerPtr;
+    typedef std::shared_ptr<QgsRasterLayer> QgsRasterLayerPtr;
 
     class QGIS_HEADLESS_EXPORT Style
     {
     public:
+        static const StyleCategory DefaultImportCategories;
+
         static Style fromString( const std::string &string,
                                  const SvgResolverCallback &svgResolverCallback = nullptr,
                                  LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
@@ -61,18 +68,58 @@ namespace HeadlessRender
         QDomDocument & data();
         UsedAttributes usedAttributes() const;
         DataType type() const;
-        StyleFormat format() const;
 
         bool isDefaultStyle() const;
         QColor defaultStyleColor() const;
 
-        QString exportToString() const;
+        QString exportToString( StyleFormat format = StyleFormat::QML ) const;
 
-        bool importToLayer( QgsMapLayerPtr &layer, QString &errorMessage );
+        bool importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const;
 
     private:
+        struct CreateParams
+        {
+            QString data;
+            SvgResolverCallback callback;
+            LayerGeometryType layerGeometry;
+            DataType layerType;
+        };
+
+        struct DefaultStyleParams
+        {
+            QColor color;
+            LayerGeometryType layerGeometryType;
+            DataType layerType;
+        };
+
         Style() = default;
-        StyleImplPtr mStyleImpl;
+
+        void init( const CreateParams &params );
+        void init( const DefaultStyleParams &params );
+
+        bool importToLayer( QgsMapLayerPtr &layer, QDomDocument style, QString &errorMessage ) const;
+        bool validateGeometryType( LayerGeometryType layerGeometryType ) const;
+        bool validateStyle( QString &errorMessage ) const;
+        void removeLayerGeometryTypeElement( QDomDocument & ) const;
+        void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback ) const;
+        QDomDocument resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const;
+        QgsVectorLayerPtr createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
+        QgsRasterLayerPtr createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
+        QSet<QString> referencedFields( const QgsVectorLayerPtr &layer, const QgsRenderContext &context, const QString &providerId ) const;
+        UsedAttributes readUsedAttributes() const;
+        bool hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const;
+
+        QDomDocument mData;
+
+        bool mDefault = false;
+        DefaultStyleParams mDefaultStyleParams;
+
+        mutable DataType mType = DataType::Unknown;
+
+        mutable UsedAttributes mUsedAttributesCache;
+        mutable bool mUsedAttributesCached = false;
+
+        mutable QgsMapLayerPtr mCachedTemporaryLayer;
     };
 }
 

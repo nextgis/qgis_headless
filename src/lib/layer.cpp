@@ -149,7 +149,7 @@ void HeadlessRender::Layer::setRendererSymbolColor(const QColor &color)
 
 bool HeadlessRender::Layer::addStyle( HeadlessRender::Style &style, QString &error )
 {
-    if ( style.format() != StyleFormat::SLD && type() != style.type() )
+    if ( type() != style.type() )
         throw StyleTypeMismatch( "Layer type and style type do not match" );
 
     return style.importToLayer( mLayer, error );

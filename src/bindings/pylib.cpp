@@ -223,10 +223,10 @@ PYBIND11_MODULE(_qgis_headless, m) {
             }
             return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type );
         }, pybind11::arg("color") = pybind11::none(), pybind11::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
-        .def( "to_string", []( const HeadlessRender::Style &style  )
+        .def( "to_string", []( const HeadlessRender::Style &style, const HeadlessRender::StyleFormat format  )
         {
-            return style.exportToString().toStdString();
-        });
+            return style.exportToString( format ).toStdString();
+        }, pybind11::arg("format") = HeadlessRender::StyleFormat::QML);
 
     pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
         .def( "icon", &HeadlessRender::LegendSymbol::icon )
