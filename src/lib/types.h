@@ -80,6 +80,8 @@ namespace HeadlessRender
 
     typedef std::pair<bool, std::set<std::string>> UsedAttributes;
 
+    typedef std::array<double, 2> ScaleRange;
+
     typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
     typedef long StyleCategory;

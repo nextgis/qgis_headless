@@ -200,11 +200,19 @@ PYBIND11_MODULE(_qgis_headless, m) {
                      pybind11::arg("format") = HeadlessRender::StyleFormat::QML )
         .def( "used_attributes", []( const HeadlessRender::Style &style ) -> pybind11::object
         {
-            const HeadlessRender::UsedAttributes &result = style.usedAttributes();
+            const auto &result = style.usedAttributes();
             if ( result.first )
                 return pybind11::cast( result.second );
             else
                 return pybind11::none();
+        })
+        .def( "scale_range", []( const HeadlessRender::Style &style ) -> pybind11::tuple
+        {
+            const auto &result = style.scaleRange();
+            return pybind11::make_tuple(
+                ( result[0] > 0 ) ? pybind11::cast(result[0]) : pybind11::none(),
+                ( result[1] > 0 ) ? pybind11::cast(result[1]) : pybind11::none()
+            );
         })
         .def_static( "from_defaults", []( const pybind11::object &color,
                      HeadlessRender::LayerGeometryType layer_geometry_type,

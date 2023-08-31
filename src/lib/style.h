@@ -67,6 +67,7 @@ namespace HeadlessRender
         const QDomDocument & data() const;
         QDomDocument & data();
         UsedAttributes usedAttributes() const;
+        ScaleRange scaleRange() const;
         DataType type() const;
 
         bool isDefaultStyle() const;
@@ -118,6 +119,8 @@ namespace HeadlessRender
 
         mutable UsedAttributes mUsedAttributesCache;
         mutable bool mUsedAttributesCached = false;
+
+        mutable ScaleRange mScaleRange = { -1, 0 };  // "-1" - not cached; "-2" has no scale range
 
         mutable QgsMapLayerPtr mCachedTemporaryLayer;
     };

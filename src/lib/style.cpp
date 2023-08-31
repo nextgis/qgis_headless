@@ -292,12 +292,43 @@ DataType Style::type() const
 
 UsedAttributes Style::usedAttributes() const
 {
-    if (!mUsedAttributesCached)
+    if ( !mUsedAttributesCached )
     {
         mUsedAttributesCache = readUsedAttributes();
         mUsedAttributesCached = true;
     }
     return mUsedAttributesCache;
+}
+
+ScaleRange Style::scaleRange() const
+{
+    if ( mScaleRange[0] == -1 )
+    {
+        if ( isDefaultStyle() )
+            mScaleRange[0] = -2;
+        else
+        {
+            QgsMapLayerPtr qgsMapLayer;
+            QString errorMessage;
+
+            if ( mType == DataType::Raster )
+                qgsMapLayer = createTemporaryRasterLayerWithStyle( errorMessage );
+            else
+                qgsMapLayer = createTemporaryVectorLayerWithStyle( errorMessage );
+
+            if ( !qgsMapLayer )
+                throw QgisHeadlessError( errorMessage );
+
+            if ( !qgsMapLayer->hasScaleBasedVisibility() )
+                mScaleRange[0] = -2;
+            else
+            {
+                mScaleRange[0] = qgsMapLayer->minimumScale();
+                mScaleRange[1] = qgsMapLayer->maximumScale();
+            }
+        }
+    }
+    return mScaleRange;
 }
 
 bool Style::isDefaultStyle() const

@@ -104,6 +104,21 @@ def test_attributes_default():
     assert attrs == set()
 
 
+@pytest.mark.parametrize("style_fn, expected", (
+    param("scale/100_10.qml", (100000, 10000), id="100-10"),
+    param("scale/min_50.qml", (50000, None), id="min-50"),
+    param("scale/max_50.qml", (None, 50000), id="max-50"),
+    param(None, (None, None), id="default"),
+))
+def test_scale_range(style_fn, expected, shared_datadir):
+    if style_fn is None:
+        style = Style.from_defaults()
+    else:
+        style = Style.from_file(str(shared_datadir / style_fn))
+
+    assert style.scale_range() == expected
+
+
 @pytest.mark.parametrize('style, layer_type, exc', (
     ('point-style.qml', LT_UNKNOWN, None),
     ('point-style.qml', LT_VECTOR, None),
