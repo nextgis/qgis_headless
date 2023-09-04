@@ -157,3 +157,9 @@ def test_format(style, fmt, exc, shared_datadir):
     style_content = style_file.read_text()
     with pytest.raises(exc) if exc is not None else suppress():
         Style.from_string(style_content, format=fmt)
+
+
+def test_tostring(shared_datadir):
+    style_file = shared_datadir / 'raster/rounds.qml'
+    style = Style.from_file(str(style_file), layer_type=LT_RASTER)
+    style.to_string()
