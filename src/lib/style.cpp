@@ -124,7 +124,9 @@ HeadlessRender::Style HeadlessRender::Style::fromString( const std::string &data
         const QDomElement namedLayerElem = myRoot.firstChildElement( TAGS::NAMED_LAYER );
 
         QgsVectorLayer::LayerOptions layerOptions;
-        if ( namedLayerElem.elementsByTagName("LineSymbolizer").size() != 0)
+        if ( namedLayerElem.elementsByTagName("PolygonSymbolizer").size() != 0)
+            layerOptions.fallbackWkbType = QgsWkbTypes::Polygon;
+        else if ( namedLayerElem.elementsByTagName("LineSymbolizer").size() != 0)
             layerOptions.fallbackWkbType = QgsWkbTypes::LineString;
         else
             layerOptions.fallbackWkbType = QgsWkbTypes::Point;
