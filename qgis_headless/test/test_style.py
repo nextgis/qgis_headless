@@ -163,3 +163,12 @@ def test_tostring(shared_datadir):
     style_file = shared_datadir / 'raster/rounds.qml'
     style = Style.from_file(str(style_file), layer_type=LT_RASTER)
     style.to_string()
+
+
+@pytest.mark.parametrize('style, gt', (
+    pytest.param('sld/point.sld', Layer.GT_POINT, id='point'),
+    pytest.param('contour-red.sld', Layer.GT_LINESTRING, id='line'),
+    pytest.param('sld/polygon.sld', Layer.GT_POLYGON, id='polygon'),
+))
+def test_sld(style, gt, save_img, shared_datadir):
+    Style.from_file(str(shared_datadir / style), format=SF_SLD, layer_geometry_type=gt)
