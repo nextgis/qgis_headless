@@ -3,7 +3,7 @@
 #  Purpose:  CMake build scripts
 #  Author:   Denis Ilyin, denis.ilyin@nextgis.com
 ################################################################################
-#  Copyright (C) 2020, NextGIS <info@nextgis.com>
+#  Copyright (C) 2020-2023, NextGIS <info@nextgis.com>
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -49,4 +49,12 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   install(TARGETS ${PY_LIB_NAME}
     LIBRARY DESTINATION ${INSTALL_LIB_DIR}
   )
+  set(PY_FILES
+    ${CMAKE_SOURCE_DIR}/qgis_headless/__init__.py
+    ${CMAKE_SOURCE_DIR}/qgis_headless/script.py
+    ${CMAKE_SOURCE_DIR}/qgis_headless/util.py
+  )
+  install(FILES ${PY_FILES} DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless COMPONENT python)
+  install(FILES ${CMAKE_SOURCE_DIR}/qgis_headless/_qgis_headless.py.tmplt DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless COMPONENT python RENAME _qgis_headless.py)
+ 
 endif()
