@@ -313,7 +313,7 @@ ScaleRange Style::scaleRange() const
             QgsMapLayerPtr qgsMapLayer;
             QString errorMessage;
 
-            if ( mType == DataType::Raster )
+            if ( type() == DataType::Raster )
                 qgsMapLayer = createTemporaryRasterLayerWithStyle( errorMessage );
             else
                 qgsMapLayer = createTemporaryVectorLayerWithStyle( errorMessage );
@@ -634,7 +634,7 @@ QString Style::exportToString( const StyleFormat format ) const
     }
     else
     {
-        if ( mType == DataType::Raster )
+        if ( type() == DataType::Raster )
             qgsMapLayer = createTemporaryRasterLayerWithStyle( errorMessage );
         else
             qgsMapLayer = createTemporaryVectorLayerWithStyle( errorMessage );
