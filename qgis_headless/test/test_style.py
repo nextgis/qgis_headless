@@ -159,9 +159,15 @@ def test_format(style, fmt, exc, shared_datadir):
         Style.from_string(style_content, format=fmt)
 
 
-def test_tostring(shared_datadir):
-    style_file = shared_datadir / 'raster/rounds.qml'
-    style = Style.from_file(str(style_file), layer_type=LT_RASTER)
+@pytest.mark.parametrize('data, params', (
+    ('raster/inverted.qml', dict()),
+    ('raster/rounds.qml', dict(layer_type=LT_RASTER)),
+    ('zero-red-circle.qml', dict()),
+    ('zero-red-circle.qml', dict(layer_type=LT_VECTOR)),
+))
+def test_tostring(data, params, shared_datadir):
+    style_file = shared_datadir / data
+    style = Style.from_file(str(style_file), **params)
     style.to_string()
 
 
