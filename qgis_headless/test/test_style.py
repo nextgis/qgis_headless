@@ -153,37 +153,30 @@ def test_geom_type(shared_datadir):
 
 
 @pytest.mark.parametrize(
-    "style, fmt, exc",
+    "style, fmt, layer_type, exc",
     (
-        ("contour/red.qml", SF_QML, None),
-        ("contour/red.qml", SF_SLD, StyleValidationError),
-        ("contour/red.sld", SF_SLD, None),
-        ("contour/red.sld", SF_QML, StyleValidationError),
+        ("contour/red.qml", SF_QML, LT_VECTOR, None),
+        ("contour/red.qml", SF_QML, LT_RASTER, StyleTypeMismatch),
+        ("contour/red.qml", SF_SLD, LT_VECTOR, StyleValidationError),
+        ("contour/red.sld", SF_SLD, LT_VECTOR, None),
+        ("contour/red.sld", SF_SLD, LT_RASTER, StyleTypeMismatch),
+        ("contour/red.sld", SF_QML, LT_VECTOR, StyleValidationError),
+        ("raster/inverted.qml", SF_QML, LT_RASTER, None),
+        ("raster/inverted.qml", SF_QML, LT_VECTOR, StyleTypeMismatch),
+        ("raster/inverted.qml", SF_SLD, LT_RASTER, StyleValidationError),
+        ("raster/rounds.qml", SF_QML, LT_RASTER, None),
     ),
 )
-def test_format(style, fmt, exc, shared_datadir):
+def test_format(style, fmt, layer_type, exc, shared_datadir):
     style_file = shared_datadir / style
     with pytest.raises(exc) if exc is not None else suppress():
-        Style.from_file(str(style_file), format=fmt)
-
-    style_content = style_file.read_text()
-    with pytest.raises(exc) if exc is not None else suppress():
-        Style.from_string(style_content, format=fmt)
-
-
-@pytest.mark.parametrize(
-    "data, params",
-    (
-        ("raster/inverted.qml", dict()),
-        ("raster/rounds.qml", dict(layer_type=LT_RASTER)),
-        ("zero/red-circle.qml", dict()),
-        ("zero/red-circle.qml", dict(layer_type=LT_VECTOR)),
-    ),
-)
-def test_tostring(data, params, shared_datadir):
-    style_file = shared_datadir / data
-    style = Style.from_file(str(style_file), **params)
-    style.to_string()
+        style = Style.from_file(str(style_file), format=fmt, layer_type=layer_type)
+        for export_fmt in (SF_QML, SF_SLD):
+            Style.from_string(
+                style.to_string(format=export_fmt),
+                format=export_fmt,
+                layer_type=layer_type,
+            )
 
 
 @pytest.mark.parametrize(
