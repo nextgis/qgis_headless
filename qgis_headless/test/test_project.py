@@ -9,7 +9,7 @@ from qgis_headless.util import image_stat, to_pil
 
 
 def test_single(shared_datadir):
-    project = Project.from_file(str(shared_datadir / 'projects/magadan/project.qgz'))
+    project = Project.from_file(str(shared_datadir / "projects/magadan/project.qgz"))
 
     req = MapRequest()
     req.set_dpi(96)
@@ -24,9 +24,9 @@ def test_single(shared_datadir):
 
 
 def test_with_layer(shared_datadir):
-    layer = Layer.from_ogr(str(shared_datadir / 'zero.geojson'))
-    style = Style.from_file(str(shared_datadir / 'zero-red-circle.qml'))
-    project = Project.from_file(str(shared_datadir / 'projects/magadan/project.qgz'))
+    layer = Layer.from_ogr(str(shared_datadir / "zero.geojson"))
+    style = Style.from_file(str(shared_datadir / "zero-red-circle.qml"))
+    project = Project.from_file(str(shared_datadir / "projects/magadan/project.qgz"))
 
     req = MapRequest()
     req.set_dpi(96)

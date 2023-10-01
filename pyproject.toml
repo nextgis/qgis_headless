@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qgis_headless"
+description = "QGIS headless rendering library"
+authors = [{ name = "NextGIS", email = "info@nextgis.com" }]
+license = { text = "GPL" }
+requires-python = ">3.8"
+dynamic = ["version"]
+
+[project.scripts]
+qgis_headless = "qgis_headless.script:main"
+
+[project.optional-dependencies]
+tests = [
+    "lxml",
+    "pytest",
+    "pytest-datadir",
+    "pytest-benchmark",
+    "requests",
+    "pillow",
+]
+
+[tool.setuptools]
+packages = ["qgis_headless"]
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = { file = "VERSION" }
+
+[tool.black]
+line-length = 99
+
+[tool.ruff]
+line-length = 99
+select = ["E", "F", "W", "I", "TID251"]
+ignore = ["E501"]

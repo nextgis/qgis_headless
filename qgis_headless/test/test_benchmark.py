@@ -6,8 +6,8 @@ from qgis_headless.util import to_pil
 SIZES = (256, 362, 512, 724, 1024)
 
 
-@pytest.mark.benchmark(group='empty')
-@pytest.mark.parametrize('size', SIZES)
+@pytest.mark.benchmark(group="empty")
+@pytest.mark.parametrize("size", SIZES)
 def test_empty(size, benchmark):
     mreq = MapRequest()
     mreq.set_dpi(96)
@@ -19,11 +19,11 @@ def test_empty(size, benchmark):
     benchmark(_render_image)
 
 
-@pytest.mark.benchmark(group='contour')
-@pytest.mark.parametrize('size', SIZES)
+@pytest.mark.benchmark(group="contour")
+@pytest.mark.parametrize("size", SIZES)
 def test_contour(size, benchmark, shared_datadir):
-    data = (shared_datadir / 'contour.geojson').read_text()  
-    style = (shared_datadir / 'contour-simple.qml').read_text()
+    data = (shared_datadir / "contour.geojson").read_text()
+    style = (shared_datadir / "contour-simple.qml").read_text()
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
     mreq = MapRequest()
@@ -38,7 +38,10 @@ def test_contour(size, benchmark, shared_datadir):
 
 
 @pytest.mark.benchmark(group="bloat")
-@pytest.mark.parametrize('payload', ['default', 'string'] + [2 ** i for i in (8, 10, 12, 14, 16, 18)])
+@pytest.mark.parametrize(
+    "payload",
+    ["default", "string"] + [2**i for i in (8, 10, 12, 14, 16, 18)],
+)
 def test_bloat(payload, benchmark):
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -47,16 +50,17 @@ def test_bloat(payload, benchmark):
     style = Style.from_defaults(
         layer_type=LT_VECTOR,
         layer_geometry_type=Layer.GT_LINESTRING,
-        color=(255, 0, 0, 255))
-    
+        color=(255, 0, 0, 255),
+    )
+
     if payload != "default":
         qml = style.to_string()
         if payload != "string":
-            inspos = len(qml) - len('</qgis>') - 1
+            inspos = len(qml) - len("</qgis>") - 1
             qml_head = qml[:inspos]
             qml_tail = qml[inspos:]
-            assert qml_tail.strip() == '</qgis>'
-            baloon = '<!-- baloon -->\n'
+            assert qml_tail.strip() == "</qgis>"
+            baloon = "<!-- baloon -->\n"
             qml = qml_head + (baloon * payload) + qml_tail
         style = Style.from_string(qml)
 

@@ -3,26 +3,24 @@ from collections import namedtuple
 
 from qgis_headless import CRS, Layer, MapRequest, Style, StyleFormat
 
-BandStat = namedtuple("BandStat", ['min', 'max', 'mean'])
-ImageStat = namedtuple("ImageStat", ['red', 'green', 'blue', 'alpha'])
+BandStat = namedtuple("BandStat", ["min", "max", "mean"])
+ImageStat = namedtuple("ImageStat", ["red", "green", "blue", "alpha"])
 
 EXTENT_ONE = (-0.5, -0.5, 0.5, 0.5)
 
-# Sample WKB geometries
-
-WKB_POINT_00 = a2b_hex('010100000000000000000000000000000000000000')  # POINT(0 0)
-WKB_POINT_11 = a2b_hex('0101000000000000000000f03f000000000000f03f')  # POINT(1 1)
-
-WKB_POINTZ_000 = a2b_hex('0101000080000000000000000000000000000000000000000000000000')  # POINT Z(0 0 0)
-WKB_POINTZ_111 = a2b_hex('0101000080000000000000f03f000000000000f03f000000000000f03f')  # POINT Z(1 1 1)
-
-WKB_LINESTRING = a2b_hex('01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f')  # LINESTRING(0 0, 1 1)
+# fmt: off
+WKB_POINT_00 = a2b_hex("010100000000000000000000000000000000000000")  # POINT(0 0)
+WKB_POINT_11 = a2b_hex("0101000000000000000000f03f000000000000f03f")  # POINT(1 1)
+WKB_POINTZ_000 = a2b_hex("0101000080000000000000000000000000000000000000000000000000")  # POINT Z(0 0 0)
+WKB_POINTZ_111 = a2b_hex("0101000080000000000000f03f000000000000f03f000000000000f03f")  # POINT Z(1 1 1)
+WKB_LINESTRING = a2b_hex("01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f")  # LINESTRING(0 0, 1 1)
+# fmt: on
 
 
 def to_pil(source):
     from PIL import Image  # Optional dependency
 
-    im = Image.frombuffer('RGBA', source.size(), source.to_bytes(), 'raw')
+    im = Image.frombuffer("RGBA", source.size(), source.to_bytes(), "raw")
 
     # Keep reference to the original image, thus the source image won't be
     # destroyed before PIL image
@@ -35,17 +33,21 @@ def image_stat(image):
     from PIL.ImageStat import Stat  # Optional dependency
 
     stat = Stat(image)
-    return ImageStat(*[
-        BandStat(stat.extrema[b][0], stat.extrema[b][1], stat.mean[b])
-        for b in range(4)
-    ])
+    return ImageStat(
+        *[BandStat(stat.extrema[b][0], stat.extrema[b][1], stat.mean[b]) for b in range(4)]
+    )
+
 
 def cmp_colors(a, b):
-    return float(sum((ca - cb)**2 for ca, cb in zip(a, b)))
+    return float(sum((ca - cb) ** 2 for ca, cb in zip(a, b)))
 
 
 def render_vector(
-    layer, style, extent, size=(256, 256), dpi=96,
+    layer,
+    style,
+    extent,
+    size=(256, 256),
+    dpi=96,
     crs=CRS.from_epsg(3857),
     svg_resolver=None,
     style_format=None,
@@ -62,12 +64,13 @@ def render_vector(
 
     if not isinstance(style, Style):
         style = Style.from_string(
-            style, svg_resolver=svg_resolver,
-            format=style_format if style_format else StyleFormat.QML)
+            style,
+            svg_resolver=svg_resolver,
+            format=style_format if style_format else StyleFormat.QML,
+        )
     else:
         assert svg_resolver is None, f"ignoring svg_resolver: {svg_resolver!r}"
         assert style_format is None, f"ignoring style_format: {style_format!r}"
-
 
     req.add_layer(layer, style)
 
