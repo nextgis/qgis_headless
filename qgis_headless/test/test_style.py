@@ -76,11 +76,11 @@ def test_default(params):
     "file, expected",
     (
         # fmt: off
-        param("contour-simple.qml", [], id="contour-simple"),
-        param("contour-rgb.qml", ["level"], id="contour-rgb"),
-        param("contour-rbl.qml", ["level"] if QGIS_312 else None, id="contour-rbl"),
-        param("boston/highway.qml", ["HIGHWAY"], id="boston-highway-qml"),
-        param("boston/highway.sld", ["HIGHWAY"], id="boston-highway-sld"),
+        param("contour/simple.qml", [], id="contour/simple"),
+        param("contour/rgb.qml", ["level"], id="contour/rgb"),
+        param("contour/rbl.qml", ["level"] if QGIS_312 else None, id="contour/rbl"),
+        param("boston/highway.qml", ["HIGHWAY"], id="boston/highway-qml"),
+        param("boston/highway.sld", ["HIGHWAY"], id="boston/highway-sld"),
         param("attributes/default.qml", [], id="default"),
         param("attributes/osm-highway.qml", ["HIGHWAY", "NAME_EN", "NAME"], id="osm-highway"),
         param("attributes/data-defined.qml", ["size"], id="data-defined"),
@@ -155,10 +155,10 @@ def test_geom_type(shared_datadir):
 @pytest.mark.parametrize(
     "style, fmt, exc",
     (
-        ("contour-red.qml", SF_QML, None),
-        ("contour-red.qml", SF_SLD, StyleValidationError),
-        ("contour-red.sld", SF_SLD, None),
-        ("contour-red.sld", SF_QML, StyleValidationError),
+        ("contour/red.qml", SF_QML, None),
+        ("contour/red.qml", SF_SLD, StyleValidationError),
+        ("contour/red.sld", SF_SLD, None),
+        ("contour/red.sld", SF_QML, StyleValidationError),
     ),
 )
 def test_format(style, fmt, exc, shared_datadir):
@@ -176,8 +176,8 @@ def test_format(style, fmt, exc, shared_datadir):
     (
         ("raster/inverted.qml", dict()),
         ("raster/rounds.qml", dict(layer_type=LT_RASTER)),
-        ("zero-red-circle.qml", dict()),
-        ("zero-red-circle.qml", dict(layer_type=LT_VECTOR)),
+        ("zero/red-circle.qml", dict()),
+        ("zero/red-circle.qml", dict(layer_type=LT_VECTOR)),
     ),
 )
 def test_tostring(data, params, shared_datadir):
@@ -190,7 +190,7 @@ def test_tostring(data, params, shared_datadir):
     "style, gt",
     (
         pytest.param("sld/point.sld", Layer.GT_POINT, id="point"),
-        pytest.param("contour-red.sld", Layer.GT_LINESTRING, id="line"),
+        pytest.param("contour/red.sld", Layer.GT_LINESTRING, id="line"),
         pytest.param("sld/polygon.sld", Layer.GT_POLYGON, id="polygon"),
     ),
 )

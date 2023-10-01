@@ -36,8 +36,8 @@ EPSG_3395_WKT = 'PROJCS["WGS 84 / World Mercator",GEOGCS["WGS 84",DATUM["WGS_198
 
 
 def test_contour(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "contour.geojson"
-    style = (shared_datadir / "contour-rgb.qml").read_text()
+    data = shared_datadir / "contour/data.geojson"
+    style = (shared_datadir / "contour/rgb.qml").read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -56,8 +56,8 @@ def test_contour(save_img, shared_datadir, reset_svg_paths):
 
 @pytest.mark.parametrize("format", ["qml", "sld"])
 def test_format(format, save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "contour.geojson"
-    style = (shared_datadir / f"contour-red.{format}").read_text()
+    data = shared_datadir / "contour/data.geojson"
+    style = (shared_datadir / f"contour/red.{format}").read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -80,8 +80,8 @@ def test_format(format, save_img, shared_datadir, reset_svg_paths):
 
 
 def test_contour_pdf(shared_datadir, reset_svg_paths):
-    layer = Layer.from_ogr(str(shared_datadir / "contour.geojson"))
-    style = Style.from_file(str(shared_datadir / "contour-rgb.qml"))
+    layer = Layer.from_ogr(str(shared_datadir / "contour/data.geojson"))
+    style = Style.from_file(str(shared_datadir / "contour/rgb.qml"))
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -96,8 +96,8 @@ def test_contour_pdf(shared_datadir, reset_svg_paths):
 
 
 def test_opacity(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "contour.geojson"
-    style = (shared_datadir / "contour-opacity.qml").read_text()
+    data = shared_datadir / "contour/data.geojson"
+    style = (shared_datadir / "contour/opacity.qml").read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -109,8 +109,8 @@ def test_opacity(save_img, shared_datadir, reset_svg_paths):
 
 
 def test_rule_based_labeling(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "contour.geojson"
-    style = (shared_datadir / "contour-rbl.qml").read_text()
+    data = shared_datadir / "contour/data.geojson"
+    style = (shared_datadir / "contour/rbl.qml").read_text()
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -122,8 +122,8 @@ def test_rule_based_labeling(save_img, shared_datadir, reset_svg_paths):
 
 
 def test_marker_simple(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-marker.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/marker.qml").read_text()
 
     set_svg_paths([str(shared_datadir / "marker-blue")])
     img = save_img(render_vector(data, style, EXTENT_ONE, 256))
@@ -134,8 +134,8 @@ def test_marker_simple(save_img, shared_datadir, reset_svg_paths):
 
 
 def test_marker_change(shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-marker.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/marker.qml").read_text()
 
     # Render with blue marker in SVG paths
     set_svg_paths([str(shared_datadir / "marker-blue")])
@@ -153,8 +153,8 @@ def test_marker_change(shared_datadir, reset_svg_paths):
     reason="Builtin SVG icons are missing",
 )
 def test_svg_builtin(shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-builtin.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/builtin.qml").read_text()
 
     set_svg_paths(["/usr/share/qgis/svg"])
 
@@ -175,8 +175,8 @@ def test_svg_builtin(shared_datadir, reset_svg_paths):
     ],
 )
 def test_svg_colorize(icon, svg_resolver, save_img, shared_datadir, reset_svg_paths):
-    layer = shared_datadir / "zero.geojson"
-    style = (shared_datadir / f"zero-svg-colorize-{icon}.qml").read_text()
+    layer = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / f"zero/svg-colorize-{icon}.qml").read_text()
 
     img = save_img(render_vector(layer, style, EXTENT_ONE, 256, svg_resolver=svg_resolver))
     assert image_stat(img).red.max == 255, "Red fill is missing"
@@ -184,8 +184,8 @@ def test_svg_colorize(icon, svg_resolver, save_img, shared_datadir, reset_svg_pa
 
 
 def test_svg_resolver(shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style_marker = (shared_datadir / "zero-marker.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style_marker = (shared_datadir / "zero/marker.qml").read_text()
 
     color = None
     resolved = list()
@@ -218,7 +218,7 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     assert resolved == ["marker.svg"], "Marker isn't resolved"
     assert stat.red.min == stat.green.min == stat.blue.min == 0, "Black question mark is missing"
 
-    style_svg_fill = (shared_datadir / "zero-svg-fill.qml").read_text()
+    style_svg_fill = (shared_datadir / "zero/svg-fill.qml").read_text()
 
     color = "blue"
     resolved.clear()
@@ -233,8 +233,8 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     reason="Fetching marker by URL may fail in QGIS < 3.14",
 )
 def test_marker_url(save_img, shared_datadir, reset_svg_paths, capfd):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-marker-url.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/marker-url.qml").read_text()
 
     img = save_img(render_vector(data, style, EXTENT_ONE, 256))
 
@@ -246,8 +246,8 @@ def test_marker_url(save_img, shared_datadir, reset_svg_paths, capfd):
 
 
 def test_svg_cache(shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-marker.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/marker.qml").read_text()
     marker = (shared_datadir / "marker-blue" / "marker.svg").resolve()
 
     layer = Layer.from_ogr(str(data))
@@ -280,8 +280,8 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
 
 
 def test_legend(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "contour.geojson"
-    style = (shared_datadir / "contour-rgb.qml").read_text()
+    data = shared_datadir / "contour/data.geojson"
+    style = (shared_datadir / "contour/rgb.qml").read_text()
 
     req = MapRequest()
     req.set_dpi(96)
@@ -323,7 +323,7 @@ for id, gt, style, sizes, expected in [
     (
         "zero_red_circle",
         Layer.GT_POINT,
-        dict(file="zero-red-circle.qml"),
+        dict(file="zero/red-circle.qml"),
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         [
             (None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=RED)),
@@ -353,7 +353,7 @@ for id, gt, style, sizes, expected in [
     (
         "contour_rgb",
         Layer.GT_LINESTRING,
-        dict(file="contour-rgb.qml"),
+        dict(file="contour/rgb.qml"),
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
             ("primary horizontals", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
@@ -432,8 +432,8 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
 
 
 def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-marker.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/marker.qml").read_text()
 
     set_svg_paths([str(shared_datadir / "marker-blue")])
 
@@ -451,8 +451,8 @@ def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
 
 
 def test_legend_svg_resolver(save_img, shared_datadir, reset_svg_paths):
-    data = shared_datadir / "zero.geojson"
-    style = (shared_datadir / "zero-marker.qml").read_text()
+    data = shared_datadir / "zero/data.geojson"
+    style = (shared_datadir / "zero/marker.qml").read_text()
     marker = (shared_datadir / "marker-blue" / "marker.svg").resolve()
 
     req = MapRequest()
@@ -505,7 +505,7 @@ def test_render_crs(crs, extent, extent_empty, save_img, shared_datadir):
     source_crs = CRS.from_epsg(4326)
     layer = Layer.from_data(Layer.GT_POINT, source_crs, tuple(), ((1, WKB_MSC, tuple()),))
 
-    style = (shared_datadir / "zero-red-circle.qml").read_text()
+    style = (shared_datadir / "zero/red-circle.qml").read_text()
 
     img = save_img(render_vector(layer, style, extent, 1024, crs=crs), "vector")
     stat = image_stat(img)
@@ -655,7 +655,7 @@ def test_vector_layer_raster_style(shared_datadir):
     [
         pytest.param(data, color, id=f"{data}-{color}")
         for data, color in product(
-            ["zero", "line", "poly"],
+            ["zero/data.geojson", "line.geojson", "poly.geojson"],
             (
                 (0, 0, 0, 0),
                 (0, 0, 0, 255),
@@ -666,7 +666,7 @@ def test_vector_layer_raster_style(shared_datadir):
     ],
 )
 def test_vector_default_style(data, color, save_img, shared_datadir):
-    data = shared_datadir / (data + ".geojson")
+    data = shared_datadir / data
     style = Style.from_defaults(color=color)
 
     size = 64
@@ -732,8 +732,8 @@ def test_raster_dem_default_style(save_img, shared_datadir):
 
 
 def test_label_variables(save_img, shared_datadir):
-    layer = Layer.from_ogr(str(shared_datadir / "zero.geojson"))
-    style = Style.from_file(str(shared_datadir / "label_variables.qml"))
+    layer = Layer.from_ogr(str(shared_datadir / "zero/data.geojson"))
+    style = Style.from_file(str(shared_datadir / "zero/label/variables.qml"))
 
     img = save_img(render_vector(layer, style, EXTENT_ONE))
 
@@ -747,13 +747,13 @@ def test_label_variables(save_img, shared_datadir):
 @pytest.mark.parametrize(
     "qml, resolve",
     [
-        pytest.param("label_marker_svg.qml", True, id="svg"),
-        pytest.param("label_marker_symbol_svg.qml", True, id="symbol_svg"),
-        pytest.param("label_marker_symbol_embedded.qml", False, id="symbol_embedded"),
+        pytest.param("zero/label/marker-svg.qml", True, id="svg"),
+        pytest.param("zero/label/marker-symbol-svg.qml", True, id="symbol_svg"),
+        pytest.param("zero/label/marker-symbol-embedded.qml", False, id="symbol_embedded"),
     ],
 )
 def test_label_marker(qml, resolve, save_img, shared_datadir):
-    layer = shared_datadir / "zero.geojson"
+    layer = shared_datadir / "zero/data.geojson"
     style = (shared_datadir / qml).read_text()
 
     resolved = list()

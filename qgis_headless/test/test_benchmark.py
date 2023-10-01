@@ -22,8 +22,8 @@ def test_empty(size, benchmark):
 @pytest.mark.benchmark(group="contour")
 @pytest.mark.parametrize("size", SIZES)
 def test_contour(size, benchmark, shared_datadir):
-    data = (shared_datadir / "contour.geojson").read_text()
-    style = (shared_datadir / "contour-simple.qml").read_text()
+    data = (shared_datadir / "contour/data.geojson").read_text()
+    style = (shared_datadir / "contour/simple.qml").read_text()
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
     mreq = MapRequest()
