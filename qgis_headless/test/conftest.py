@@ -1,3 +1,4 @@
+import gc
 import json
 import re
 from pathlib import Path
@@ -19,7 +20,13 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session", autouse=True)
 def setup():
     _qgis_headless.init([])
+
     yield
+
+    # Force garbage collection before qgis deinitialization. In case of
+    # destroying Layers and Styles after deinit() will cause segmentation fault.
+    gc.collect()
+
     _qgis_headless.deinit()
 
 
