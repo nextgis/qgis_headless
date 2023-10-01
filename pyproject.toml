@@ -16,11 +16,13 @@ qgis_headless = "qgis_headless.script:main"
 [project.optional-dependencies]
 tests = [
     "lxml",
-    "pytest",
-    "pytest-datadir",
-    "pytest-benchmark",
-    "requests",
     "pillow",
+    "pytest-benchmark",
+    "pytest-datadir",
+    "pytest-timeout",
+    "pytest",
+    "requests",
+    "uwsgi",
 ]
 
 [tool.setuptools]
