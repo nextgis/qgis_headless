@@ -22,7 +22,6 @@
 
 #include "version.h"
 #include <qgsnetworkaccessmanager.h>
-#include <qgsmaprendererparalleljob.h>
 #include <qgslegendrenderer.h>
 #include <qgslegendsettings.h>
 #include <qgslayertreemodel.h>
@@ -199,16 +198,18 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     int width = std::get<0>( size );
     int height = std::get<1>( size );
 
+    QImage img( width, height, QImage::Format_ARGB32_Premultiplied );
+    img.fill( Qt::transparent );
+
+    QPainter painter( &img );
+
     mSettings->setOutputSize( { width, height } );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-//    mSettings->setExtent( mSettings->fullExtent() );
 
-    QgsMapRendererParallelJob job( *mSettings );
+    QgsMapRendererCustomPainterJob job( *mSettings, &painter );
+    job.renderSynchronously();
 
-    job.start();
-    job.waitForFinished();
-
-    return std::make_shared<HeadlessRender::Image>( job.renderedImage() );
+    return std::make_shared<HeadlessRender::Image>( img );
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size /* = Size() */ )
