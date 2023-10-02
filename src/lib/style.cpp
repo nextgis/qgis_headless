@@ -37,11 +37,8 @@
 #include <qgslinesymbollayer.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgsmaplayerstylemanager.h>
+#include <qgsrulebasedlabeling.h>
 #include <QFile>
-
-#if VERSION_INT >= 31200
-#	include <qgsrulebasedlabeling.h>
-#endif
 
 #if VERSION_INT >= 33000
 #	include <qgsdiagramrenderer.h>
@@ -412,23 +409,15 @@ UsedAttributes Style::readUsedAttributes() const
 
         if ( abstractVectorLayerLabeling->type() == LabelingType::RuleBased )
         {
-#if VERSION_INT >= 31200
             QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>( abstractVectorLayerLabeling );
             if ( ruleBasedLabeling->rootRule() )
                 for ( const QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
                     fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
-#else
-            return std::make_pair( false, usedAttributes );
-#endif
         }
 
         for ( const QString &providerId : qgsVectorLayer->labeling()->subProviders() )
         {
-#if VERSION_INT < 31400
-            fields.unite( referencedFields( qgsVectorLayer, renderContext, providerId ));
-#else
             fields.unite( qgsVectorLayer->labeling()->settings( providerId ).referencedFields( renderContext ));
-#endif
         }
 
         for ( const QString &field : fields )
