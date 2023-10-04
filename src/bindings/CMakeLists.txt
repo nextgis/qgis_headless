@@ -47,8 +47,8 @@ target_link_libraries(${PY_LIB_NAME} PRIVATE
 
 if(UNIX AND NOT OSX_FRAMEWORK)
     add_custom_target(create_symlink
-        ALL ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE_NAME:${LIB_NAME}>" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        DEPENDS ${LIB_NAME}
+        ALL ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE_NAME:${PY_LIB_NAME}>" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        DEPENDS ${PY_LIB_NAME}
     )
     install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless${CMAKE_SHARED_LIBRARY_SUFFIX}" DESTINATION ${INSTALL_LIB_DIR} COMPONENT python)
 endif()
