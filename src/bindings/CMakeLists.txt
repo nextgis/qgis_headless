@@ -41,7 +41,7 @@ target_link_libraries(${PY_LIB_NAME} PRIVATE
   Qt5::Gui
   Qt5::Widgets
   Qt5::Network
-  ${PYTHON_LIBRARY}
+#   ${PYTHON_LIBRARY}
   ${LIB_NAME}
 )
 
@@ -50,15 +50,19 @@ if(UNIX AND NOT OSX_FRAMEWORK)
         ALL ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE_NAME:${PY_LIB_NAME}>" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless${CMAKE_SHARED_LIBRARY_SUFFIX}"
         DEPENDS ${PY_LIB_NAME}
     )
-    install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless${CMAKE_SHARED_LIBRARY_SUFFIX}" DESTINATION ${INSTALL_LIB_DIR} COMPONENT python)
+    install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless${CMAKE_SHARED_LIBRARY_SUFFIX}" DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless COMPONENT python)
 endif()
+
+file(READ ${CMAKE_SOURCE_DIR}/qgis_headless/__init__.py INPUT_TEXT)
+string(REPLACE "from _qgis_headless" "from ._qgis_headless" INPUT_TEXT "${INPUT_TEXT}")
+file(WRITE ${CMAKE_BINARY_DIR}/__init__.py "${INPUT_TEXT}")
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   install(TARGETS ${PY_LIB_NAME}
-    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    LIBRARY DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless
   )
   set(PY_FILES
-    ${CMAKE_SOURCE_DIR}/qgis_headless/__init__.py
+    ${CMAKE_BINARY_DIR}/__init__.py
     ${CMAKE_SOURCE_DIR}/qgis_headless/script.py
     ${CMAKE_SOURCE_DIR}/qgis_headless/util.py
   )
