@@ -21,6 +21,7 @@
 #ifndef QGIS_HEADLESS_TYPES_H
 #define QGIS_HEADLESS_TYPES_H
 
+#include <array>
 #include <string>
 #include <set>
 #include <memory>

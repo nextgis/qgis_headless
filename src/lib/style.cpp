@@ -352,7 +352,10 @@ bool Style::validateGeometryType( LayerGeometryType layerGeometryType ) const
 
 bool Style::validateStyle( QString &errorMessage ) const
 {
-    return createTemporaryVectorLayerWithStyle( errorMessage ) ? true : false;
+    if (type() == DataType::Vector)
+        return createTemporaryVectorLayerWithStyle( errorMessage ) ? true : false;
+    else
+        return createTemporaryRasterLayerWithStyle( errorMessage ) ? true : false;
 }
 
 bool Style::importToLayer( HeadlessRender::QgsMapLayerPtr &layer, QString &errorMessage ) const
