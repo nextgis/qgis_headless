@@ -31,6 +31,7 @@
 #include <qgsvectorlayer.h>
 #include <qgslayoutexporter.h>
 #include <qgsmaprenderercustompainterjob.h>
+#include <qgsexpressioncontextutils.h>
 
 #include "exceptions.h"
 
@@ -78,6 +79,17 @@ static void messageHandler( QtMsgType msgType, const QMessageLogContext &, const
 
     if ( msgType == QtFatalMsg )
         qFatal( "%s", logMessage.constData() );
+}
+
+static QgsExpressionContext createExpressionContext(HeadlessRender::QgsMapSettingsPtr mapSettings)
+{
+    QgsExpressionContext expressionContext;
+    expressionContext << QgsExpressionContextUtils::globalScope()
+              << QgsExpressionContextUtils::atlasScope( nullptr )
+              << QgsExpressionContextUtils::mapSettingsScope( *mapSettings )
+              << new QgsExpressionContextScope;
+
+    return expressionContext;
 }
 
 void HeadlessRender::init( int argc, char **argv )
@@ -199,6 +211,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
 
     QPainter painter( &img );
 
+    mSettings->setExpressionContext( createExpressionContext(mSettings) );
     mSettings->setOutputSize( { width, height } );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
@@ -252,6 +265,7 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
     int width = std::get<0>( size );
     int height = std::get<1>( size );
 
+    mSettings->setExpressionContext( createExpressionContext(mSettings) );
     mSettings->setOutputSize({ width, height });
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
