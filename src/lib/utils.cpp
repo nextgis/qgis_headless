@@ -20,6 +20,8 @@
 
 #include "utils.h"
 
+#include <qgsrasterlayer.h>
+
 QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
 {
     switch( geometryType )
@@ -77,4 +79,19 @@ QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType( HeadlessRender:
 HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions )
 {
     return QgsMapLayerPtr( new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
+}
+
+HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
+{
+    QgsRasterLayer::LayerOptions layerOptions;
+    layerOptions.loadDefaultStyle = false;
+    return HeadlessRender::QgsMapLayerPtr( new QgsRasterLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
+}
+
+HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryLayerByType( const DataType type, const QgsVectorLayer::LayerOptions &layerOptions )
+{
+    if (type == DataType::Vector)
+        return createTemporaryVectorLayer( layerOptions );
+    else
+        return createTemporaryRasterLayer();
 }

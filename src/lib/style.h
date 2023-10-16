@@ -106,6 +106,7 @@ namespace HeadlessRender
         QDomDocument resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const;
         QgsVectorLayerPtr createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
         QgsRasterLayerPtr createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
+        QgsMapLayerPtr createTemporaryLayerWithStyleByType( DataType type, QString &errorMessage ) const;
         QSet<QString> referencedFields( const QgsVectorLayerPtr &layer, const QgsRenderContext &context, const QString &providerId ) const;
         UsedAttributes readUsedAttributes() const;
         bool hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const;

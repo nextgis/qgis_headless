@@ -32,6 +32,8 @@ namespace HeadlessRender
     QVariant::Type layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType );
 
     QgsMapLayerPtr createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions );
+    QgsMapLayerPtr createTemporaryRasterLayer();
+    QgsMapLayerPtr createTemporaryLayerByType( HeadlessRender::DataType type, const QgsVectorLayer::LayerOptions &layerOptions );
 }
 
 #endif // QGIS_HEADLESS_UTILS_H
