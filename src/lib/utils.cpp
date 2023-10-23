@@ -90,8 +90,8 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryLayerByType( const DataType type, const QgsVectorLayer::LayerOptions &layerOptions )
 {
-    if (type == DataType::Vector)
-        return createTemporaryVectorLayer( layerOptions );
-    else
+    if (type == DataType::Raster)
         return createTemporaryRasterLayer();
+    else
+        return createTemporaryVectorLayer( layerOptions );
 }

@@ -103,6 +103,11 @@ Style Style::fromString( const std::string &data,
         break;
     case StyleFormat::SLD:
 
+        if ( layerType == DataType::Raster)
+        {
+            throw StyleTypeMismatch( "Raster layers do not support importing SLD styles" );
+        }
+
         QDomDocument styleDom;
         styleDom.setContent( QString::fromStdString(data), true );
 
@@ -110,6 +115,7 @@ Style Style::fromString( const std::string &data,
         const QDomElement namedLayerElem = myRoot.firstChildElement( TAGS::NAMED_LAYER );
 
         QgsVectorLayer::LayerOptions layerOptions;
+
         if ( namedLayerElem.elementsByTagName(TAGS::POLYGON_SYMBOLIZER).size() != 0)
             layerOptions.fallbackWkbType = QgsWkbTypes::Polygon;
         else if ( namedLayerElem.elementsByTagName(TAGS::LINE_SYMBOLIZER).size() != 0)
@@ -119,15 +125,11 @@ Style Style::fromString( const std::string &data,
 
         QgsMapLayerPtr layer = createTemporaryLayerByType( layerType, layerOptions );
         QString errorMessage;
-        if (layer->readSld( namedLayerElem, errorMessage ))
-        {
-            layer->exportNamedStyle( styleDom, errorMessage,  {},  static_cast<QgsMapLayer::StyleCategory>( DefaultImportCategories ));
-            style.init({ styleDom.toString(), svgResolverCallback, layerGeometryType, layerType });
-        }
-        else
-        {
+        if (!layer->readSld( namedLayerElem, errorMessage ))
             throw StyleValidationError( "Cannot import SLD style, error: " + errorMessage );
-        }
+
+        layer->exportNamedStyle( styleDom, errorMessage,  {},  static_cast<QgsMapLayer::StyleCategory>( DefaultImportCategories ));
+        style.init({ styleDom.toString(), svgResolverCallback, layerGeometryType, layerType });
 
         break;
     }
@@ -157,11 +159,7 @@ Style Style::fromDefaults( const QColor &color,
                                                            StyleFormat format /* = StyleFormat::QML */)
 {
     Style style;
-    style.init({
-               color,
-               layerGeometryType,
-               layerType
-           });
+    style.init({ color, layerGeometryType, layerType });
     return style;
 }
 
@@ -225,10 +223,10 @@ QgsRasterLayerPtr Style::createTemporaryRasterLayerWithStyle( QString &errorMess
 
 QgsMapLayerPtr Style::createTemporaryLayerWithStyleByType( const DataType type, QString &errorMessage ) const
 {
-    if ( type == DataType::Vector )
-        return createTemporaryVectorLayerWithStyle( errorMessage );
-    else
+    if ( type == DataType::Raster )
         return createTemporaryRasterLayerWithStyle( errorMessage );
+    else
+        return createTemporaryVectorLayerWithStyle( errorMessage );
 }
 
 void Style::init( const CreateParams &params )
@@ -548,16 +546,14 @@ QString Style::exportToString( const StyleFormat format ) const
 
     if ( isDefaultStyle() )
     {
-        QgsVectorLayer::LayerOptions layerOptions;
-        layerOptions.fallbackWkbType = layerGeometryTypeToQgsWkbType( mDefaultStyleParams.layerGeometryType );
-
-        qgsMapLayer = createTemporaryLayerByType( mDefaultStyleParams.layerType, layerOptions );
-
-        if ( !qgsMapLayer )
-            throw QgisHeadlessError( errorMessage );
-
         if ( mDefaultStyleParams.layerType != DataType::Raster )
         {
+            QgsVectorLayer::LayerOptions layerOptions;
+            layerOptions.fallbackWkbType = layerGeometryTypeToQgsWkbType( mDefaultStyleParams.layerGeometryType );
+            qgsMapLayer = createTemporaryVectorLayer( layerOptions );
+            if ( !qgsMapLayer )
+                throw QgisHeadlessError( errorMessage );
+
             QgsSymbol *qgsSymbol;
             QgsSymbolLayer *qgsSymbolLayer;
 
@@ -599,6 +595,12 @@ QString Style::exportToString( const StyleFormat format ) const
                 QgsSingleSymbolRenderer *qgsSingleSymbolRenderer = new QgsSingleSymbolRenderer( qgsSymbol );
                 static_cast<QgsVectorLayer *>( qgsMapLayer.get() )->setRenderer( qgsSingleSymbolRenderer );
             }
+        }
+        else
+        {
+            qgsMapLayer = createTemporaryRasterLayer();
+            if ( !qgsMapLayer )
+                throw QgisHeadlessError( errorMessage );
         }
     }
     else
