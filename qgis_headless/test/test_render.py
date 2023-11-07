@@ -611,9 +611,13 @@ def test_gradient(save_img, shared_datadir):
     assert stat.blue.max == 255, "Last colour is missing"
 
 
-def test_raster(shared_datadir):
+@pytest.mark.parametrize("style_file", (
+    "rounds_310.qml",
+    "rounds_334.qml",
+))
+def test_raster(style_file, shared_datadir):
     layer = Layer.from_gdal(str(shared_datadir / "raster" / "rounds.tif"))
-    style = Style.from_file(str(shared_datadir / "raster" / "rounds.qml"))
+    style = Style.from_file(str(shared_datadir / "raster" / style_file))
 
     img = render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0))
     stat = image_stat(img)
