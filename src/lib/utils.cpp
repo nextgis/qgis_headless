@@ -85,7 +85,9 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
 {
     QgsRasterLayer::LayerOptions layerOptions;
     layerOptions.loadDefaultStyle = false;
-    return HeadlessRender::QgsMapLayerPtr( new QgsRasterLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
+    auto layer = HeadlessRender::QgsMapLayerPtr( new QgsRasterLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions ) );
+    static_cast<QgsRasterLayer *>(layer.get())->setDataProvider( "gdal" );
+    return layer;
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryLayerByType( const DataType type, const QgsVectorLayer::LayerOptions &layerOptions )
