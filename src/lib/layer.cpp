@@ -106,7 +106,11 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
 HeadlessRender::DataType HeadlessRender::Layer::type() const
 {
     if ( mLayer && mLayer->isValid() )
+#if _QGIS_VERSION_INT < 33000
         mType = mLayer->type() == QgsMapLayerType::VectorLayer ? HeadlessRender::DataType::Vector : HeadlessRender::DataType::Raster;
+#else
+        mType = mLayer->type() == Qgis::LayerType::Vector ? HeadlessRender::DataType::Vector : HeadlessRender::DataType::Raster;
+#endif
     return mType;
 }
 
