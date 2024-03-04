@@ -19,13 +19,17 @@
 ******************************************************************************/
 
 #include "utils.h"
-
 #include <qgsrasterlayer.h>
 
+#if _QGIS_VERSION_INT < 33000
 QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
+#else
+Qgis::WkbType HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
+#endif
 {
     switch( geometryType )
     {
+#if _QGIS_VERSION_INT < 33000
     case HeadlessRender::LayerGeometryType::Point:
         return QgsWkbTypes::Type::Point;
     case HeadlessRender::LayerGeometryType::LineString:
@@ -52,7 +56,40 @@ QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender:
         return QgsWkbTypes::Type::MultiPolygonZ;
     case HeadlessRender::LayerGeometryType::Unknown:
         return QgsWkbTypes::Type::Unknown;
+#else
+    case HeadlessRender::LayerGeometryType::Point:
+        return Qgis::WkbType::Point;
+    case HeadlessRender::LayerGeometryType::LineString:
+        return Qgis::WkbType::LineString;
+    case HeadlessRender::LayerGeometryType::Polygon:
+        return Qgis::WkbType::Polygon;
+    case HeadlessRender::LayerGeometryType::MultiPoint:
+        return Qgis::WkbType::MultiPoint;
+    case HeadlessRender::LayerGeometryType::MultiLineString:
+        return Qgis::WkbType::MultiLineString;
+    case HeadlessRender::LayerGeometryType::MultiPolygon:
+        return Qgis::WkbType::MultiPolygon;
+    case HeadlessRender::LayerGeometryType::PointZ:
+        return Qgis::WkbType::PointZ;
+    case HeadlessRender::LayerGeometryType::LineStringZ:
+        return Qgis::WkbType::LineStringZ;
+    case HeadlessRender::LayerGeometryType::PolygonZ:
+        return Qgis::WkbType::PolygonZ;
+    case HeadlessRender::LayerGeometryType::MultiPointZ:
+        return Qgis::WkbType::MultiPointZ;
+    case HeadlessRender::LayerGeometryType::MultiLineStringZ:
+        return Qgis::WkbType::MultiLineStringZ;
+    case HeadlessRender::LayerGeometryType::MultiPolygonZ:
+        return Qgis::WkbType::MultiPolygonZ;
+    case HeadlessRender::LayerGeometryType::Unknown:
+        return Qgis::WkbType::Unknown;
+#endif
     }
+#if _QGIS_VERSION_INT < 33000
+ return QgsWkbTypes::Type::Unknown;
+#else
+ return Qgis::WkbType::Unknown;
+#endif
 }
 
 QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType )
@@ -74,6 +111,7 @@ QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType( HeadlessRender:
     case HeadlessRender::LayerAttributeType::Integer64:
         return QVariant::LongLong;
     }
+  return QVariant::Int;
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions )

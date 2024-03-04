@@ -28,7 +28,11 @@
 
 namespace HeadlessRender
 {
+#if _QGIS_VERSION_INT < 33000
     QgsWkbTypes::Type layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType );
+#else
+    Qgis::WkbType layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType );
+#endif
     QVariant::Type layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType );
 
     QgsMapLayerPtr createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions );
