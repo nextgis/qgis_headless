@@ -22,11 +22,18 @@
 
 using namespace HeadlessRender;
 
-LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title )
+LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const bool isEnabled, const Index index )
     : mIcon( icon )
     , mTitle( title )
+    , mIsEnabled( isEnabled )
+    , mIndex( index )
 {
 
+}
+
+LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const bool isEnabled, Index index)
+{
+    return { icon, title, isEnabled, index };
 }
 
 ImagePtr LegendSymbol::icon() const
@@ -34,7 +41,7 @@ ImagePtr LegendSymbol::icon() const
     return mIcon;
 }
 
-const QString & LegendSymbol::title() const
+QString LegendSymbol::title() const
 {
     return mTitle;
 }
@@ -44,7 +51,17 @@ bool LegendSymbol::hasCategory() const
     return mHasCategory;
 }
 
-void LegendSymbol::setHasCategory( bool hasCategory )
+void LegendSymbol::setHasCategory( const bool hasCategory )
 {
     mHasCategory = hasCategory;
+}
+
+LegendSymbol::Index LegendSymbol::index() const
+{
+    return mIndex;
+}
+
+bool LegendSymbol::isEnabled() const
+{
+    return mIsEnabled;
 }

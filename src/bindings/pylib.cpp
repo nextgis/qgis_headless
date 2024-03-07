@@ -245,7 +245,9 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 return pybind11::none();
             else
                 return pybind11::cast( title.toStdString() );
-        });
+        })
+        .def( "index", &HeadlessRender::LegendSymbol::index )
+        .def( "render", &HeadlessRender::LegendSymbol::isEnabled );
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
         .def( pybind11::init<>() )

@@ -32,6 +32,7 @@
 #include <qgslayoutexporter.h>
 #include <qgsmaprenderercustompainterjob.h>
 #include <qgsexpressioncontextutils.h>
+#include <qgsrenderer.h>
 
 #include "exceptions.h"
 
@@ -41,19 +42,24 @@
 #include <QJsonArray>
 #include <cstdlib>
 
-static QApplication *app = nullptr;
-static HeadlessRender::LogLevel appLogLevel = HeadlessRender::LogLevel::Debug;
+namespace
+{
+QApplication *app = nullptr;
+HeadlessRender::LogLevel appLogLevel = HeadlessRender::LogLevel::Debug;
+
+const auto SymbolRenderingNotAdjustableError = QStringLiteral("Symbol rendering is not adjustable");
+const auto InvalidSymbolIndexError = QStringLiteral("Invalid symbol index");
 
 namespace KEYS
 {
-    static const QString TYPE = "type";
-    static const QString SYMBOLS = "symbols";
-    static const QString NODES = "nodes";
-    static const QString ICON = "icon";
-    static const QString TITLE = "title";
+    static const auto TYPE = QStringLiteral("type");
+    static const auto SYMBOLS = QStringLiteral("symbols");
+    static const auto NODES = QStringLiteral("nodes");
+    static const auto ICON = QStringLiteral("icon");
+    static const auto TITLE = QStringLiteral("title");
 }
 
-static void messageHandler( QtMsgType msgType, const QMessageLogContext &, const QString &msg )
+void messageHandler( QtMsgType msgType, const QMessageLogContext &, const QString &msg )
 {
     const QByteArray &logMessage = msg.toLocal8Bit();
 
@@ -81,7 +87,7 @@ static void messageHandler( QtMsgType msgType, const QMessageLogContext &, const
         qFatal( "%s", logMessage.constData() );
 }
 
-static QgsExpressionContext createExpressionContext(HeadlessRender::QgsMapSettingsPtr mapSettings)
+QgsExpressionContext createExpressionContext(HeadlessRender::QgsMapSettingsPtr mapSettings)
 {
     QgsExpressionContext expressionContext;
     expressionContext << QgsExpressionContextUtils::globalScope()
@@ -91,6 +97,7 @@ static QgsExpressionContext createExpressionContext(HeadlessRender::QgsMapSettin
 
     return expressionContext;
 }
+} // namespace
 
 void HeadlessRender::init( int argc, char **argv )
 {
@@ -157,7 +164,7 @@ int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &s
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
-        throw QgisHeadlessError( "Layer is null" );
+        throw QgisHeadlessError( QStringLiteral("Layer is null") );
 
     if ( style.isDefaultStyle())
     {
@@ -167,7 +174,7 @@ int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &s
     {
         QString readStyleError;
         if ( !layer.addStyle( style, readStyleError ))
-            throw QgisHeadlessError( "Cannot add style, error message: " + readStyleError );
+            throw QgisHeadlessError( QStringLiteral("Cannot add style, error message: ") + readStyleError );
     }
 
     qgsMapLayer->setName( QString::fromStdString( label ) );
@@ -196,15 +203,15 @@ void HeadlessRender::MapRequest::addProject( const Project &project )
     mSettings->setLayers( qgsMapLayers );
 }
 
-HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size )
+HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &extent, const Size &size, const RenderSymbols &symbols /* = {} */  )
 {
-    double minx = std::get<0>( extent );
-    double miny = std::get<1>( extent );
-    double maxx = std::get<2>( extent );
-    double maxy = std::get<3>( extent );
+    const auto minx = std::get<0>( extent );
+    const auto miny = std::get<1>( extent );
+    const auto maxx = std::get<2>( extent );
+    const auto maxy = std::get<3>( extent );
 
-    int width = std::get<0>( size );
-    int height = std::get<1>( size );
+    const auto width = std::get<0>( size );
+    const auto height = std::get<1>( size );
 
     QImage img( width, height, QImage::Format_ARGB32_Premultiplied );
     img.fill( Qt::transparent );
@@ -214,6 +221,31 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     mSettings->setExpressionContext( createExpressionContext(mSettings) );
     mSettings->setOutputSize( { width, height } );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+
+    for (const auto& renderSymbolsItem : symbols)
+    {
+        auto* layer = mSettings->layers().at(renderSymbolsItem.first);
+        if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ) )
+        {
+            if ( !vlayer->renderer() )
+                continue;
+
+            const QgsLegendSymbolList symbolList = vlayer->renderer()->legendSymbolItems();
+
+            for ( const auto &item : symbolList )
+                vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), false );
+
+            for (const auto symbolIndex : renderSymbolsItem.second)
+            {
+                if (symbolIndex >= symbolList.size())
+                    throw QgisHeadlessError( InvalidSymbolIndexError );
+
+                vlayer->renderer()->checkLegendSymbolItem( symbolList.at(symbolIndex).ruleKey(), true );
+            }
+        }
+        else
+            throw QgisHeadlessError( SymbolRenderingNotAdjustableError );
+    }
 
     QgsMapRendererCustomPainterJob job( *mSettings, &painter );
     job.renderSynchronously();
@@ -287,7 +319,7 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
     painter.end();
 }
 
-static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image )
+static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image, HeadlessRender::LegendSymbol::Index index = 0 )
 {
     for ( const auto &it : group )
     {
@@ -297,29 +329,29 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
             const auto nodes = model.layerLegendNodes( nodeLayer );
             for ( const auto &node : nodes )
             {
-                image.fill(Qt::transparent);
+                image.fill( Qt::transparent );
                 node->draw( settings, &context );
 
-                QString title = node->data( Qt::DisplayRole ).toString();
-                HeadlessRender::LegendSymbol item = { std::make_shared<HeadlessRender::Image>( image ), title };
+                const auto title = node->data( Qt::DisplayRole ).toString();
+                const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
+                auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, isEnabled, index++ );
                 if (nodes.size() == 1 && result.empty())
-                    item.setHasCategory( false );
-
-                result.push_back( item );
+                    legendSymbol.setHasCategory( false );
+                result.push_back( legendSymbol );
             }
         }
         else
         {
             const auto group = QgsLayerTree::toGroup( it );
-            processLegendGroup( group->children(), result, model, settings, context, image );
+            processLegendGroup( group->children(), result, model, settings, context, image, index );
         }
     }
 }
 
-std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbols( size_t index, const HeadlessRender::Size &size /* = Size() */ )
+std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymbols( const LayerIndex index, const HeadlessRender::Size &size /* = Size() */ )
 {
     if ( mLayers.size() <= index )
-        throw QgisHeadlessError( "Invalid layer index" );
+        throw QgisHeadlessError( QStringLiteral("Invalid layer index") );
 
     int width = std::get<0>( size );
     int height = std::get<1>( size );

@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 #include "crs.h"
 #include "layer.h"
@@ -40,10 +41,12 @@ class QgsLayerTree;
 
 namespace HeadlessRender
 {
+    typedef size_t LayerIndex;
     typedef std::shared_ptr<QgsMapSettings> QgsMapSettingsPtr;
     typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
     typedef std::tuple<double, double, double, double> Extent;
     typedef std::tuple<int, int> Size;
+    typedef std::unordered_map<LayerIndex, std::vector<size_t>> RenderSymbols;
 
     class QGIS_HEADLESS_EXPORT MapRequest
     {
@@ -55,11 +58,11 @@ namespace HeadlessRender
         int addLayer( Layer &layer, Style &style, const std::string &label = "");
         void addProject( const Project &project );
 
-        ImagePtr renderImage( const Extent &extent, const Size &size );
+        ImagePtr renderImage( const Extent &extent, const Size &size, const RenderSymbols &symbols = {} );
         ImagePtr renderLegend( const Size &size = Size() );
         void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
 
-        std::vector<LegendSymbol> legendSymbols( size_t index, const Size &size = Size() );
+        std::vector<LegendSymbol> legendSymbols( LayerIndex index, const Size &size = Size() );
 
     private:
         QgsMapSettingsPtr mSettings;

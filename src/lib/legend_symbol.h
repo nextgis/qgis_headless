@@ -26,19 +26,31 @@
 
 namespace HeadlessRender
 {
+    class LegendSymbol;
+    using LegendSymbolPtr = std::shared_ptr<LegendSymbol>;
+
     class LegendSymbol
     {
     public:
-        LegendSymbol( const ImagePtr icon, const QString &title );
+        using Index = int;
+
+        static LegendSymbol create( const ImagePtr icon, const QString &title, bool isEnabled, Index index );
 
         ImagePtr icon() const;
-        const QString & title() const;
+        QString title() const;
         bool hasCategory() const;
         void setHasCategory( bool hasCategory );
+        Index index() const;
+        bool isEnabled() const;
+
     private:
+        LegendSymbol( const ImagePtr icon, const QString &title, bool isEnabled, Index index );
+
         ImagePtr mIcon;
         QString mTitle;
         bool mHasCategory = true;
+        bool mIsEnabled;
+        Index mIndex = 0;
     };
 }
 
