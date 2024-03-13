@@ -19,6 +19,8 @@ from qgis_headless import (
     get_qgis_version,
 )
 
+from .known_issues import Issues
+
 QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 QGIS_312 = QGIS_VERSION >= version.parse("3.12")
 
@@ -85,7 +87,7 @@ def test_default(params):
         param("attributes/osm-highway.qml", ["HIGHWAY", "NAME_EN", "NAME"], id="osm-highway"),
         param("attributes/data-defined.qml", ["size"], id="data-defined"),
         param("attributes/rule-based-labeling.qml", ["a", "b", "c"] if QGIS_312 else None, id="rule-based-labeling"),
-        param("diagram/industries.qml", ["zern", "ovosch", "sad", "vinograd", "efir", "skotovod", "svinovod", "ptitcevod", "total"], id="diagram", marks=pytest.mark.xfail(reason="https://github.com/qgis/QGIS/issues/33810")),
+        param("diagram/industries.qml", ["zern", "ovosch", "sad", "vinograd", "efir", "skotovod", "svinovod", "ptitcevod", "total"], id="diagram", marks=Issues.DIAGRAM_ATTRIBUTES),
         # fmt: on
     ),
 )

@@ -28,6 +28,8 @@ from qgis_headless.util import (
     to_pil,
 )
 
+from .known_issues import Issues
+
 QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 
 WKB_MSC = a2b_hex("01010000005070B1A206CF42409CDCEF5014E04B40")  # POINT (37.61739 55.75062)
@@ -599,6 +601,7 @@ def test_diagram(layer, save_img, shared_datadir):
     # img.save('share/from_ogr.png')
 
 
+@Issues.GRADIENT
 def test_gradient(save_img, shared_datadir):
     style = Style.from_file(str(shared_datadir / "gradient.qml"))
     layer = Layer.from_ogr(str(shared_datadir / "landuse/landuse.geojson"))
@@ -751,8 +754,15 @@ def test_label_variables(save_img, shared_datadir):
 @pytest.mark.parametrize(
     "qml, resolve",
     [
-        pytest.param("zero/label/marker-svg.qml", True, id="svg"),
-        pytest.param("zero/label/marker-symbol-svg.qml", True, id="symbol_svg"),
+        pytest.param(
+            "zero/label/marker-svg.qml", True, id="svg", marks=Issues.SVG_MARKER_NOT_RESOLVED
+        ),
+        pytest.param(
+            "zero/label/marker-symbol-svg.qml",
+            True,
+            id="symbol_svg",
+            marks=Issues.SVG_MARKER_NOT_RESOLVED,
+        ),
         pytest.param("zero/label/marker-symbol-embedded.qml", False, id="symbol_embedded"),
     ],
 )
