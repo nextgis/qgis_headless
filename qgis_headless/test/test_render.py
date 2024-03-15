@@ -13,6 +13,7 @@ from qgis_headless import (
     LT_VECTOR,
     Layer,
     MapRequest,
+    QgisHeadlessError,
     Style,
     StyleFormat,
     StyleTypeMismatch,
@@ -431,6 +432,47 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
             assert delta < 20, f"{k}{p} color mismatch ({delta}): {color} != {v} "
 
         assert im_size == size, f"size mismatch: {im_size} != {size}"
+
+
+@pytest.mark.parametrize(
+    "style_file, layer_file, extent, cases", (
+        (
+            "landuse/landuse.qml",
+            "landuse/landuse.geojson",
+            (4189314.0, 7505071.0, 4190452.0, 7506101.0),
+            (
+                ((-1,), dict(exc=QgisHeadlessError)),
+                ((2,), dict(exc=QgisHeadlessError)),
+                (None, dict(colors=(255, 255, 0, None))),
+                ((0, 1), dict(colors=(255, 255, 0, None))),
+                ((), dict(colors=(None, None, None, 0))),
+                ((0,), dict(colors=(255, 0, 0, 255))),
+                ((1,), dict(colors=(0, 255, 0, 255))),
+            ),
+        ),
+    ),
+)
+def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_datadir):
+    style = Style.from_file(str(shared_datadir / style_file))
+    layer = Layer.from_ogr(str(shared_datadir / layer_file))
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+
+    params = dict(extent=extent, size=(256, 256))
+    for symbols, expected in cases:
+        if symbols is not None:
+            params["symbols"] = (0, symbols)
+        if exc := expected.get("exc"):
+            with pytest.raises(exc):
+                req.render_image(**params)
+        else:
+            img = to_pil(req.render_image(**params))
+            stat = image_stat(img)
+            for band, band_max in zip(("red", "green", "blue", "alpha"), expected["colors"]):
+                if band_max is not None:
+                    assert getattr(stat, band).max == band_max
 
 
 def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
