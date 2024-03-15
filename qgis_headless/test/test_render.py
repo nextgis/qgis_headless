@@ -441,13 +441,13 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
             "landuse/landuse.geojson",
             (4189314.0, 7505071.0, 4190452.0, 7506101.0),
             (
-                ((-1,), dict(exc=QgisHeadlessError)),
-                ((2,), dict(exc=QgisHeadlessError)),
+                ([-1,], dict(exc=QgisHeadlessError)),
+                ([2,], dict(exc=QgisHeadlessError)),
                 (None, dict(colors=(255, 255, 0, None))),
-                ((0, 1), dict(colors=(255, 255, 0, None))),
-                ((), dict(colors=(None, None, None, 0))),
-                ((0,), dict(colors=(255, 0, 0, 255))),
-                ((1,), dict(colors=(0, 255, 0, 255))),
+                ([0, 1], dict(colors=(255, 255, 0, None))),
+                ([], dict(colors=(None, None, None, 0))),
+                ([0,], dict(colors=(255, 0, 0, 255))),
+                ([1,], dict(colors=(0, 255, 0, 255))),
             ),
         ),
     ),
@@ -463,7 +463,7 @@ def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_dat
     params = dict(extent=extent, size=(256, 256))
     for symbols, expected in cases:
         if symbols is not None:
-            params["symbols"] = (0, symbols)
+            params["symbols"] = {0: symbols}
         if exc := expected.get("exc"):
             with pytest.raises(exc):
                 req.render_image(**params)

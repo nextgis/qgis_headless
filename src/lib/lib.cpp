@@ -160,7 +160,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &style, const std::string &label /* = "" */ )
+HeadlessRender::LayerIndex HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &style, const std::string &label /* = "" */ )
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
@@ -188,7 +188,7 @@ int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &s
 
     mQgsLayerTree->addLayer( qgsMapLayer.get() );
 
-    int addedLayerIndex = qgsMapLayers.size() - 1;
+    const auto addedLayerIndex = qgsMapLayers.size() - 1;
     return addedLayerIndex;
 }
 
@@ -237,7 +237,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
 
             for (const auto symbolIndex : renderSymbolsItem.second)
             {
-                if (symbolIndex >= symbolList.size())
+                if (symbolIndex < 0 || symbolIndex >= symbolList.size())
                     throw QgisHeadlessError( InvalidSymbolIndexError );
 
                 vlayer->renderer()->checkLegendSymbolItem( symbolList.at(symbolIndex).ruleKey(), true );
