@@ -276,7 +276,7 @@ void Style::init( const CreateParams &params )
     if ( params.layerType != DataType::Unknown && type() != params.layerType )
         throw StyleTypeMismatch( ErrorString::LayerStyleMismatch );
 
-    if (params.callback)
+    if ( params.callback || type() == DataType::Vector )
     {
         mData = resolveSvgPaths( params.callback );
         mCachedTemporaryLayer.reset();
@@ -487,13 +487,15 @@ void Style::resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgReso
         if ( symbolLayer->layerType() == SymbolLayerType::SvgMarker )
         {
             QgsSvgMarkerSymbolLayer *svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>( symbolLayer );
-            const std::string &resolvedPath = svgResolverCallback( svgMarkerSymbolLayer->path().toStdString() );
+            std::string path = svgMarkerSymbolLayer->path().toStdString();
+            if ( svgResolverCallback )
+                path = svgResolverCallback( path );
 
             const QColor fillColor = svgMarkerSymbolLayer->fillColor();
             const QColor strokeColor = svgMarkerSymbolLayer->strokeColor();
             const double strokeWidth = svgMarkerSymbolLayer->strokeWidth();
 
-            svgMarkerSymbolLayer->setPath( QString::fromStdString( resolvedPath ) );
+            svgMarkerSymbolLayer->setPath( QString::fromStdString( path ) );
 
             svgMarkerSymbolLayer->setFillColor( fillColor );
             svgMarkerSymbolLayer->setStrokeColor( strokeColor );
@@ -502,8 +504,10 @@ void Style::resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgReso
         else if ( symbolLayer->layerType() == SymbolLayerType::SVGFill )
         {
             QgsSVGFillSymbolLayer *svgFillSymbolLayer = dynamic_cast<QgsSVGFillSymbolLayer *>( symbolLayer );
-            const std::string &resolvedPath = svgResolverCallback( svgFillSymbolLayer->svgFilePath().toStdString() );
-            svgFillSymbolLayer->setSvgFilePath( QString::fromStdString( resolvedPath ) );
+            std::string path = svgFillSymbolLayer->svgFilePath().toStdString();
+            if ( svgResolverCallback )
+                path = svgResolverCallback( path );
+            svgFillSymbolLayer->setSvgFilePath( QString::fromStdString( path ) );
         }
 
         if ( symbolLayer->subSymbol() )

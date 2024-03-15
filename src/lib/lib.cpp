@@ -160,7 +160,7 @@ void HeadlessRender::MapRequest::setCrs( const HeadlessRender::CRS &crs )
     mSettings->setDestinationCrs( *crs.qgsCoordinateReferenceSystem() );
 }
 
-int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &style, const std::string &label /* = "" */ )
+HeadlessRender::LayerIndex HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &style, const std::string &label /* = "" */ )
 {
     QgsMapLayerPtr qgsMapLayer = layer.qgsMapLayer();
     if ( !qgsMapLayer )
@@ -188,7 +188,7 @@ int HeadlessRender::MapRequest::addLayer( HeadlessRender::Layer &layer, Style &s
 
     mQgsLayerTree->addLayer( qgsMapLayer.get() );
 
-    int addedLayerIndex = qgsMapLayers.size() - 1;
+    const auto addedLayerIndex = qgsMapLayers.size() - 1;
     return addedLayerIndex;
 }
 
@@ -222,29 +222,47 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     mSettings->setOutputSize( { width, height } );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
-    for (const auto& renderSymbolsItem : symbols)
+    if ( symbols.empty() )
     {
-        auto* layer = mSettings->layers().at(renderSymbolsItem.first);
-        if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ) )
+        for ( auto* layer : mSettings->layers() )
         {
-            if ( !vlayer->renderer() )
-                continue;
-
-            const QgsLegendSymbolList symbolList = vlayer->renderer()->legendSymbolItems();
-
-            for ( const auto &item : symbolList )
-                vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), false );
-
-            for (const auto symbolIndex : renderSymbolsItem.second)
+            if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ))
             {
-                if (symbolIndex >= symbolList.size())
-                    throw QgisHeadlessError( InvalidSymbolIndexError );
+                if ( !vlayer->renderer() )
+                    continue;
 
-                vlayer->renderer()->checkLegendSymbolItem( symbolList.at(symbolIndex).ruleKey(), true );
+                const auto symbolList = vlayer->renderer()->legendSymbolItems();
+                for ( const auto &item : symbolList )
+                    vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), true );
             }
         }
-        else
-            throw QgisHeadlessError( SymbolRenderingNotAdjustableError );
+    }
+    else
+    {
+        for (const auto& renderSymbolsItem : symbols)
+        {
+            auto* layer = mSettings->layers().at(renderSymbolsItem.first);
+            if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ) )
+            {
+                if ( !vlayer->renderer() )
+                    continue;
+
+                const QgsLegendSymbolList symbolList = vlayer->renderer()->legendSymbolItems();
+
+                for ( const auto &item : symbolList )
+                    vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), false );
+
+                for (const auto symbolIndex : renderSymbolsItem.second)
+                {
+                    if (symbolIndex < 0 || symbolIndex >= symbolList.size())
+                        throw QgisHeadlessError( InvalidSymbolIndexError );
+
+                    vlayer->renderer()->checkLegendSymbolItem( symbolList.at(symbolIndex).ruleKey(), true );
+                }
+            }
+            else
+                throw QgisHeadlessError( SymbolRenderingNotAdjustableError );
+        }
     }
 
     QgsMapRendererCustomPainterJob job( *mSettings, &painter );
