@@ -275,7 +275,35 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
         .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
         .def( "add_project", &HeadlessRender::MapRequest::addProject )
-        .def( "render_image", &HeadlessRender::MapRequest::renderImage, pybind11::arg("extent"), pybind11::arg("size"), pybind11::arg("symbols") = HeadlessRender::RenderSymbols() )
+        .def( "render_image", []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size )
+        {
+            return mapRequest.renderImage( extent, size );
+        })
+        .def( "render_image", []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size, const pybind11::tuple &symbols )
+        {
+            HeadlessRender::RenderSymbols renderSymbols;
+            if ( symbols )
+            {
+                for ( const auto &it : symbols )
+                {
+                    const auto layerRenderSymbols = it.cast<pybind11::tuple>();
+                    if ( !layerRenderSymbols.is_none() )
+                    {
+                        HeadlessRender::SymbolIndexVector symbolIndexVector;
+                        const auto symbolIndexObject = layerRenderSymbols[1];
+                        if ( !symbolIndexObject.is_none() )
+                        {
+                            const auto symbolIndexTuple = symbolIndexObject.cast<pybind11::tuple>();
+                            for ( const auto &symbolIt : symbolIndexTuple)
+                                symbolIndexVector.push_back( symbolIt.cast<HeadlessRender::LegendSymbol::Index>() );
+
+                            renderSymbols[layerRenderSymbols[0].cast<HeadlessRender::LayerIndex>()] = symbolIndexVector;
+                        }
+                    }
+                }
+            }
+            return mapRequest.renderImage( extent, size, renderSymbols );
+        })
         .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() )
         .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf )
         .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, pybind11::arg("index"), pybind11::arg("size") = HeadlessRender::Size() );

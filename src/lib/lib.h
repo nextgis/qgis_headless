@@ -46,7 +46,8 @@ namespace HeadlessRender
     typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
     typedef std::tuple<double, double, double, double> Extent;
     typedef std::tuple<int, int> Size;
-    typedef std::unordered_map<LayerIndex, std::vector<LegendSymbol::Index>> RenderSymbols;
+    typedef std::vector<LegendSymbol::Index> SymbolIndexVector;
+    typedef std::unordered_map<LayerIndex, SymbolIndexVector> RenderSymbols;
 
     class QGIS_HEADLESS_EXPORT MapRequest
     {
