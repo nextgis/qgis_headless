@@ -276,7 +276,7 @@ void Style::init( const CreateParams &params )
     if ( params.layerType != DataType::Unknown && type() != params.layerType )
         throw StyleTypeMismatch( ErrorString::LayerStyleMismatch );
 
-    if ( params.callback || params.layerType == DataType::Vector )
+    if ( params.callback || type() == DataType::Vector )
     {
         mData = resolveSvgPaths( params.callback );
         mCachedTemporaryLayer.reset();
