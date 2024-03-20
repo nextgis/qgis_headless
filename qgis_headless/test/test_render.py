@@ -461,8 +461,8 @@ def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_dat
     req.add_layer(layer, style)
     req.set_crs(CRS.from_epsg(3857))
 
-    params = dict(extent=extent, size=(256, 256))
     for symbols, expected in cases:
+        params = dict(extent=extent, size=(256, 256))
         if symbols is not None:
             params["symbols"] = ((0, symbols),)
         if exc := expected.get("exc"):
