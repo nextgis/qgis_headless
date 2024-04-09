@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "RGB",
+"features": [
+{ "type": "Feature", "properties": { "name": "red" }, "geometry": { "type": "Point", "coordinates": [ 0, 0.1 ] } },
+{ "type": "Feature", "properties": { "name": "green" }, "geometry": { "type": "Point", "coordinates": [ 0, 0 ] } },
+{ "type": "Feature", "properties": { "name": "blue" }, "geometry": { "type": "Point", "coordinates": [ 0, -0.1 ] } }
+]
+}

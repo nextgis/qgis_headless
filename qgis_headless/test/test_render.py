@@ -450,6 +450,17 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
                 ((1,), dict(colors=(0, 255, 0, 255))),
             ),
         ),
+        (
+            "categories/rgb.qml",
+            "categories/rgb.geojson",
+            (-4400, -14000, 4400, 14000),
+            (
+                (None, dict(colors=(255, 0, 255, 255))),
+                ((0,), dict(colors=(255, 0, 0, 255))),
+                ((1,), dict(colors=(0, 255, 0, 255))),
+                ((2,), dict(colors=(0, 0, 255, 255))),
+            ),
+        ),
     ),
 )
 def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_datadir):
@@ -473,7 +484,7 @@ def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_dat
             stat = image_stat(img)
             for band, band_max in zip(("red", "green", "blue", "alpha"), expected["colors"]):
                 if band_max is not None:
-                    assert getattr(stat, band).max == band_max
+                    assert getattr(stat, band).max == band_max, f"{band} color mismatch"
 
 
 def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
