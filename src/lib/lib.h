@@ -66,9 +66,12 @@ namespace HeadlessRender
         std::vector<LegendSymbol> legendSymbols( LayerIndex index, const Size &size = Size() );
 
     private:
+        void applyRenderSymbols(const RenderSymbols& symbols);
+
         QgsMapSettingsPtr mSettings;
         QgsLayerTreePtr mQgsLayerTree;
         std::vector<QgsMapLayerPtr> mLayers;
+        RenderSymbols mDefaultRenderSymbols;
     };
 
     QGIS_HEADLESS_EXPORT void init( int argc, char **argv );

@@ -189,6 +189,23 @@ HeadlessRender::LayerIndex HeadlessRender::MapRequest::addLayer( HeadlessRender:
     mQgsLayerTree->addLayer( qgsMapLayer.get() );
 
     const auto addedLayerIndex = qgsMapLayers.size() - 1;
+
+    if (QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>(qgsMapLayer.get()))
+    {
+        if (vlayer->renderer())
+        {
+            SymbolIndexVector renderSymbols;
+            int idx = 0;
+            for (const auto& symbolItem : vlayer->renderer()->legendSymbolItems())
+            {
+                if (vlayer->renderer()->legendSymbolItemChecked( symbolItem.ruleKey()))
+                    renderSymbols.push_back(idx);
+                ++idx;
+            }
+            mDefaultRenderSymbols[addedLayerIndex] = renderSymbols;
+        }
+    }
+
     return addedLayerIndex;
 }
 
@@ -222,48 +239,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderImage( const Extent &
     mSettings->setOutputSize( { width, height } );
     mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
 
-    if ( symbols.empty() )
-    {
-        for ( auto* layer : mSettings->layers() )
-        {
-            if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ))
-            {
-                if ( !vlayer->renderer() )
-                    continue;
-
-                const auto symbolList = vlayer->renderer()->legendSymbolItems();
-                for ( const auto &item : symbolList )
-                    vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), true );
-            }
-        }
-    }
-    else
-    {
-        for (const auto& renderSymbolsItem : symbols)
-        {
-            auto* layer = mSettings->layers().at(renderSymbolsItem.first);
-            if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ) )
-            {
-                if ( !vlayer->renderer() )
-                    continue;
-
-                const QgsLegendSymbolList symbolList = vlayer->renderer()->legendSymbolItems();
-
-                for ( const auto &item : symbolList )
-                    vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), false );
-
-                for (const auto symbolIndex : renderSymbolsItem.second)
-                {
-                    if (symbolIndex < 0 || symbolIndex >= symbolList.size())
-                        throw QgisHeadlessError( InvalidSymbolIndexError );
-
-                    vlayer->renderer()->checkLegendSymbolItem( symbolList.at(symbolIndex).ruleKey(), true );
-                }
-            }
-            else
-                throw QgisHeadlessError( SymbolRenderingNotAdjustableError );
-        }
-    }
+    applyRenderSymbols( symbols.empty() ? mDefaultRenderSymbols : symbols );
 
     QgsMapRendererCustomPainterJob job( *mSettings, &painter );
     job.renderSynchronously();
@@ -405,6 +381,34 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
     processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image );
     return legendSymbols;
+}
+
+void HeadlessRender::MapRequest::applyRenderSymbols( const RenderSymbols &symbols )
+{
+    for (const auto& renderSymbolsItem : symbols)
+    {
+        auto* layer = mSettings->layers().at(renderSymbolsItem.first);
+        if ( QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer ) )
+        {
+            if ( !vlayer->renderer() )
+                continue;
+
+            const QgsLegendSymbolList symbolList = vlayer->renderer()->legendSymbolItems();
+
+            for ( const auto &item : symbolList )
+                vlayer->renderer()->checkLegendSymbolItem( item.ruleKey(), false );
+
+            for (const auto symbolIndex : renderSymbolsItem.second)
+            {
+                if (symbolIndex < 0 || symbolIndex >= symbolList.size())
+                    throw QgisHeadlessError( InvalidSymbolIndexError );
+
+                vlayer->renderer()->checkLegendSymbolItem( symbolList.at(symbolIndex).ruleKey(), true );
+            }
+        }
+        else
+            throw QgisHeadlessError( SymbolRenderingNotAdjustableError );
+    }
 }
 
 void HeadlessRender::setLoggingLevel( HeadlessRender::LogLevel level )
