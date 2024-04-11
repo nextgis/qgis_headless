@@ -461,6 +461,16 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
                 ((2,), dict(colors=(0, 0, 255, 255))),
             ),
         ),
+        (
+            "categories/null-attr.qml",
+            "categories/null-attr.geojson",
+            (-4400, -14000, 4400, 14000),
+            (
+                (None, dict(colors=(255, 0, 255, 255))),
+                ((0,), dict(colors=(255, 0, 0, 255))),
+                ((1,), dict(colors=(0, 0, 255, 255))),
+            ),
+        ),
     ),
 )
 def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_datadir):

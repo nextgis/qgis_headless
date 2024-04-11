@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "NULL attribute",
+"features": [
+{ "type": "Feature", "properties": { "key": "word" }, "geometry": { "type": "Point", "coordinates": [ -0.1, 0 ] } },
+{ "type": "Feature", "properties": { "key": null }, "geometry": { "type": "Point", "coordinates": [ 0.1, 0 ] } }
+]
+}
