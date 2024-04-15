@@ -461,7 +461,7 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
                 ((2,), dict(colors=(0, 0, 255, 255))),
             ),
         ),
-        (
+        pytest.param(
             "categories/null-attr.qml",
             "categories/null-attr.geojson",
             (-4400, -14000, 4400, 14000),
@@ -469,6 +469,10 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
                 (None, dict(colors=(255, 0, 255, 255))),
                 ((0,), dict(colors=(255, 0, 0, 255))),
                 ((1,), dict(colors=(0, 0, 255, 255))),
+            ),
+            marks=pytest.mark.skipif(
+                QGIS_VERSION < version.parse("3.36"),
+                reason="QML category syntax changing",
             ),
         ),
     ),
