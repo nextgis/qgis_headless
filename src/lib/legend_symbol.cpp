@@ -22,18 +22,19 @@
 
 using namespace HeadlessRender;
 
-LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const bool isEnabled, const Index index )
+LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const bool isEnabled, const Index index, RasterBand rasterBand )
     : mIcon( icon )
     , mTitle( title )
     , mIsEnabled( isEnabled )
     , mIndex( index )
+    , mRasterBand( rasterBand )
 {
 
 }
 
-LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const bool isEnabled, Index index)
+LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const bool isEnabled, Index index, RasterBand rasterBand)
 {
-    return { icon, title, isEnabled, index };
+    return { icon, title, isEnabled, index, std::move( rasterBand ) };
 }
 
 ImagePtr LegendSymbol::icon() const
@@ -64,4 +65,38 @@ LegendSymbol::Index LegendSymbol::index() const
 bool LegendSymbol::isEnabled() const
 {
     return mIsEnabled;
+}
+
+LegendSymbol::RasterBand LegendSymbol::rasterBand() const
+{
+    return mRasterBand;
+}
+
+LegendSymbol::RasterBand::RasterBand(const int red, const int green, const int blue, const int alpha)
+    : mRed(red)
+    , mGreen(green)
+    , mBlue(blue)
+    , mAlpha(alpha)
+{
+
+}
+
+int LegendSymbol::RasterBand::red() const
+{
+    return mRed;
+}
+
+int LegendSymbol::RasterBand::green() const
+{
+    return mGreen;
+}
+
+int LegendSymbol::RasterBand::blue() const
+{
+    return mBlue;
+}
+
+int LegendSymbol::RasterBand::alpha() const
+{
+    return mAlpha;
 }
