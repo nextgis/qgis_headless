@@ -57,7 +57,6 @@ HeadlessRender::LogLevel appLogLevel = HeadlessRender::LogLevel::Debug;
 
 const auto SymbolRenderingNotAdjustableError = QStringLiteral("Symbol rendering is not adjustable");
 const auto InvalidSymbolIndexError = QStringLiteral("Invalid symbol index");
-const auto InvalidRenderTypeError = QStringLiteral("Invalid render type (Count > 0)");
 const auto InvalidLayerIndexError = QStringLiteral("Invalid layer index");
 
 namespace KEYS
@@ -342,9 +341,9 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
     painter.end();
 }
 
-static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image, HeadlessRender::LegendSymbol::Index index = 0, QgsRasterRenderer* rasterRenderer = nullptr, const int count = HeadlessRender::InvalidValue )
+static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image, HeadlessRender::LegendSymbol::Index index = 0, QgsRasterRenderer* rasterRenderer = nullptr, const int count = HeadlessRender::DefaultRasterRenderSymbolCount )
 {
-    auto createLegendSymbol = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QString& title, const HeadlessRender::LegendSymbol::RasterBand& rasterBand)
+    auto createLegendSymbol = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QString& title, const int rasterBand)
     {
         image.fill( Qt::transparent );
         node->draw( settings, &context );
@@ -356,7 +355,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
         result.push_back( legendSymbol );
     };
 
-    auto createLegendSymbolWithImage = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QImage& image, const QString& title, const HeadlessRender::LegendSymbol::RasterBand& rasterBand)
+    auto createLegendSymbolWithImage = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QImage& image, const QString& title, const int rasterBand)
     {
         const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
         auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, isEnabled, index++, rasterBand );
@@ -374,59 +373,69 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
             for ( const auto &node : nodes )
             {
                 auto title = node->data( Qt::DisplayRole ).toString();
-                HeadlessRender::LegendSymbol::RasterBand rasterBand;
+                int rasterBand = 0;
                 if ( rasterRenderer )
                 {
                     if ( rasterRenderer->type() == RendererType::MULTIBANDCOLOR )
                     {
                         title = QString();
                         if ( auto* r = dynamic_cast<QgsMultiBandColorRenderer*>( rasterRenderer ))
-                            rasterBand = HeadlessRender::LegendSymbol::RasterBand( r->redBand(), r->greenBand(), r->blueBand(), r->alphaBand() );
+                        {
+                            switch( index )
+                            {
+                            case 0:
+                                rasterBand = r->redBand();
+                                break;
+                            case 1:
+                                rasterBand = r->greenBand();
+                                break;
+                            case 2:
+                                rasterBand = r->blueBand();
+                                break;
+                            }
+                        }
                         createLegendSymbol(node, nodes, title, rasterBand);
+
+                        if ( index > 3)
+                            break;
                     }
                     else if ( rasterRenderer->type() == RendererType::PALETTED )
                     {
                         if ( auto* r = dynamic_cast<QgsPalettedRasterRenderer*>( rasterRenderer ))
-                            rasterBand = HeadlessRender::LegendSymbol::RasterBand( r->band(), r->band(), r->band(), r->alphaBand() );
+                            rasterBand = r->band();
                         createLegendSymbol(node, nodes, title, rasterBand);
                     }
                     else if ( rasterRenderer->type() == RendererType::SINGLEBANDGRAY )
                     {
                         if ( auto* r = dynamic_cast<QgsSingleBandGrayRenderer*>( rasterRenderer ))
                         {
-                            rasterBand = HeadlessRender::LegendSymbol::RasterBand( r->grayBand(), r->grayBand(), r->grayBand(), r->alphaBand() );
+                            rasterBand = r->grayBand();
 
-                            if ( count != HeadlessRender::InvalidValue )
+                            title = QString::number( rasterBand );
+                            const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
+
+                            const auto gradient = r->gradient();
+                            const auto step = 255 / (count - 1);
+                            for (auto i = 0; i < count; ++i)
                             {
-                                title = QString::number( rasterBand.blue() );
-                                const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
-
-                                const auto gradient = r->gradient();
-                                const auto step = 255 / (count - 1);
-                                for (auto i = 0; i < count; ++i)
-                                {
-                                    const int color = gradient == QgsSingleBandGrayRenderer::BlackToWhite ? i * step : 255 - i * step;
-                                    image.fill( QColor(color, color, color) );
-                                    createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
-                                }
-                                break;
+                                const int color = gradient == QgsSingleBandGrayRenderer::BlackToWhite ? i * step : 255 - i * step;
+                                image.fill( QColor(color, color, color) );
+                                createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
                             }
-                            else
-                                createLegendSymbol(node, nodes, title, rasterBand);
+                            break;
                         }
                     }
                     else if ( rasterRenderer->type() == RendererType::SINGLEBANDPSEUDOCOLOR )
                     {
                         if ( auto* r = dynamic_cast<QgsSingleBandPseudoColorRenderer*>( rasterRenderer ))
                         {
-                            if (auto *rampShader = dynamic_cast<QgsColorRampShader *>( r->shader()->rasterShaderFunction() ))
+                            if ( auto *rampShader = dynamic_cast<QgsColorRampShader *>( r->shader()->rasterShaderFunction() ))
                             {
-                                if ( rampShader->colorRampType() == QgsColorRampShader::Interpolated && count != HeadlessRender::InvalidValue )
+                                if ( rampShader->colorRampType() == QgsColorRampShader::Interpolated )
                                 {
-                                    rasterBand = HeadlessRender::LegendSymbol::RasterBand( r->band(), r->band(), r->band(), r->alphaBand() );
+                                    rasterBand = r->band();
 
-                                    title = QString::number( rasterBand.blue() );
-                                    const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
+                                    title = QString::number( rasterBand );
 
                                     const auto& colorRampItemList = rampShader->colorRampItemList();
                                     const auto& colorRampItem1 = colorRampItemList.first();
@@ -472,10 +481,6 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
     QgsRasterRenderer* rasterRenderer = nullptr;
     if (auto* rasterLayer = qobject_cast<QgsRasterLayer*>( layer.get() ))
         rasterRenderer = rasterLayer->renderer();
-
-    if ( count != InvalidValue && (!rasterRenderer
-                                   || (rasterRenderer->type() != RendererType::SINGLEBANDGRAY && rasterRenderer->type() != RendererType::SINGLEBANDPSEUDOCOLOR )))
-        throw QgisHeadlessError( InvalidRenderTypeError );
 
     QgsLayerTree qgsLayerTree;
     qgsLayerTree.addLayer( layer.get() );

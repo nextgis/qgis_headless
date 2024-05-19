@@ -49,7 +49,7 @@ namespace HeadlessRender
     typedef std::vector<LegendSymbol::Index> SymbolIndexVector;
     typedef std::unordered_map<LayerIndex, SymbolIndexVector> RenderSymbols;
 
-    constexpr int InvalidValue = -1;
+    constexpr int DefaultRasterRenderSymbolCount = 5;
 
     class QGIS_HEADLESS_EXPORT MapRequest
     {
@@ -65,7 +65,7 @@ namespace HeadlessRender
         ImagePtr renderLegend( const Size &size = Size() );
         void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
 
-        std::vector<LegendSymbol> legendSymbols( LayerIndex index, const Size &size = Size(), int count = InvalidValue );
+        std::vector<LegendSymbol> legendSymbols( LayerIndex index, const Size &size = Size(), int count = DefaultRasterRenderSymbolCount );
 
     private:
         void applyRenderSymbols(const RenderSymbols& symbols);

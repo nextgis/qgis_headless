@@ -236,12 +236,6 @@ PYBIND11_MODULE(_qgis_headless, m) {
             return style.exportToString( format ).toStdString();
         }, pybind11::arg("format") = HeadlessRender::StyleFormat::QML);
 
-    pybind11::class_<HeadlessRender::LegendSymbol::RasterBand>(m, "RasterBand" )
-            .def( "red", &HeadlessRender::LegendSymbol::RasterBand::red)
-            .def( "green", &HeadlessRender::LegendSymbol::RasterBand::green)
-            .def( "blue", &HeadlessRender::LegendSymbol::RasterBand::blue)
-            .def( "alpha", &HeadlessRender::LegendSymbol::RasterBand::alpha);
-
     pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
         .def( "icon", &HeadlessRender::LegendSymbol::icon )
         .def( "title", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> pybind11::object
@@ -300,7 +294,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
         }, pybind11::arg("extent"), pybind11::arg("size"), pybind11::kw_only(), pybind11::arg("symbols") = pybind11::none())
         .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() )
         .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf )
-        .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, pybind11::arg("index"), pybind11::arg("size") = HeadlessRender::Size(), pybind11::arg("count") = HeadlessRender::InvalidValue );
+        .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, pybind11::arg("index"), pybind11::arg("size") = HeadlessRender::Size(), pybind11::arg("count") = HeadlessRender::DefaultRasterRenderSymbolCount );
 
     m.def("init", []( const std::vector<std::string> &args )
     {

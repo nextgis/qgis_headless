@@ -32,26 +32,8 @@ namespace HeadlessRender
     class LegendSymbol
     {
     public:
-        struct RasterBand
-        {
-            explicit RasterBand() = default;
-            RasterBand( int red, int green, int blue, int alpha );
-
-            int red() const;
-            int green() const;
-            int blue() const;
-            int alpha() const;
-
-        private:
-            int mRed = 0;
-            int mGreen = 0;
-            int mBlue = 0;
-            int mAlpha = 0;
-        };
-
         using Index = int;
-
-        static LegendSymbol create( const ImagePtr icon, const QString &title, bool isEnabled, Index index, RasterBand rasterBand );
+        static LegendSymbol create( const ImagePtr icon, const QString &title, bool isEnabled, Index index, int rasterBand );
 
         ImagePtr icon() const;
         QString title() const;
@@ -59,17 +41,17 @@ namespace HeadlessRender
         void setHasCategory( bool hasCategory );
         Index index() const;
         bool isEnabled() const;
-        RasterBand rasterBand() const;
+        int rasterBand() const;
 
     private:
-        LegendSymbol( const ImagePtr icon, const QString &title, bool isEnabled, Index index, RasterBand rasterBand );
+        LegendSymbol( const ImagePtr icon, const QString &title, bool isEnabled, Index index, int rasterBand );
 
         ImagePtr mIcon;
         QString mTitle;
         bool mHasCategory = true;
         bool mIsEnabled;
         Index mIndex = 0;
-        RasterBand mRasterBand;
+        int mRasterBand;
     };
 }
 
