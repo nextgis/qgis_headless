@@ -853,3 +853,17 @@ def test_label_marker(qml, resolve, save_img, shared_datadir):
 
     assert stat.red.max == 255, "Point is missing"
     assert stat.green.max == 255, "Label marker is missing"
+
+
+@Issues.WRONG_CALC_ELLIPSOID
+def test_calc_area(save_img, shared_datadir):
+    data = shared_datadir / "rough_australia.geojson"
+    layer = Layer.from_ogr(str(data))
+
+    style = (shared_datadir / "calc" / "area.qml").read_text()
+
+    img = save_img(render_vector(layer, style, (11937420, -5671831, 17643191, -932509)))
+
+    stat = image_stat(img)
+
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 255, 0)
