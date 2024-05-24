@@ -22,9 +22,10 @@
 
 using namespace HeadlessRender;
 
-LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const bool isEnabled, const Index index, int rasterBand )
+LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const bool isEnabled, const Index index, int rasterBand, const bool hasTitle )
     : mIcon( icon )
     , mTitle( title )
+    , mHasTitle( hasTitle )
     , mIsEnabled( isEnabled )
     , mIndex( index )
     , mRasterBand( rasterBand )
@@ -32,9 +33,9 @@ LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const boo
 
 }
 
-LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const bool isEnabled, Index index, int rasterBand)
+LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const bool isEnabled, Index index, int rasterBand, const bool hasTitle)
 {
-    return { icon, title, isEnabled, index, std::move( rasterBand ) };
+    return { icon, title, isEnabled, index, std::move( rasterBand ), hasTitle };
 }
 
 ImagePtr LegendSymbol::icon() const
@@ -50,6 +51,11 @@ QString LegendSymbol::title() const
 bool LegendSymbol::hasCategory() const
 {
     return mHasCategory;
+}
+
+bool LegendSymbol::hasTitle() const
+{
+    return mHasTitle;
 }
 
 void LegendSymbol::setHasCategory( const bool hasCategory )

@@ -343,13 +343,20 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
 
 static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image, HeadlessRender::LegendSymbol::Index index = 0, QgsRasterRenderer* rasterRenderer = nullptr, const int count = HeadlessRender::DefaultRasterRenderSymbolCount )
 {
-    auto createLegendSymbol = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QString& title, const int rasterBand)
+    auto createLegendSymbol = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QString& title, const int rasterBand, const bool hasTitle = true)
     {
+        if (rasterRenderer)
+        {
+            const auto icon = node->data( Qt::DecorationRole ).value<QIcon>();
+            if (icon.isNull())
+                return;
+        }
+
         image.fill( Qt::transparent );
         node->draw( settings, &context );
 
         const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
-        auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, isEnabled, index++, rasterBand );
+        auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, isEnabled, index++, rasterBand, hasTitle );
         if (nodes.size() == 1 && result.empty())
             legendSymbol.setHasCategory( false );
         result.push_back( legendSymbol );
@@ -394,7 +401,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                                 break;
                             }
                         }
-                        createLegendSymbol(node, nodes, title, rasterBand);
+                        createLegendSymbol( node, nodes, title, rasterBand, false );
 
                         if ( index > 3)
                             break;
@@ -403,6 +410,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                     {
                         if ( auto* r = dynamic_cast<QgsPalettedRasterRenderer*>( rasterRenderer ))
                             rasterBand = r->band();
+
                         createLegendSymbol(node, nodes, title, rasterBand);
                     }
                     else if ( rasterRenderer->type() == RendererType::SINGLEBANDGRAY )
@@ -411,7 +419,6 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                         {
                             rasterBand = r->grayBand();
 
-                            title = QString::number( rasterBand );
                             const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
 
                             const auto gradient = r->gradient();
@@ -420,6 +427,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                             {
                                 const int color = gradient == QgsSingleBandGrayRenderer::BlackToWhite ? i * step : 255 - i * step;
                                 image.fill( QColor(color, color, color) );
+                                title = QString::number( color );
                                 createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
                             }
                             break;
@@ -435,8 +443,6 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                                 {
                                     rasterBand = r->band();
 
-                                    title = QString::number( rasterBand );
-
                                     const auto& colorRampItemList = rampShader->colorRampItemList();
                                     const auto& colorRampItem1 = colorRampItemList.first();
                                     const auto& colorRampItem2 = colorRampItemList.last();
@@ -445,6 +451,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                                     for (auto i = 0; i < count; ++i)
                                     {
                                         image.fill( interpolateColors(colorRampItem1.color, colorRampItem2.color, i * step) );
+                                        title = QString::number( 255 / (count - 1) * i );
                                         createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
                                     }
                                     break;

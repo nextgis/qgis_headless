@@ -241,7 +241,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .def( "title", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> pybind11::object
         {
             const QString title = legendSymbol.title();
-            if ( !legendSymbol.hasCategory() && title.isEmpty() )
+            if ( !legendSymbol.hasTitle() || !legendSymbol.hasCategory() && title.isEmpty() )
                 return pybind11::none();
             else
                 return pybind11::cast( title.toStdString() );

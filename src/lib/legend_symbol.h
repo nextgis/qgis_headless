@@ -33,22 +33,24 @@ namespace HeadlessRender
     {
     public:
         using Index = int;
-        static LegendSymbol create( const ImagePtr icon, const QString &title, bool isEnabled, Index index, int rasterBand );
+        static LegendSymbol create( const ImagePtr icon, const QString &title, bool isEnabled, Index index, int rasterBand, bool hasTitle = true );
 
         ImagePtr icon() const;
         QString title() const;
         bool hasCategory() const;
+        bool hasTitle() const;
         void setHasCategory( bool hasCategory );
         Index index() const;
         bool isEnabled() const;
         int rasterBand() const;
 
     private:
-        LegendSymbol( const ImagePtr icon, const QString &title, bool isEnabled, Index index, int rasterBand );
+        LegendSymbol( const ImagePtr icon, const QString &title, bool isEnabled, Index index, int rasterBand, bool hasTitle = true );
 
         ImagePtr mIcon;
         QString mTitle;
         bool mHasCategory = true;
+        bool mHasTitle = false;
         bool mIsEnabled;
         Index mIndex = 0;
         int mRasterBand;
