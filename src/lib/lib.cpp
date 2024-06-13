@@ -419,15 +419,17 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                         {
                             rasterBand = r->grayBand();
 
-                            const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
+                            const auto contrastEnhancement = r->contrastEnhancement();
+                            const auto min = contrastEnhancement->minimumValue();
+                            const auto max = contrastEnhancement->maximumValue();
+                            const auto step = (max - min) / (count - 1.0);
+                            const auto interpStep = 1.0 / (count - 1.0);
+                            const auto blackToWhite = r->gradient() == QgsSingleBandGrayRenderer::BlackToWhite;
 
-                            const auto gradient = r->gradient();
-                            const auto step = 255 / (count - 1);
                             for (auto i = 0; i < count; ++i)
                             {
-                                const int color = gradient == QgsSingleBandGrayRenderer::BlackToWhite ? i * step : 255 - i * step;
-                                image.fill( QColor(color, color, color) );
-                                title = QString::number( color );
+                                image.fill( interpolateColors( blackToWhite ? Qt::black : Qt::white, blackToWhite ? Qt::white : Qt::black, i * interpStep) );
+                                title = QString::number( ceil( blackToWhite ? i * step : max - i * step ));
                                 createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
                             }
                             break;
@@ -451,7 +453,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                                     for (auto i = 0; i < count; ++i)
                                     {
                                         image.fill( interpolateColors(colorRampItem1.color, colorRampItem2.color, i * step) );
-                                        title = QString::number( 255 / (count - 1) * i );
+                                        title = QString::number( ceil( 255.0 / (count - 1.0) * i));
                                         createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
                                     }
                                     break;
