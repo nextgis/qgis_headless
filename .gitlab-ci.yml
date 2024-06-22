@@ -1,8 +1,8 @@
 stages:
-  - tests
+  - Dockerfile.focal
 
-tests:
-  stage: tests
+test_focal_job:
+  stage: Dockerfile.focal
   image: docker
   services:
     - docker:24.0.5-dind
@@ -14,5 +14,8 @@ tests:
   script:
     - docker build -t qgis_headless:focal -f Dockerfile.focal .
     - docker run --rm qgis_headless:focal ./pytest-runner
-  when: manual
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
 
