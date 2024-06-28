@@ -443,19 +443,27 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                             {
                                 if ( rampShader->colorRampType() == QgsColorRampShader::Interpolated )
                                 {
-                                    rasterBand = r->band();
-
-                                    const auto& colorRampItemList = rampShader->colorRampItemList();
-                                    const auto& colorRampItem1 = colorRampItemList.first();
-                                    const auto& colorRampItem2 = colorRampItemList.last();
-                                    const qreal step = 1.0 / (count - 1);
-
-                                    for (auto i = 0; i < count; ++i)
+                                    auto addColorRampItem = [&]( const auto& item )
                                     {
-                                        image.fill( interpolateColors(colorRampItem1.color, colorRampItem2.color, i * step) );
-                                        title = QString::number( ceil( 255.0 / (count - 1.0) * i));
+                                        image.fill( item.color );
+                                        title = QString::number( item.value );
                                         createLegendSymbolWithImage(node, nodes, image, title, rasterBand);
+                                    };
+
+                                    rasterBand = r->band();
+                                    const auto& colorRampItemList = rampShader->colorRampItemList();
+
+                                    addColorRampItem(colorRampItemList.first());
+
+                                    double step = static_cast<double>(colorRampItemList.size() - 1) / (count - 1);
+                                    for (auto i = 1; i < count - 1; ++i)
+                                    {
+                                        const double position = i * step;
+                                        const auto index = static_cast<int>(position);
+                                        addColorRampItem(colorRampItemList[index]);
                                     }
+
+                                    addColorRampItem(colorRampItemList.last());
                                     break;
                                 }
                                 else
