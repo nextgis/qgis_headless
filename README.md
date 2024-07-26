@@ -28,8 +28,7 @@ Headless rendering library using QGIS
 
 ## Running Python Tests in Docker
 
-Ubuntu Bionic Beaver:
+Ubuntu Jammy (for example):
 
-    $ docker build -t qgis_headless:bionic -f Dockerfile.bionic .
-    $ docker run --rm qgis_headless:bionic ./pytest-runner
-
+    $ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
+    $ docker run --rm qgis_headless:jammy ./pytest-runner

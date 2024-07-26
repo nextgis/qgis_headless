@@ -1,8 +1,4 @@
-stages:
-  - Dockerfile.focal
-
-test_focal_job:
-  stage: Dockerfile.focal
+.job_cmn:
   image: docker
   services:
     - docker:24.0.5-dind
@@ -12,10 +8,21 @@ test_focal_job:
   tags:
     - ng-docker-dind
   script:
-    - docker build -t qgis_headless:focal -f Dockerfile.focal .
-    - docker run --rm qgis_headless:focal ./pytest-runner
+    - docker build -t qgis_headless -f Dockerfile.$CI_JOB_STAGE .
+    - docker run --rm qgis_headless ./pytest-runner
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
 
+stages:
+  - focal
+  - jammy
+
+test_focal_job:
+  extends: .job_cmn
+  stage: focal
+
+test_jammy_job:
+  extends: .job_cmn
+  stage: jammy
