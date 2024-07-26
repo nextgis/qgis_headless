@@ -441,7 +441,11 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
                         {
                             if ( auto *rampShader = dynamic_cast<QgsColorRampShader *>( r->shader()->rasterShaderFunction() ))
                             {
-                                if ( rampShader->colorRampType() == QgsColorRampShader::Interpolated )
+#if _QGIS_VERSION_INT < 33800
+                                if ( rampShader->colorRampType() == QgsColorRampShader::Type::Interpolated )
+#else
+                                if ( rampShader->colorRampType() == Qgis::ShaderInterpolationMethod::Linear )
+#endif
                                 {
                                     auto addColorRampItem = [&]( const auto& item )
                                     {

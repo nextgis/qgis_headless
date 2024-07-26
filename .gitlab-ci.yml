@@ -18,6 +18,7 @@
 stages:
   - focal
   - jammy
+  - jammy-latest
 
 test_focal_job:
   extends: .job_cmn
@@ -26,3 +27,7 @@ test_focal_job:
 test_jammy_job:
   extends: .job_cmn
   stage: jammy
+
+test_jammy_latest_job:
+  extends: .job_cmn
+  stage: jammy-latest
