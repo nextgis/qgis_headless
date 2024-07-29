@@ -9,8 +9,16 @@
     - ng-docker-dind
   script:
     - docker build -t qgis_headless -f Dockerfile.$CI_JOB_STAGE .
-    - docker run --rm qgis_headless ./pytest-runner
+    - mkmdir report
+    - docker run -v ${CI_PROJECT_DIR}/report:/mnt --rm qgis_headless ./pytest-runner
   allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - ${CI_PROJECT_DIR}/report/rspec.xml
+    reports:
+      junit: ${CI_PROJECT_DIR}/report/rspec.xml
+
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
