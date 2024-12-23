@@ -247,7 +247,17 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 return pybind11::cast( title.toStdString() );
         })
         .def( "index", &HeadlessRender::LegendSymbol::index )
-        .def( "render", &HeadlessRender::LegendSymbol::isEnabled )
+        .def( "render", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> pybind11::object
+        {
+            switch( legendSymbol.render() )
+            {
+            case HeadlessRender::SymbolRender::Checked:
+                return pybind11::cast( true );
+            case HeadlessRender::SymbolRender::Unchecked:
+                return pybind11::cast( false );
+            }
+            return pybind11::none();
+        })
         .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );
 
     pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )

@@ -22,20 +22,20 @@
 
 using namespace HeadlessRender;
 
-LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const bool isEnabled, const Index index, int rasterBand, const bool hasTitle )
+LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const SymbolRender render, const Index index, int rasterBand, const bool hasTitle )
     : mIcon( icon )
     , mTitle( title )
     , mHasTitle( hasTitle )
-    , mIsEnabled( isEnabled )
+    , mRender( render )
     , mIndex( index )
     , mRasterBand( rasterBand )
 {
 
 }
 
-LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const bool isEnabled, Index index, int rasterBand, const bool hasTitle)
+LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const SymbolRender render, Index index, int rasterBand, const bool hasTitle)
 {
-    return { icon, title, isEnabled, index, std::move( rasterBand ), hasTitle };
+    return { icon, title, render, index, std::move( rasterBand ), hasTitle };
 }
 
 ImagePtr LegendSymbol::icon() const
@@ -68,9 +68,9 @@ LegendSymbol::Index LegendSymbol::index() const
     return mIndex;
 }
 
-bool LegendSymbol::isEnabled() const
+SymbolRender LegendSymbol::render() const
 {
-    return mIsEnabled;
+    return mRender;
 }
 
 int LegendSymbol::rasterBand() const

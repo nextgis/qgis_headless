@@ -341,22 +341,24 @@ void HeadlessRender::MapRequest::exportPdf( const std::string &filepath, const E
     painter.end();
 }
 
-static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image, HeadlessRender::LegendSymbol::Index index = 0, QgsRasterRenderer* rasterRenderer = nullptr, const int count = HeadlessRender::DefaultRasterRenderSymbolCount )
+static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vector<HeadlessRender::LegendSymbol> &result, QgsLayerTreeModel &model, const QgsLegendSettings &settings, QgsLayerTreeModelLegendNode::ItemContext &context, QImage &image, HeadlessRender::LegendSymbol::Index index = 0, QgsRasterRenderer* rasterRenderer = nullptr, QgsFeatureRenderer* featureRenderer = nullptr, const int count = HeadlessRender::DefaultRasterRenderSymbolCount )
 {
     auto createLegendSymbol = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QString& title, const int rasterBand, const bool hasTitle = true)
     {
+        auto symbolRender = HeadlessRender::SymbolRender::Uncheckable;
         if (rasterRenderer)
         {
             const auto icon = node->data( Qt::DecorationRole ).value<QIcon>();
             if (icon.isNull())
                 return;
         }
+        else if ( featureRenderer->legendSymbolItemsCheckable() )
+            symbolRender = node->data( Qt::CheckStateRole ).toBool() ? HeadlessRender::SymbolRender::Checked : HeadlessRender::SymbolRender::Unchecked;
 
         image.fill( Qt::transparent );
         node->draw( settings, &context );
 
-        const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
-        auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, isEnabled, index++, rasterBand, hasTitle );
+        auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, symbolRender, index++, rasterBand, hasTitle );
         if (nodes.size() == 1 && result.empty())
             legendSymbol.setHasCategory( false );
         result.push_back( legendSymbol );
@@ -364,8 +366,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
 
     auto createLegendSymbolWithImage = [&](QgsLayerTreeModelLegendNode* node, const QList<QgsLayerTreeModelLegendNode *>& nodes, const QImage& image, const QString& title, const int rasterBand)
     {
-        const auto isEnabled = node->data( Qt::CheckStateRole ).toBool();
-        auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, isEnabled, index++, rasterBand );
+        auto legendSymbol = HeadlessRender::LegendSymbol::create( std::make_shared<HeadlessRender::Image>( image ), title, HeadlessRender::SymbolRender::Uncheckable, index++, rasterBand );
         if (nodes.size() == 1 && result.empty())
             legendSymbol.setHasCategory( false );
         result.push_back( legendSymbol );
@@ -485,7 +486,7 @@ static void processLegendGroup( const QList<QgsLayerTreeNode*> &group, std::vect
         else
         {
             const auto group = QgsLayerTree::toGroup( it );
-            processLegendGroup( group->children(), result, model, settings, context, image, index, rasterRenderer );
+            processLegendGroup( group->children(), result, model, settings, context, image, index, rasterRenderer, featureRenderer );
         }
     }
 }
@@ -500,8 +501,11 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
 
     QgsMapLayerPtr layer = mLayers.at( index );
     QgsRasterRenderer* rasterRenderer = nullptr;
+    QgsFeatureRenderer* featureRenderer = nullptr;
     if (auto* rasterLayer = qobject_cast<QgsRasterLayer*>( layer.get() ))
         rasterRenderer = rasterLayer->renderer();
+    else
+        featureRenderer = qobject_cast<QgsVectorLayer*>( layer.get() )->renderer();
 
     QgsLayerTree qgsLayerTree;
     qgsLayerTree.addLayer( layer.get() );
@@ -531,7 +535,7 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::legendSymb
     legendSettings.setMaximumSymbolSize( canvasFrac * height / dpmm );
 
     std::vector<HeadlessRender::LegendSymbol> legendSymbols;
-    processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image, 0, rasterRenderer, count );
+    processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image, 0, rasterRenderer, featureRenderer, count );
     return legendSymbols;
 }
 

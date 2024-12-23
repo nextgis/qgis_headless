@@ -79,6 +79,13 @@ namespace HeadlessRender
         SLD
     };
 
+    enum SymbolRender
+    {
+        Uncheckable,
+        Unchecked,
+        Checked
+    };
+
     typedef std::pair<bool, std::set<std::string>> UsedAttributes;
 
     typedef std::array<double, 2> ScaleRange;
