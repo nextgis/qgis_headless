@@ -30,11 +30,25 @@ namespace HeadlessRender
 {
     typedef std::shared_ptr<QgsCoordinateReferenceSystem> QgsCoordinateReferenceSystemPtr;
 
+    /**
+     * This class represents a coordinate reference system (CRS).
+     */
     class QGIS_HEADLESS_EXPORT CRS
     {
     public:
+        /**
+         * Creates a CRS from a given EPSG ID.
+         */
         static CRS fromEPSG( long epsg );
+
+        /**
+         * Creates a CRS from a WKT spatial ref sys definition string.
+         */
         static CRS fromWkt( const std::string &wkt );
+
+        /**
+         * Converts a CRS to shared_ptr to QgsCoordinateReferenceSystem.
+         */
         QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
     private:
         QgsCoordinateReferenceSystemPtr mCRS;

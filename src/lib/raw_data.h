@@ -26,16 +26,30 @@
 
 namespace HeadlessRender
 {
+    /**
+     * Provides an interface for accessing raw data as an array of bytes.
+     */
     class QGIS_HEADLESS_EXPORT IRawData
     {
     public:
         virtual ~IRawData(){}
+
+        /**
+         * Returns a pointer to the first byte of data.
+         */
         virtual const uchar *data() const = 0;
+
+        /**
+         * Returns size of data in bytes.
+         */
         virtual std::size_t size() const = 0;
     };
 
     typedef std::shared_ptr<IRawData> RawDataPtr;
 
+    /**
+     * Simple implementation of IRawData, based on QByteArray.
+     */
     class QGIS_HEADLESS_EXPORT RawData: public IRawData
     {
     public:

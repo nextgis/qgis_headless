@@ -35,6 +35,9 @@ namespace HeadlessRender
     class Style;
     typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
+    /**
+     * Represents map layer (vector and raster layer types)
+     */
     class QGIS_HEADLESS_EXPORT Layer
     {
     public:
@@ -45,10 +48,24 @@ namespace HeadlessRender
             QVector<QVariant> attributes;
         };
 
+        /**
+         * Creates an empty layer
+         */
         Layer() = default;
 
+        /**
+         * Creates a vector layer from file.
+         */
         static Layer fromOgr( const std::string &uri );
+
+        /**
+         * Creates a raster layer from file.
+         */
         static Layer fromGdal( const std::string &uri );
+
+        /**
+         * Creates a vector layer of given geometry type, CRS with attributes of given types from QVector of FeatureList
+         */
         static Layer fromData( LayerGeometryType geometryType, const CRS &crs, const QVector<QPair<QString, LayerAttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
 
         QgsMapLayerPtr qgsMapLayer() const;

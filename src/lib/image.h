@@ -31,15 +31,35 @@ namespace HeadlessRender
 {
     typedef std::shared_ptr<QImage> QImagePtr;
 
+    /**
+     * This class represents an image, based on QImage.
+     */
     class QGIS_HEADLESS_EXPORT Image: public IRawData
     {
     public:
+        /**
+         * Constructs a null image.
+         */
         Image() = default;
+
+        /**
+         * Constructs image from a given QImage.
+         */
         explicit Image( const QImage &qimage );
 
+        /**
+         * Returns size of image in format (width, height).
+         */
         std::pair<int, int> sizeWidthHeight() const;
 
+        /**
+         * Returns a pointer to the first pixel data.
+         */
         const uchar *data() const override;
+
+        /**
+         * Returns size of pixel data in bytes
+         */
         std::size_t size() const override;
 
     private:

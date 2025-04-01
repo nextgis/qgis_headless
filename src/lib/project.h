@@ -27,12 +27,25 @@
 
 namespace HeadlessRender
 {
+    /**
+     * Represents project with list of layers and CRS. We can't use more than one Project for now.
+     */
     class QGIS_HEADLESS_EXPORT Project
     {
     public:
+        /**
+         * Read data of project from file.
+         */
         static Project fromFile( const std::string &filename );
 
+        /**
+         * Returns current CRS of project.
+         */
         CRS crs() const;
+
+        /**
+         * Returns all layers in project.
+         */
         QList<Layer> layers() const;
 
     private:

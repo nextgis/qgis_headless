@@ -30,19 +30,58 @@ namespace HeadlessRender
     class LegendSymbol;
     using LegendSymbolPtr = std::shared_ptr<LegendSymbol>;
 
+    /**
+     * Represents symbol of layer in map's legend
+     */
     class LegendSymbol
     {
     public:
         using Index = int;
+
+        /**
+         * Returns LegendSymbol, created with given icon, title and layer's index.
+         */
         static LegendSymbol create( const ImagePtr icon, const QString &title, SymbolRender render, Index index, int rasterBand, bool hasTitle = true );
 
+        /**
+         * Returns icon of symbol.
+         */
         ImagePtr icon() const;
+
+        /**
+         * Returns title of symbol.
+         */
         QString title() const;
+
+        /**
+         * Returns true if the layer has a category, i.e. it is part of some group, otherwise returns false.
+         */
         bool hasCategory() const;
+
+        /**
+         * Returns true if layer has a title, otherwise returns false.
+         */
         bool hasTitle() const;
+
+        /**
+         * Sets whether the layer has a category or not, depending on the value of the hasCategory parameter.
+         * \sa hasCategory()
+         */
         void setHasCategory( bool hasCategory );
+
+        /**
+         * Returns index of layer.
+         */
         Index index() const;
+
+        /**
+         * Returns render type of symbol.
+         */
         SymbolRender render() const;
+
+        /**
+         * Return raster band number
+         */
         int rasterBand() const;
 
     private:

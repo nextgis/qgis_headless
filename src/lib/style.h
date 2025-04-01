@@ -42,39 +42,88 @@ namespace HeadlessRender
     typedef std::shared_ptr<QgsVectorLayer> QgsVectorLayerPtr;
     typedef std::shared_ptr<QgsRasterLayer> QgsRasterLayerPtr;
 
+    /**
+     * Represents style of layer.
+     */
     class QGIS_HEADLESS_EXPORT Style
     {
     public:
+        /**
+         * Categories of style, imported by default.
+         */
         static const StyleCategory DefaultImportCategories;
 
+        /**
+         * Creates Style from QML or SLD formatted string.
+         */
         static Style fromString( const std::string &string,
                                  const SvgResolverCallback &svgResolverCallback = nullptr,
                                  LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
                                  DataType layerType = DataType::Unknown,
                                  StyleFormat format = StyleFormat::QML );
 
+        /**
+         * Creates Style from QML or SLD file.
+         */
         static Style fromFile( const std::string &filePath,
                                const SvgResolverCallback &svgResolverCallback = nullptr,
                                LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
                                DataType layerType = DataType::Unknown,
                                StyleFormat format = StyleFormat::QML );
 
+        /**
+         * Creates default Style with given color (color will be applied only for vector layer).
+         */
         static Style fromDefaults( const QColor &color,
                                    LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
                                    DataType layerType = DataType::Unknown ,
                                    StyleFormat format = StyleFormat::QML );
 
+        /**
+         * Returns XML representation of style.
+         */
         const QDomDocument & data() const;
+
+        /**
+         * Provides access to XML representation of style.
+         */
         QDomDocument & data();
+
+        /**
+         * Returns set of attributes, used in style.
+         */
         UsedAttributes usedAttributes() const;
+
+        /**
+         * Returns range of scales, within which the layer is visible.
+         */
         ScaleRange scaleRange() const;
+
+        /**
+         * Returns type of layer's data.
+         */
         DataType type() const;
 
+        /**
+         * Returns true, if style is default, otherwise returns false.
+         * \sa fromDefaults()
+         */
         bool isDefaultStyle() const;
+
+        /**
+         * Returns the default color for vector layer.
+         * \sa fromDefaults()
+         */
         QColor defaultStyleColor() const;
 
+        /**
+         * Returns XML-string, containing style in given format.
+         */
         QString exportToString( StyleFormat format = StyleFormat::QML ) const;
 
+        /**
+         * Applies style for given layer. Returns true, if success, otherwise returns false and write reason in errorMessage.
+         */
         bool importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const;
 
     private:
