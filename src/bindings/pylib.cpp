@@ -29,23 +29,25 @@
 #include <exceptions.h>
 #include <utils.h>
 
+namespace py = pybind11;
+
 PYBIND11_MODULE(_qgis_headless, m) {
 
-    pybind11::enum_<HeadlessRender::LogLevel>( m, "LogLevel" )
+    py::enum_<HeadlessRender::LogLevel>( m, "LogLevel" )
         .value("DEBUG", HeadlessRender::LogLevel::Debug)
         .value("INFO", HeadlessRender::LogLevel::Info)
         .value("WARNING", HeadlessRender::LogLevel::Warning)
         .value("CRITICAL", HeadlessRender::LogLevel::Critical)
         .export_values();
 
-    auto qgisHeadlessErrorHandle = pybind11::register_exception<HeadlessRender::QgisHeadlessError>( m, "QgisHeadlessError" );
-    auto styleValidationErrorHandle = pybind11::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError", qgisHeadlessErrorHandle );
-    pybind11::register_exception<HeadlessRender::StyleTypeMismatch>( m, "StyleTypeMismatch", styleValidationErrorHandle );
-    pybind11::register_exception<HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
+    auto qgisHeadlessErrorHandle = py::register_exception<HeadlessRender::QgisHeadlessError>( m, "QgisHeadlessError" );
+    auto styleValidationErrorHandle = py::register_exception<HeadlessRender::StyleValidationError>( m, "StyleValidationError", qgisHeadlessErrorHandle );
+    py::register_exception<HeadlessRender::StyleTypeMismatch>( m, "StyleTypeMismatch", styleValidationErrorHandle );
+    py::register_exception<HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
 
-    pybind11::class_<HeadlessRender::Layer> layer( m, "Layer" );
+    py::class_<HeadlessRender::Layer> layer( m, "Layer" );
 
-    pybind11::enum_<HeadlessRender::LayerGeometryType>( layer, "GeometryType" )
+    py::enum_<HeadlessRender::LayerGeometryType>( layer, "GeometryType" )
         .value( "GT_POINT", HeadlessRender::LayerGeometryType::Point )
         .value( "GT_LINESTRING", HeadlessRender::LayerGeometryType::LineString )
         .value( "GT_POLYGON", HeadlessRender::LayerGeometryType::Polygon )
@@ -61,7 +63,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .value( "GT_UNKNOWN", HeadlessRender::LayerGeometryType::Unknown )
         .export_values();
 
-    pybind11::enum_<HeadlessRender::LayerAttributeType>( layer, "AttributeType" )
+    py::enum_<HeadlessRender::LayerAttributeType>( layer, "AttributeType" )
         .value("FT_INTEGER", HeadlessRender::LayerAttributeType::Integer)
         .value("FT_REAL", HeadlessRender::LayerAttributeType::Real)
         .value("FT_STRING", HeadlessRender::LayerAttributeType::String)
@@ -71,19 +73,19 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .value("FT_INTEGER64", HeadlessRender::LayerAttributeType::Integer64)
         .export_values();
 
-    pybind11::enum_<HeadlessRender::DataType>( m, "LayerType" )
+    py::enum_<HeadlessRender::DataType>( m, "LayerType" )
         .value("LT_VECTOR", HeadlessRender::DataType::Vector)
         .value("LT_RASTER", HeadlessRender::DataType::Raster)
         .value("LT_UNKNOWN", HeadlessRender::DataType::Unknown)
         .export_values();
 
-    layer.def( pybind11::init<>() )
+    layer.def( py::init<>() )
         .def_static( "from_ogr", &HeadlessRender::Layer::fromOgr )
         .def_static( "from_gdal", &HeadlessRender::Layer::fromGdal )
         .def_static( "from_data", []( HeadlessRender::LayerGeometryType geometryType,
                                const HeadlessRender::CRS &crs,
-                               const pybind11::tuple &attrTypes,
-                               const pybind11::tuple &features )
+                               const py::tuple &attrTypes,
+                               const py::tuple &features )
         {
 
             QVector<QPair<QString, HeadlessRender::LayerAttributeType>> attributeTypes;
@@ -91,7 +93,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
             for ( const auto &it : attrTypes )
             {
-                const pybind11::tuple &attr = it.cast<pybind11::tuple>();
+                const py::tuple &attr = it.cast<py::tuple>();
                 attributeTypes.append( qMakePair( QString::fromStdString( attr[0].cast<std::string>() ), attr[1].cast<HeadlessRender::LayerAttributeType>() ) );
             }
 
@@ -99,11 +101,11 @@ PYBIND11_MODULE(_qgis_headless, m) {
             {
                 HeadlessRender::Layer::FeatureData feature;
 
-                const pybind11::tuple &feat = it.cast<pybind11::tuple>();
+                const py::tuple &feat = it.cast<py::tuple>();
 
                 feature.id = feat[0].cast<qint64>();
                 feature.wkb = feat[1].cast<std::string>();
-                
+
 
                 int idx = 0;
                 for (const auto &attr : feat[2])
@@ -129,7 +131,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                         break;
                     case HeadlessRender::LayerAttributeType::Date:
                     {
-                        const pybind11::tuple &params = attr.cast<pybind11::tuple>();
+                        const py::tuple &params = attr.cast<py::tuple>();
                         int y = params[0].cast<int>();
                         int m = params[1].cast<int>();
                         int d = params[2].cast<int>();
@@ -138,7 +140,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                     }
                     case HeadlessRender::LayerAttributeType::Time:
                     {
-                        const pybind11::tuple &params = attr.cast<pybind11::tuple>();
+                        const py::tuple &params = attr.cast<py::tuple>();
                         int h = params[0].cast<int>();
                         int m = params[1].cast<int>();
                         int s = params[2].cast<int>();
@@ -147,7 +149,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
                     }
                     case HeadlessRender::LayerAttributeType::DateTime:
                     {
-                        const pybind11::tuple &params = attr.cast<pybind11::tuple>();
+                        const py::tuple &params = attr.cast<py::tuple>();
 
                         int year = params[0].cast<int>();
                         int month = params[1].cast<int>();
@@ -175,53 +177,53 @@ PYBIND11_MODULE(_qgis_headless, m) {
             return HeadlessRender::Layer::fromData( geometryType, crs, attributeTypes, featureData );
         });
 
-    pybind11::class_<HeadlessRender::CRS>( m, "CRS" )
-        .def( pybind11::init<>() )
+    py::class_<HeadlessRender::CRS>( m, "CRS" )
+        .def( py::init<>() )
         .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG )
         .def_static( "from_wkt", &HeadlessRender::CRS::fromWkt );
 
-    pybind11::enum_<HeadlessRender::StyleFormat>( m, "StyleFormat" )
+    py::enum_<HeadlessRender::StyleFormat>( m, "StyleFormat" )
         .value("QML", HeadlessRender::StyleFormat::QML)
         .value("SLD", HeadlessRender::StyleFormat::SLD)
         .export_values();
 
-    pybind11::class_<HeadlessRender::Style>( m, "Style" )
+    py::class_<HeadlessRender::Style>( m, "Style" )
         .def_static( "from_string", &HeadlessRender::Style::fromString,
-                     pybind11::arg("string"),
-                     pybind11::arg("svg_resolver") = nullptr,
-                     pybind11::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown,
-                     pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown,
-                     pybind11::arg("format") = HeadlessRender::StyleFormat::QML )
+                     py::arg("string"),
+                     py::arg("svg_resolver") = nullptr,
+                     py::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown,
+                     py::arg("layer_type") = HeadlessRender::DataType::Unknown,
+                     py::arg("format") = HeadlessRender::StyleFormat::QML )
         .def_static( "from_file", &HeadlessRender::Style::fromFile,
-                     pybind11::arg("filePath"),
-                     pybind11::arg("svg_resolver") = nullptr,
-                     pybind11::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown,
-                     pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown,
-                     pybind11::arg("format") = HeadlessRender::StyleFormat::QML )
-        .def( "used_attributes", []( const HeadlessRender::Style &style ) -> pybind11::object
+                     py::arg("filePath"),
+                     py::arg("svg_resolver") = nullptr,
+                     py::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown,
+                     py::arg("layer_type") = HeadlessRender::DataType::Unknown,
+                     py::arg("format") = HeadlessRender::StyleFormat::QML )
+        .def( "used_attributes", []( const HeadlessRender::Style &style ) -> py::object
         {
             const auto &result = style.usedAttributes();
             if ( result.first )
-                return pybind11::cast( result.second );
+                return py::cast( result.second );
             else
-                return pybind11::none();
+                return py::none();
         })
-        .def( "scale_range", []( const HeadlessRender::Style &style ) -> pybind11::tuple
+        .def( "scale_range", []( const HeadlessRender::Style &style ) -> py::tuple
         {
             const auto &result = style.scaleRange();
-            return pybind11::make_tuple(
-                ( result[0] > 0 ) ? pybind11::cast(result[0]) : pybind11::none(),
-                ( result[1] > 0 ) ? pybind11::cast(result[1]) : pybind11::none()
+            return py::make_tuple(
+                ( result[0] > 0 ) ? py::cast(result[0]) : py::none(),
+                ( result[1] > 0 ) ? py::cast(result[1]) : py::none()
             );
         })
-        .def_static( "from_defaults", []( const pybind11::object &color,
+        .def_static( "from_defaults", []( const py::object &color,
                      HeadlessRender::LayerGeometryType layer_geometry_type,
                      HeadlessRender::DataType layer_type )
         {
             QColor qcolor;
             if ( !color.is_none() )
             {
-                const pybind11::tuple &colorTuple = color.cast<pybind11::tuple>();
+                const py::tuple &colorTuple = color.cast<py::tuple>();
                 int r = colorTuple[0].cast<int>();
                 int g = colorTuple[1].cast<int>();
                 int b = colorTuple[2].cast<int>();
@@ -230,81 +232,81 @@ PYBIND11_MODULE(_qgis_headless, m) {
                 qcolor = { r, g, b, a };
             }
             return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type );
-        }, pybind11::arg("color") = pybind11::none(), pybind11::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown, pybind11::arg("layer_type") = HeadlessRender::DataType::Unknown )
+        }, py::arg("color") = py::none(), py::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown, py::arg("layer_type") = HeadlessRender::DataType::Unknown )
         .def( "to_string", []( const HeadlessRender::Style &style, const HeadlessRender::StyleFormat format  )
         {
             return style.exportToString( format ).toStdString();
-        }, pybind11::arg("format") = HeadlessRender::StyleFormat::QML);
+        }, py::arg("format") = HeadlessRender::StyleFormat::QML);
 
-    pybind11::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
+    py::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
         .def( "icon", &HeadlessRender::LegendSymbol::icon )
-        .def( "title", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> pybind11::object
+        .def( "title", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> py::object
         {
             const QString title = legendSymbol.title();
             if ( !legendSymbol.hasTitle() || !legendSymbol.hasCategory() && title.isEmpty() )
-                return pybind11::none();
+                return py::none();
             else
-                return pybind11::cast( title.toStdString() );
+                return py::cast( title.toStdString() );
         })
         .def( "index", &HeadlessRender::LegendSymbol::index )
-        .def( "render", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> pybind11::object
+        .def( "render", []( const HeadlessRender::LegendSymbol &legendSymbol ) -> py::object
         {
             switch( legendSymbol.render() )
             {
             case HeadlessRender::SymbolRender::Checked:
-                return pybind11::cast( true );
+                return py::cast( true );
             case HeadlessRender::SymbolRender::Unchecked:
-                return pybind11::cast( false );
+                return py::cast( false );
             }
-            return pybind11::none();
+            return py::none();
         })
         .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );
 
-    pybind11::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
-        .def( pybind11::init<>() )
+    py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
+        .def( py::init<>() )
         .def( "size", &HeadlessRender::Image::sizeWidthHeight )
         .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img )
         {
-            return pybind11::memoryview::from_memory( img->data(), img->size() );
+            return py::memoryview::from_memory( img->data(), img->size() );
         });
 
-    pybind11::class_<HeadlessRender::RawData, std::shared_ptr<HeadlessRender::RawData>>( m, "RawData" )
-        .def( pybind11::init<>() )
+    py::class_<HeadlessRender::RawData, std::shared_ptr<HeadlessRender::RawData>>( m, "RawData" )
+        .def( py::init<>() )
         .def( "size", &HeadlessRender::RawData::size )
         .def( "to_bytes", []( std::shared_ptr<HeadlessRender::RawData> bytes )
         {
-            return pybind11::memoryview::from_memory( bytes->data(), bytes->size() );
+            return py::memoryview::from_memory( bytes->data(), bytes->size() );
         });
 
-    pybind11::class_<HeadlessRender::Project>( m, "Project" )
-        .def( pybind11::init<>() )
+    py::class_<HeadlessRender::Project>( m, "Project" )
+        .def( py::init<>() )
         .def_static( "from_file", &HeadlessRender::Project::fromFile );
 
-    pybind11::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
-        .def( pybind11::init<>() )
+    py::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
+        .def( py::init<>() )
         .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
         .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
-        .def( "add_layer", &HeadlessRender::MapRequest::addLayer, pybind11::arg("layer"), pybind11::arg("style"), pybind11::arg("label") = "" )
+        .def( "add_layer", &HeadlessRender::MapRequest::addLayer, py::arg("layer"), py::arg("style"), py::arg("label") = "" )
         .def( "add_project", &HeadlessRender::MapRequest::addProject )
-        .def( "render_image", []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size, const pybind11::object &symbols )
+        .def( "render_image", []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size, const py::object &symbols )
         {
             if ( symbols.is_none() )
                 return mapRequest.renderImage( extent, size );
 
             HeadlessRender::RenderSymbols renderSymbols;
-            for ( const auto &it : symbols.cast<pybind11::tuple>() )
+            for ( const auto &it : symbols.cast<py::tuple>() )
             {
-                const auto layerRenderSymbols = it.cast<pybind11::tuple>();
+                const auto layerRenderSymbols = it.cast<py::tuple>();
                 HeadlessRender::SymbolIndexVector symbolIndexVector;
-                for ( const auto &symbolIt : layerRenderSymbols[1].cast<pybind11::tuple>())
+                for ( const auto &symbolIt : layerRenderSymbols[1].cast<py::tuple>())
                     symbolIndexVector.push_back( symbolIt.cast<HeadlessRender::LegendSymbol::Index>() );
                 renderSymbols[layerRenderSymbols[0].cast<HeadlessRender::LayerIndex>()] = symbolIndexVector;
             }
             return mapRequest.renderImage( extent, size, renderSymbols );
-        }, pybind11::arg("extent"), pybind11::arg("size"), pybind11::kw_only(), pybind11::arg("symbols") = pybind11::none())
-        .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, pybind11::arg("size") = HeadlessRender::Size() )
+        }, py::arg("extent"), py::arg("size"), py::kw_only(), py::arg("symbols") = py::none())
+        .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, py::arg("size") = HeadlessRender::Size() )
         .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf )
-        .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, pybind11::arg("index"), pybind11::arg("size") = HeadlessRender::Size(), pybind11::arg("count") = HeadlessRender::DefaultRasterRenderSymbolCount );
+        .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, py::arg("index"), py::arg("size") = HeadlessRender::Size(), py::arg("count") = HeadlessRender::DefaultRasterRenderSymbolCount );
 
     m.def("init", []( const std::vector<std::string> &args )
     {
