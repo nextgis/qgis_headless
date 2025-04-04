@@ -147,6 +147,6 @@ def test_geometry_crash():
 
 def test_wrong_source(shared_datadir):
     with pytest.raises(InvalidLayerSource):
-        Layer.from_ogr(str(shared_datadir / "raster" / "rounds.tif"))
+        Layer.from_ogr(shared_datadir / "raster" / "rounds.tif")
     with pytest.raises(InvalidLayerSource):
-        Layer.from_gdal(str(shared_datadir / "poly.geojson"))
+        Layer.from_gdal(shared_datadir / "poly.geojson")

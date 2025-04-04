@@ -80,8 +80,12 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .export_values();
 
     layer.def( py::init<>() )
-        .def_static( "from_ogr", &HeadlessRender::Layer::fromOgr )
-        .def_static( "from_gdal", &HeadlessRender::Layer::fromGdal )
+        .def_static( "from_ogr", [](const py::object& uri) {
+            return HeadlessRender::Layer::fromOgr(py::str(uri));
+        } )
+        .def_static( "from_gdal", [](const py::object& uri) {
+            return HeadlessRender::Layer::fromGdal(py::str(uri));
+        } )
         .def_static( "from_data", []( HeadlessRender::LayerGeometryType geometryType,
                                const HeadlessRender::CRS &crs,
                                const py::tuple &attrTypes,
@@ -194,8 +198,17 @@ PYBIND11_MODULE(_qgis_headless, m) {
                      py::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown,
                      py::arg("layer_type") = HeadlessRender::DataType::Unknown,
                      py::arg("format") = HeadlessRender::StyleFormat::QML )
-        .def_static( "from_file", &HeadlessRender::Style::fromFile,
-                     py::arg("filePath"),
+        .def_static( "from_file",
+                     [](
+                         const py::object &filePath,
+                         const HeadlessRender::SvgResolverCallback &svgResolverCallback,
+                         HeadlessRender::LayerGeometryType layerGeometryType,
+                         HeadlessRender::DataType layerType,
+                         HeadlessRender::StyleFormat format
+                     ){
+                        return HeadlessRender::Style::fromFile(py::str(filePath), svgResolverCallback, layerGeometryType, layerType, format);
+                     },
+                     py::arg("file_path"),
                      py::arg("svg_resolver") = nullptr,
                      py::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown,
                      py::arg("layer_type") = HeadlessRender::DataType::Unknown,
@@ -280,7 +293,9 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     py::class_<HeadlessRender::Project>( m, "Project" )
         .def( py::init<>() )
-        .def_static( "from_file", &HeadlessRender::Project::fromFile );
+        .def_static( "from_file", [](const py::object& filename){
+            return HeadlessRender::Project::fromFile(py::str(filename));
+        });
 
     py::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
         .def( py::init<>() )

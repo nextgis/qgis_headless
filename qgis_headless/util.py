@@ -60,7 +60,7 @@ def render_vector(
         size = (size, int(size * (extent[3] - extent[1]) / (extent[2] - extent[0])))
 
     if not isinstance(layer, Layer):
-        layer = Layer.from_ogr(str(layer))
+        layer = Layer.from_ogr(layer)
 
     if not isinstance(style, Style):
         style = Style.from_string(
@@ -86,7 +86,7 @@ def render_raster(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)
         size = (size, int(size * (extent[3] - extent[1]) / (extent[2] - extent[0])))
 
     if not isinstance(layer, Layer):
-        layer = Layer.from_gdal(str(layer))
+        layer = Layer.from_gdal(layer)
 
     if not isinstance(style, Style):
         style = Style.from_string(style)

@@ -27,12 +27,12 @@ QGIS_312 = QGIS_VERSION >= version.parse("3.12")
 
 def test_non_existent_file(shared_datadir):
     with pytest.raises(StyleValidationError):
-        Style.from_file(str(shared_datadir / "missing.qml"))
+        Style.from_file(shared_datadir / "missing.qml")
 
 
 def test_invalid_file(shared_datadir):
     with pytest.raises(StyleValidationError):
-        Style.from_file(str(shared_datadir / "invalid.qml"))
+        Style.from_file(shared_datadir / "invalid.qml")
 
 
 def test_empty_string(shared_datadir):
@@ -99,7 +99,7 @@ def test_attributes(file, expected, shared_datadir):
     else:
         raise ValueError
 
-    style = Style.from_file(str(shared_datadir / file), format=format)
+    style = Style.from_file(shared_datadir / file, format=format)
     assert style.used_attributes() == (set(expected) if expected is not None else None)
 
 
@@ -122,7 +122,7 @@ def test_scale_range(style_fn, expected, shared_datadir):
     if style_fn is None:
         style = Style.from_defaults()
     else:
-        style = Style.from_file(str(shared_datadir / style_fn))
+        style = Style.from_file(shared_datadir / style_fn)
 
     assert style.scale_range() == expected
 
@@ -143,7 +143,7 @@ def test_layer_type(style, layer_type, exc, shared_datadir):
         params = dict()
         if layer_type is not None:
             params["layer_type"] = layer_type
-        Style.from_file(str(shared_datadir / style), **params)
+        Style.from_file(shared_datadir / style, **params)
 
 
 def test_geom_type(shared_datadir):
@@ -172,7 +172,7 @@ def test_geom_type(shared_datadir):
 def test_format(style, fmt, layer_type, exc, shared_datadir):
     style_file = shared_datadir / style
     with pytest.raises(exc) if exc is not None else suppress():
-        style = Style.from_file(str(style_file), format=fmt, layer_type=layer_type)
+        style = Style.from_file(style_file, format=fmt, layer_type=layer_type)
         for export_fmt in (SF_QML, SF_SLD):
             Style.from_string(
                 style.to_string(format=export_fmt),
@@ -190,4 +190,4 @@ def test_format(style, fmt, layer_type, exc, shared_datadir):
     ),
 )
 def test_sld(style, gt, save_img, shared_datadir):
-    Style.from_file(str(shared_datadir / style), format=SF_SLD, layer_geometry_type=gt)
+    Style.from_file(shared_datadir / style, format=SF_SLD, layer_geometry_type=gt)

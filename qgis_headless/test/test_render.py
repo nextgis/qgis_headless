@@ -83,8 +83,8 @@ def test_format(format, save_img, shared_datadir, reset_svg_paths):
 
 
 def test_contour_pdf(shared_datadir, reset_svg_paths):
-    layer = Layer.from_ogr(str(shared_datadir / "contour/data.geojson"))
-    style = Style.from_file(str(shared_datadir / "contour/rgb.qml"))
+    layer = Layer.from_ogr(shared_datadir / "contour/data.geojson")
+    style = Style.from_file(shared_datadir / "contour/rgb.qml")
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
@@ -161,7 +161,7 @@ def test_svg_builtin(shared_datadir, reset_svg_paths):
 
     set_svg_paths(["/usr/share/qgis/svg"])
 
-    layer = Layer.from_ogr(str(data))
+    layer = Layer.from_ogr(data)
     style = Style.from_string(style)
 
     img = render_vector(layer, style, EXTENT_ONE, 256)
@@ -253,7 +253,7 @@ def test_svg_cache(shared_datadir, reset_svg_paths):
     style = (shared_datadir / "zero/marker.qml").read_text()
     marker = (shared_datadir / "marker-blue" / "marker.svg").resolve()
 
-    layer = Layer.from_ogr(str(data))
+    layer = Layer.from_ogr(data)
     style = Style.from_string(style, svg_resolver=lambda _: str(marker))
 
     req = MapRequest()
@@ -290,7 +290,7 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
     req.set_dpi(96)
     req.set_crs(CRS.from_epsg(3857))
 
-    req.add_layer(Layer.from_ogr(str(data)), Style.from_string(style), label="Contour")
+    req.add_layer(Layer.from_ogr(data), Style.from_string(style), label="Contour")
 
     rendered_legend = req.render_legend()
     img = save_img(to_pil(rendered_legend))
@@ -388,7 +388,7 @@ for id, gt, style, sizes, expected in [
 @pytest.mark.parametrize("gt, style_params, size, expected", legend_symbols_params)
 def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datadir):
     if "file" in style_params:
-        style = Style.from_file(str(shared_datadir / style_params["file"]))
+        style = Style.from_file(shared_datadir / style_params["file"])
     else:
         style = Style.from_defaults(
             layer_type=LT_VECTOR,
@@ -478,8 +478,8 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
     ),
 )
 def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_datadir):
-    style = Style.from_file(str(shared_datadir / style_file))
-    layer = Layer.from_ogr(str(shared_datadir / layer_file))
+    style = Style.from_file(shared_datadir / style_file)
+    layer = Layer.from_ogr(shared_datadir / layer_file)
 
     req = MapRequest()
     req.set_dpi(96)
@@ -511,7 +511,7 @@ def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
     req.set_dpi(96)
     req.set_crs(CRS.from_epsg(3857))
 
-    req.add_layer(Layer.from_ogr(str(data)), Style.from_string(style), label="Marker")
+    req.add_layer(Layer.from_ogr(data), Style.from_string(style), label="Marker")
 
     rendered_legend = req.render_legend()
     img = save_img(to_pil(rendered_legend))
@@ -530,7 +530,7 @@ def test_legend_svg_resolver(save_img, shared_datadir, reset_svg_paths):
     req.set_crs(CRS.from_epsg(3857))
 
     req.add_layer(
-        Layer.from_ogr(str(data)),
+        Layer.from_ogr(data),
         Style.from_string(style, svg_resolver=lambda _: str(marker)),
         label="Marker",
     )
@@ -589,7 +589,7 @@ def test_render_crs(crs, extent, extent_empty, save_img, shared_datadir):
 
 def test_attribute_color(save_img, shared_datadir):
     data = shared_datadir / "landuse" / "landuse.geojson"
-    layer = Layer.from_ogr(str(data))
+    layer = Layer.from_ogr(data)
 
     style = (shared_datadir / "landuse" / "landuse.qml").read_text()
 
@@ -611,7 +611,7 @@ def test_attribute_color(save_img, shared_datadir):
 
 def test_style_25d(save_img, shared_datadir):
     data = shared_datadir / "poly.geojson"
-    layer = Layer.from_ogr(str(data))
+    layer = Layer.from_ogr(data)
 
     style = (shared_datadir / "25d" / "poly_25d.qml").read_text()
 
@@ -632,8 +632,8 @@ def test_style_25d(save_img, shared_datadir):
     ),
 )
 def test_diagram(layer, save_img, shared_datadir):
-    style = Style.from_file(str(shared_datadir / "diagram" / "industries.qml"))
-    layer = Layer.from_ogr(str(shared_datadir / layer))
+    style = Style.from_file(shared_datadir / "diagram" / "industries.qml")
+    layer = Layer.from_ogr(shared_datadir / layer)
 
     img = save_img(
         render_vector(
@@ -664,15 +664,15 @@ def test_diagram(layer, save_img, shared_datadir):
     # img = render_vector(layer, style, EXTENT_ONE, crs=CRS.from_epsg(3857))
     # img.save('share/from_data.png')
 
-    # layer = Layer.from_ogr(str(shared_datadir / 'diagram' / 'ind.geojson'))
+    # layer = Layer.from_ogr(shared_datadir / 'diagram' / 'ind.geojson')
     # img = render_vector(layer, style, EXTENT_ONE, crs=CRS.from_epsg(3857))
     # img.save('share/from_ogr.png')
 
 
 @Issues.GRADIENT
 def test_gradient(save_img, shared_datadir):
-    style = Style.from_file(str(shared_datadir / "gradient.qml"))
-    layer = Layer.from_ogr(str(shared_datadir / "landuse/landuse.geojson"))
+    style = Style.from_file(shared_datadir / "gradient.qml")
+    layer = Layer.from_ogr(shared_datadir / "landuse/landuse.geojson")
 
     img = save_img(render_vector(layer, style, (4189625, 7505162, 4190004, 7506081)))
     stat = image_stat(img)
@@ -687,8 +687,8 @@ def test_gradient(save_img, shared_datadir):
     "rounds_334.qml",
 ))
 def test_raster(style_file, shared_datadir):
-    layer = Layer.from_gdal(str(shared_datadir / "raster" / "rounds.tif"))
-    style = Style.from_file(str(shared_datadir / "raster" / style_file))
+    layer = Layer.from_gdal(shared_datadir / "raster" / "rounds.tif")
+    style = Style.from_file(shared_datadir / "raster" / style_file)
 
     img = render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0))
     stat = image_stat(img)
@@ -708,8 +708,8 @@ def test_raster(style_file, shared_datadir):
 
 
 def test_raster_layer_vector_style(shared_datadir):
-    layer = Layer.from_gdal(str(shared_datadir / "raster" / "rounds.tif"))
-    style = Style.from_file(str(shared_datadir / "point-style.qml"))
+    layer = Layer.from_gdal(shared_datadir / "raster" / "rounds.tif")
+    style = Style.from_file(shared_datadir / "point-style.qml")
 
     mreq = MapRequest()
     with pytest.raises(StyleTypeMismatch):
@@ -717,8 +717,8 @@ def test_raster_layer_vector_style(shared_datadir):
 
 
 def test_vector_layer_raster_style(shared_datadir):
-    layer = Layer.from_ogr(str(shared_datadir / "poly.geojson"))
-    style = Style.from_file(str(shared_datadir / "raster" / "rounds.qml"))
+    layer = Layer.from_ogr(shared_datadir / "poly.geojson")
+    style = Style.from_file(shared_datadir / "raster" / "rounds.qml")
 
     mreq = MapRequest()
     with pytest.raises(StyleTypeMismatch):
@@ -759,7 +759,7 @@ def test_vector_default_style(data, color, save_img, shared_datadir):
 
 
 def test_raster_rgb_default_style(shared_datadir):
-    layer = Layer.from_gdal(str(shared_datadir / "raster/rounds.tif"))
+    layer = Layer.from_gdal(shared_datadir / "raster/rounds.tif")
     style = Style.from_defaults()
 
     stat = image_stat(render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0)))
@@ -776,8 +776,8 @@ def test_raster_rgb_default_style(shared_datadir):
 
 
 def test_raster_rgb_inverted_style(shared_datadir):
-    layer = Layer.from_gdal(str(shared_datadir / "raster/rounds.tif"))
-    style = Style.from_file(str(shared_datadir / "raster/inverted.qml"))
+    layer = Layer.from_gdal(shared_datadir / "raster/rounds.tif")
+    style = Style.from_file(shared_datadir / "raster/inverted.qml")
 
     stat = image_stat(render_raster(layer, style, (251440.0, 5977974.0, 1978853.0, 7505647.0)))
     assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 255, 255), "Cyan colour missing"
@@ -793,7 +793,7 @@ def test_raster_rgb_inverted_style(shared_datadir):
 
 
 def test_raster_dem_default_style(save_img, shared_datadir):
-    layer = Layer.from_gdal(str(shared_datadir / "raster/sochi-aster-dem.tif"))
+    layer = Layer.from_gdal(shared_datadir / "raster/sochi-aster-dem.tif")
     style = Style.from_defaults()
 
     img = save_img(render_raster(layer, style, (40.0, 43.0, 41.0, 44.0), crs=CRS.from_epsg(4326)))
@@ -807,8 +807,8 @@ def test_raster_dem_default_style(save_img, shared_datadir):
 
 
 def test_label_variables(save_img, shared_datadir):
-    layer = Layer.from_ogr(str(shared_datadir / "zero/data.geojson"))
-    style = Style.from_file(str(shared_datadir / "zero/label/variables.qml"))
+    layer = Layer.from_ogr(shared_datadir / "zero/data.geojson")
+    style = Style.from_file(shared_datadir / "zero/label/variables.qml")
 
     img = save_img(render_vector(layer, style, EXTENT_ONE))
 
@@ -858,7 +858,7 @@ def test_label_marker(qml, resolve, save_img, shared_datadir):
 @Issues.WRONG_CALC_ELLIPSOID
 def test_calc_area(save_img, shared_datadir):
     data = shared_datadir / "rough_australia.geojson"
-    layer = Layer.from_ogr(str(data))
+    layer = Layer.from_ogr(data)
 
     style = (shared_datadir / "calc" / "area.qml").read_text()
 

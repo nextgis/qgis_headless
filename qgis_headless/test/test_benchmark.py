@@ -29,7 +29,7 @@ def test_contour(size, benchmark, shared_datadir):
     mreq = MapRequest()
     mreq.set_dpi(96)
     mreq.set_crs(CRS.from_epsg(3857))
-    mreq.add_layer(Layer.from_ogr(str(data)), Style.from_string(style))
+    mreq.add_layer(Layer.from_ogr(data), Style.from_string(style))
 
     def _render_image():
         to_pil(mreq.render_image(extent, (size, size)))
