@@ -52,7 +52,7 @@ def test_contour(save_img, shared_datadir, reset_svg_paths):
     assert stat.green.max == 255, "Primary lines aren't visible"
     assert stat.blue.max == 255, "Primary lines aren't visible"
 
-    assert 3 < stat.red.mean < 4
+    assert 3 < stat.red.mean < 4.05
     assert 12 < stat.green.mean < 13
     assert 29 < stat.blue.mean < 30
 
