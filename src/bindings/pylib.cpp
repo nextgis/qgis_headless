@@ -342,5 +342,7 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     m.def("get_qgis_version", &HeadlessRender::getQGISVersion, "Get QGIS library version");
 
+    m.def("get_qgis_version_int", &HeadlessRender::getQGISVersionInt, "Get QGIS library version (number)");
+
     m.def("set_logging_level", &HeadlessRender::setLoggingLevel, "Set logging level");
 }

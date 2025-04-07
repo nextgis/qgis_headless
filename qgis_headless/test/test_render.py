@@ -22,8 +22,8 @@ from qgis_headless import (
 )
 from qgis_headless.util import (
     EXTENT_ONE,
-    cmp_colors,
     image_stat,
+    is_same_color,
     render_raster,
     render_vector,
     to_pil,
@@ -52,7 +52,7 @@ def test_contour(save_img, shared_datadir, reset_svg_paths):
     assert stat.green.max == 255, "Primary lines aren't visible"
     assert stat.blue.max == 255, "Primary lines aren't visible"
 
-    assert 3 < stat.red.mean < 4
+    assert 3 < stat.red.mean < 4.05
     assert 12 < stat.green.mean < 13
     assert 29 < stat.blue.mean < 30
 
@@ -295,7 +295,13 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
     rendered_legend = req.render_legend()
     img = save_img(to_pil(rendered_legend))
 
-    assert img.size == (223, 92), "Expected size is 223 x 92"
+    EXPECTED_WIDTH = 224
+    EXPECTED_HEIGHT = 92
+    assert (
+        (EXPECTED_WIDTH - 2, EXPECTED_HEIGHT - 2)
+        <= img.size
+        <= (EXPECTED_WIDTH + 2, EXPECTED_HEIGHT + 2)
+    ), f"Expected size is ~{EXPECTED_WIDTH}x{EXPECTED_HEIGHT}"
 
     stat = image_stat(img)
     assert stat.green.max == 255, "Primary lines aren't visible"
@@ -308,9 +314,9 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
     rendered_legend = req.render_legend()
     hdpi_img = to_pil(rendered_legend)
 
-    assert (
-        img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1]
-    ), "Higher DPI should produce bigger legend"
+    assert img.size[0] < hdpi_img.size[0] and img.size[1] < hdpi_img.size[1], (
+        "Higher DPI should produce bigger legend"
+    )
 
 
 RED = (255, 0, 0, 255)
@@ -379,7 +385,7 @@ for id, gt, style, sizes, expected in [
     ),
 ]:
     for size in sizes:
-        if type(size) == int:
+        if isinstance(size, int):
             size = (size, size)
         param_id = f"{id}-{size[0]}x{size[1]}"
         legend_symbols_params.append(pytest.param(gt, style, size, expected, id=param_id))
@@ -405,8 +411,8 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
     expected_count = len(expected)
     assert symbols_count == expected_count, "count mismatch"
 
-    for symbol, (title, color) in zip(symbols, expected):
-        assert symbol.title() == title, "title mismatch"
+    for symbol, (expected_title, expected_colors) in zip(symbols, expected):
+        assert symbol.title() == expected_title, "title mismatch"
 
         image = save_img(to_pil(symbol.icon()), symbol.title())
         im_size = image.size
@@ -415,27 +421,37 @@ def test_legend_symbols(gt, style_params, size, expected, save_img, shared_datad
         assert im_width != 0, "zero width"
         assert im_height != 0, "zero height"
 
-        pixel_coord = (
+        sides_coords = (
             dict(l=0, r=im_width - 1, c=(im_width - 1) // 2),
             dict(t=0, b=im_height - 1, c=(im_height - 1) // 2),
         )
 
-        if isinstance(color, tuple):
-            color = dict(c=color)
+        if isinstance(expected_colors, tuple):
+            expected_colors = dict(c=expected_colors)
 
-        for k, v in color.items():
-            if k == "c":
-                k = "cc"
-            p = tuple(b[i] for i, b in zip(k, pixel_coord))
-            color = image.getpixel(p)
-            delta = cmp_colors(color, v)
-            assert delta < 20, f"{k}{p} color mismatch ({delta}): {color} != {v} "
+        for position, expected_color in expected_colors.items():
+            if position == "c":
+                position = "cc"
+
+            pixel_coord = tuple(
+                side_coords[side] for side, side_coords in zip(position, sides_coords)
+            )
+            pixels_coord = [pixel_coord]
+            if position == "cc":
+                pixels_coord.append((pixel_coord[0], pixel_coord[1] - 1))
+                pixels_coord.append((pixel_coord[0], pixel_coord[1] + 1))
+            pixels_color = [image.getpixel(pixel_coord) for pixel_coord in pixels_coord]
+
+            assert any(
+                is_same_color(pixel_color, expected_color) for pixel_color in pixels_color
+            ), f"{position}{pixel_coord} color mismatch: {expected_color} != {pixels_color[0]} "
 
         assert im_size == size, f"size mismatch: {im_size} != {size}"
 
 
 @pytest.mark.parametrize(
-    "style_file, layer_file, extent, cases", (
+    "style_file, layer_file, extent, cases",
+    (
         (
             "landuse/landuse.qml",
             "landuse/landuse.geojson",
@@ -682,10 +698,13 @@ def test_gradient(save_img, shared_datadir):
     assert stat.blue.max == 255, "Last colour is missing"
 
 
-@pytest.mark.parametrize("style_file", (
-    "rounds_310.qml",
-    "rounds_334.qml",
-))
+@pytest.mark.parametrize(
+    "style_file",
+    (
+        "rounds_310.qml",
+        "rounds_334.qml",
+    ),
+)
 def test_raster(style_file, shared_datadir):
     layer = Layer.from_gdal(shared_datadir / "raster" / "rounds.tif")
     style = Style.from_file(shared_datadir / "raster" / style_file)

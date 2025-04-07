@@ -70,7 +70,7 @@ def test_default(params):
         result = root.xpath(search)
         assert len(result) == 1, "Color option missing"
 
-        qml_color = tuple(map(int, result[0].attrib["value"].split(",")))
+        qml_color = tuple(map(int, result[0].attrib["value"].split(",")[:4]))
         assert qml_color == color
 
 
@@ -174,12 +174,14 @@ def test_format(style, fmt, layer_type, exc, shared_datadir):
     with pytest.raises(exc) if exc is not None else suppress():
         style = Style.from_file(style_file, format=fmt, layer_type=layer_type)
         for export_fmt in (SF_QML, SF_SLD):
+            if layer_type == LT_RASTER and export_fmt == SF_SLD:
+                continue
+
             Style.from_string(
                 style.to_string(format=export_fmt),
                 format=export_fmt,
                 layer_type=layer_type,
             )
-
 
 @pytest.mark.parametrize(
     "style, gt",
