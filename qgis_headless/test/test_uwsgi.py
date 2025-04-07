@@ -1,4 +1,5 @@
 import re
+import shutil
 import socket
 import sys
 import time
@@ -26,10 +27,13 @@ def test_segfault(mode):
         sock.bind(("127.0.0.1", 0))
         addr, port = sock.getsockname()
 
+    uwsgi_path = shutil.which("uwsgi")
+    assert uwsgi_path is not None
+
     with TemporaryFile(mode="w+") as fd:
         proc = Popen(
             [
-                Path(sys.executable).parent / "uwsgi",
+                uwsgi_path,
                 "--master",
                 "--lazy-apps",
                 "--enable-threads",
