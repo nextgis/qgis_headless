@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "qgis_headless"
 description = "QGIS headless rendering library"
 authors = [{ name = "NextGIS", email = "info@nextgis.com" }]
-license = { text = "GPL" }
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">3.8"
 dynamic = ["version"]
 
