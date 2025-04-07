@@ -70,7 +70,7 @@ def test_default(params):
         result = root.xpath(search)
         assert len(result) == 1, "Color option missing"
 
-        qml_color = tuple(map(int, result[0].attrib["value"].split(",")))
+        qml_color = tuple(map(int, result[0].attrib["value"].split(",")[:4]))
         assert qml_color == color
 
 
