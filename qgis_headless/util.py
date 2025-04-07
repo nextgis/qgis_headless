@@ -1,5 +1,6 @@
 from binascii import a2b_hex
 from collections import namedtuple
+from typing import Tuple
 
 from qgis_headless import CRS, Layer, MapRequest, Style, StyleFormat
 
@@ -38,8 +39,10 @@ def image_stat(image):
     )
 
 
-def cmp_colors(a, b):
-    return float(sum((ca - cb) ** 2 for ca, cb in zip(a, b)))
+def is_same_color(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> bool:
+    color_channels_delta = sum(abs(ca - cb) for ca, cb in zip(a[:3], b[:3]))
+    alpha_channel_delta = abs(a[3] - b[3]) / 255.0
+    return color_channels_delta <= 3 and alpha_channel_delta < 0.05
 
 
 def render_vector(
