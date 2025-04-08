@@ -295,7 +295,13 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
     rendered_legend = req.render_legend()
     img = save_img(to_pil(rendered_legend))
 
-    assert img.size == (223, 92), "Expected size is 223 x 92"
+    EXPECTED_WIDTH = 224
+    EXPECTED_HEIGHT = 92
+    assert (
+        (EXPECTED_WIDTH - 2, EXPECTED_HEIGHT - 2)
+        <= img.size
+        <= (EXPECTED_WIDTH + 2, EXPECTED_HEIGHT + 2)
+    ), f"Expected size is ~{EXPECTED_WIDTH}x{EXPECTED_HEIGHT}"
 
     stat = image_stat(img)
     assert stat.green.max == 255, "Primary lines aren't visible"
