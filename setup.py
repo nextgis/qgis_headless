@@ -11,7 +11,7 @@ here = path.abspath(path.dirname(__file__))
 
 class CMakeExtension(Extension):
     def __init__(self, name):
-        Extension.__init__(self, name, sources=[])
+        super().__init__(name, sources=[])
 
 
 class CMakeBuild(build_ext):
@@ -23,20 +23,20 @@ class CMakeBuild(build_ext):
         if not os.path.isdir(self.build_temp):
             makedirs(self.build_temp)
 
-        extdir = self.get_ext_fullpath(ext.name)
-
+        extdir = path.abspath(path.dirname(self.get_ext_fullpath(ext.name)))
         config = "Debug" if self.debug else "Release"
+
         cmake_args = [
-            "-DPYTHON_EXECUTABLE=" + sys.executable,
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + os.path.abspath(os.path.split(extdir)[0]),
-            "-DCMAKE_BUILD_TYPE=" + config,
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
+            f"-DCMAKE_BUILD_TYPE={config}",
         ]
 
         build_args = ["--config", config, "--", "-j2"]
-
         env = os.environ.copy()
+
         subprocess.check_call(
-            ["cmake", os.path.abspath(os.path.dirname(__file__))] + cmake_args,
+            ["cmake", here] + cmake_args,
             cwd=self.build_temp,
             env=env,
         )
@@ -48,8 +48,49 @@ class CMakeBuild(build_ext):
                 env=env,
             )
 
+        self._generate_stubs(extdir, ext.name)
+
+    def _generate_stubs(self, extdir: str, modname: str) -> None:
+        """
+        Generate .pyi stubs using pybind11-stubgen.
+
+        :param extdir: Directory containing the built module.
+        :param modname: Module name, e.g. "_qgis_headless".
+        """
+        stubgen_cmd = [
+            "pybind11-stubgen",
+            modname,
+            "--output-dir",
+            extdir,
+        ]
+        if self.dry_run:
+            stubgen_cmd.append("--dry-run")
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = extdir
+        subprocess.check_call(stubgen_cmd, env=env)
+
+        if self.dry_run:
+            return
+
+        ruff_check_cmd = [
+            "ruff",
+            "check",
+            "--fix",
+            "--unsafe-fixes",
+            os.path.join(extdir, f"{modname}.pyi"),
+        ]
+        subprocess.check_call(ruff_check_cmd)
+
+        ruff_format_cmd = [
+            "ruff",
+            "format",
+            os.path.join(extdir, f"{modname}.pyi"),
+        ]
+        subprocess.check_call(ruff_format_cmd)
+
 
 setup(
     ext_modules=[CMakeExtension("_qgis_headless")],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass={"build_ext": CMakeBuild},
 )
