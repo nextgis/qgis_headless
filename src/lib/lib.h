@@ -88,6 +88,8 @@ namespace HeadlessRender
 
     QGIS_HEADLESS_EXPORT const char *getQGISVersion();
 
+    QGIS_HEADLESS_EXPORT int getQGISVersionInt();
+
     QGIS_HEADLESS_EXPORT void setLoggingLevel( HeadlessRender::LogLevel level );
 }
 

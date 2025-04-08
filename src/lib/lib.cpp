@@ -170,6 +170,11 @@ const char * HeadlessRender::getQGISVersion()
     return VERSION;
 }
 
+int HeadlessRender::getQGISVersionInt()
+{
+    return _QGIS_VERSION_INT;
+}
+
 HeadlessRender::MapRequest::MapRequest()
     : mSettings( new QgsMapSettings )
     , mQgsLayerTree( new QgsLayerTree )
