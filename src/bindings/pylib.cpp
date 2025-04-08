@@ -45,6 +45,11 @@ PYBIND11_MODULE(_qgis_headless, m) {
     py::register_exception<HeadlessRender::StyleTypeMismatch>( m, "StyleTypeMismatch", styleValidationErrorHandle );
     py::register_exception<HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
 
+    py::class_<HeadlessRender::CRS>( m, "CRS" )
+        .def( py::init<>() )
+        .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG , py::arg("epsg"))
+        .def_static( "from_wkt", &HeadlessRender::CRS::fromWkt , py::arg("wkt"));
+
     py::class_<HeadlessRender::Layer> layer( m, "Layer" );
 
     py::enum_<HeadlessRender::LayerGeometryType>( layer, "GeometryType" )
@@ -80,12 +85,20 @@ PYBIND11_MODULE(_qgis_headless, m) {
         .export_values();
 
     layer.def( py::init<>() )
-        .def_static( "from_ogr", [](const py::object& uri) {
-            return HeadlessRender::Layer::fromOgr(py::str(uri));
-        } )
-        .def_static( "from_gdal", [](const py::object& uri) {
-            return HeadlessRender::Layer::fromGdal(py::str(uri));
-        } )
+        .def_static(
+            "from_ogr",
+            [](const py::object& uri) {
+                return HeadlessRender::Layer::fromOgr(py::str(uri));
+            },
+            py::arg("uri")
+        )
+        .def_static(
+            "from_gdal",
+            [](const py::object& uri) {
+                return HeadlessRender::Layer::fromGdal(py::str(uri));
+            },
+            py::arg("uri")
+        )
         .def_static( "from_data", []( HeadlessRender::LayerGeometryType geometryType,
                                const HeadlessRender::CRS &crs,
                                const py::tuple &attrTypes,
@@ -179,17 +192,18 @@ PYBIND11_MODULE(_qgis_headless, m) {
             }
 
             return HeadlessRender::Layer::fromData( geometryType, crs, attributeTypes, featureData );
-        });
-
-    py::class_<HeadlessRender::CRS>( m, "CRS" )
-        .def( py::init<>() )
-        .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG )
-        .def_static( "from_wkt", &HeadlessRender::CRS::fromWkt );
+        },
+        py::arg("geometry_type"),
+        py::arg("crs"),
+        py::arg("attribute_types"),
+        py::arg("features")
+    );
 
     py::enum_<HeadlessRender::StyleFormat>( m, "StyleFormat" )
         .value("QML", HeadlessRender::StyleFormat::QML)
-        .value("SLD", HeadlessRender::StyleFormat::SLD)
-        .export_values();
+        .value("SLD", HeadlessRender::StyleFormat::SLD);
+    m.attr("SF_QML") = HeadlessRender::StyleFormat::QML;
+    m.attr("SF_SLD") = HeadlessRender::StyleFormat::SLD;
 
     py::class_<HeadlessRender::Style>( m, "Style" )
         .def_static( "from_string", &HeadlessRender::Style::fromString,
@@ -246,10 +260,13 @@ PYBIND11_MODULE(_qgis_headless, m) {
             }
             return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type );
         }, py::arg("color") = py::none(), py::arg("layer_geometry_type") = HeadlessRender::LayerGeometryType::Unknown, py::arg("layer_type") = HeadlessRender::DataType::Unknown )
-        .def( "to_string", []( const HeadlessRender::Style &style, const HeadlessRender::StyleFormat format  )
-        {
-            return style.exportToString( format ).toStdString();
-        }, py::arg("format") = HeadlessRender::StyleFormat::QML);
+        .def( "to_string",
+            []( const HeadlessRender::Style &style, const HeadlessRender::StyleFormat format  )
+            {
+                return style.exportToString( format ).toStdString();
+            },
+            py::arg("format") = HeadlessRender::StyleFormat::QML
+        );
 
     py::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
         .def( "icon", &HeadlessRender::LegendSymbol::icon )
@@ -293,16 +310,24 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     py::class_<HeadlessRender::Project>( m, "Project" )
         .def( py::init<>() )
-        .def_static( "from_file", [](const py::object& filename){
-            return HeadlessRender::Project::fromFile(py::str(filename));
-        });
+        .def_static(
+            "from_file",
+            [](const py::object& filename){
+                return HeadlessRender::Project::fromFile(py::str(filename));
+            },
+            py::arg("filename")
+        );
 
     py::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
         .def( py::init<>() )
-        .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
-        .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
+        .def( "set_dpi", &HeadlessRender::MapRequest::setDpi, py::arg("dpi") )
+        .def( "set_crs", &HeadlessRender::MapRequest::setCrs, py::arg("crs") )
         .def( "add_layer", &HeadlessRender::MapRequest::addLayer, py::arg("layer"), py::arg("style"), py::arg("label") = "" )
-        .def( "add_project", &HeadlessRender::MapRequest::addProject )
+        .def(
+            "add_project",
+            &HeadlessRender::MapRequest::addProject,
+            py::arg("project")
+        )
         .def( "render_image", []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size, const py::object &symbols )
         {
             if ( symbols.is_none() )
@@ -320,21 +345,43 @@ PYBIND11_MODULE(_qgis_headless, m) {
             return mapRequest.renderImage( extent, size, renderSymbols );
         }, py::arg("extent"), py::arg("size"), py::kw_only(), py::arg("symbols") = py::none())
         .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, py::arg("size") = HeadlessRender::Size() )
-        .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf )
-        .def( "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, py::arg("index"), py::arg("size") = HeadlessRender::Size(), py::arg("count") = HeadlessRender::DefaultRasterRenderSymbolCount );
+        .def(
+            "export_pdf",
+            &HeadlessRender::MapRequest::exportPdf,
+            py::arg("filepath"),
+            py::arg("extent"),
+            py::arg("size")
+        )
+        .def(
+            "legend_symbols",
+            &HeadlessRender::MapRequest::legendSymbols,
+            py::arg("index"),
+            py::arg("size") = HeadlessRender::Size(),
+            py::arg("count") = HeadlessRender::DefaultRasterRenderSymbolCount
+        );
 
-    m.def("init", []( const std::vector<std::string> &args )
-    {
-        std::vector<char *> v;
-        v.reserve( args.size() );
-        for ( auto &s : args )
-            v.push_back( const_cast<char *>( s.c_str() ) );
-        return HeadlessRender::init( v.size(), v.data() );
-    }, "Library initialization");
+    m.def(
+        "init",
+        []( const std::vector<std::string> &args )
+        {
+            std::vector<char *> v;
+            v.reserve( args.size() );
+            for ( auto &s : args )
+                v.push_back( const_cast<char *>( s.c_str() ) );
+            return HeadlessRender::init( v.size(), v.data() );
+        },
+        "Library initialization",
+        py::arg("args")
+    );
 
     m.def("deinit", &HeadlessRender::deinit, "Library deinitialization");
 
-    m.def("set_svg_paths", &HeadlessRender::setSvgPaths, "Set SVG search paths");
+    m.def(
+        "set_svg_paths",
+        &HeadlessRender::setSvgPaths,
+        "Set SVG search paths",
+        py::arg("paths")
+    );
 
     m.def("get_svg_paths", &HeadlessRender::getSvgPaths, "Get SVG search paths");
 
@@ -344,5 +391,5 @@ PYBIND11_MODULE(_qgis_headless, m) {
 
     m.def("get_qgis_version_int", &HeadlessRender::getQGISVersionInt, "Get QGIS library version (number)");
 
-    m.def("set_logging_level", &HeadlessRender::setLoggingLevel, "Set logging level");
+    m.def("set_logging_level", &HeadlessRender::setLoggingLevel, "Set logging level", py::arg("level"));
 }
