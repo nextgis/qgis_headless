@@ -18,6 +18,7 @@ from qgis_headless import (
     StyleFormat,
     StyleTypeMismatch,
     get_qgis_version,
+    get_qgis_version_int,
     set_svg_paths,
 )
 from qgis_headless.util import (
@@ -685,8 +686,10 @@ def test_diagram(layer, save_img, shared_datadir):
     # img.save('share/from_ogr.png')
 
 
-@Issues.GRADIENT
 def test_gradient(save_img, shared_datadir):
+    if get_qgis_version_int() < 33200:
+        pytest.xfail(Issues.GRADIENT.kwargs["reason"])
+
     style = Style.from_file(shared_datadir / "gradient.qml")
     layer = Layer.from_ogr(shared_datadir / "landuse/landuse.geojson")
 
