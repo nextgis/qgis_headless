@@ -67,7 +67,10 @@ class CMakeBuild(build_ext):
             stubgen_cmd.append("--dry-run")
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = extdir
+        if "PYTHONPATH" in env:
+            env["PYTHONPATH"] = os.pathsep.join((env["PYTHONPATH"], extdir))
+        else:
+            env["PYTHONPATH"] = extdir
         subprocess.check_call(stubgen_cmd, env=env)
 
         if self.dry_run:
