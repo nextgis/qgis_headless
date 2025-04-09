@@ -4,7 +4,7 @@ Headless rendering library using QGIS
 
 ## Installation to Virtualenv
 
-1. Install dependecies: 
+1. Install dependecies:
 
    * `libqgis-dev`
    * `qt5-image-formats-plugins` (usually installed via dependencies)
@@ -13,7 +13,7 @@ Headless rendering library using QGIS
 
 2. Create virtualenv, activate it and install the package there:
 
-    ```
+    ``` shell
     $ python3 -m venv env
     $ source env/bin/activate
     $ pip install --editable ./[tests]
@@ -21,7 +21,7 @@ Headless rendering library using QGIS
 
 3. Run the tests:
 
-    ```
+    ``` shell
     $ python -m pytest qgis_headless/test/
     ```
 
@@ -30,5 +30,7 @@ Headless rendering library using QGIS
 
 Ubuntu Jammy (for example):
 
-    $ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
-    $ docker run --rm qgis_headless:jammy ./pytest-runner
+``` shell
+$ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
+$ docker run --rm qgis_headless:jammy ./pytest-runner
+```
