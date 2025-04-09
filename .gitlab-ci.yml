@@ -11,7 +11,7 @@
     - docker build -t qgis_headless -f Dockerfile.${CI_JOB_STAGE} .
     - mkdir -p report/${CI_JOB_STAGE}
     - docker run -v ${CI_PROJECT_DIR}/report/${CI_JOB_STAGE}:/mnt --rm qgis_headless ./pytest-runner
-  allow_failure: true
+  allow_failure: false
   artifacts:
     when: always
     paths:
