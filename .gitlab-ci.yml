@@ -1,40 +1,57 @@
-.job_cmn:
+stages:
+  - lint
+  - test
+
+pre_commit_check:
+  image: python:3.11
+  stage: lint
+  tags:
+    - ng-docker-dind
+  before_script:
+    - pip install pre-commit
+  script:
+    - pre-commit run --all-files
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+.run_tests_job:
   image: docker
   services:
     - docker:24.0.5-dind
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
+    REPORT_DIR: report/${DISTRO}
   tags:
     - ng-docker-dind
   script:
-    - docker build -t qgis_headless -f Dockerfile.${CI_JOB_STAGE} .
-    - mkdir -p report/${CI_JOB_STAGE}
-    - docker run -v ${CI_PROJECT_DIR}/report/${CI_JOB_STAGE}:/mnt --rm qgis_headless ./pytest-runner
-  allow_failure: true
+    - docker build -t qgis_headless:${DISTRO} -f Dockerfile.${DISTRO} .
+    - mkdir -p ${REPORT_DIR}
+    - docker run -v ${CI_PROJECT_DIR}/${REPORT_DIR}:/mnt --rm qgis_headless:${DISTRO} ./pytest-runner
+  allow_failure: false
   artifacts:
     when: always
     paths:
-      - report/${CI_JOB_STAGE}/rspec.xml
+      - ${REPORT_DIR}/rspec.xml
     reports:
-      junit: report/${CI_JOB_STAGE}/rspec.xml
+      junit: ${REPORT_DIR}/rspec.xml
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
+test_focal:
+  extends: .run_tests_job
+  stage: test
+  variables:
+    DISTRO: focal
 
-stages:
-  - focal
-  - jammy
-  - jammy-latest
+test_jammy:
+  extends: .run_tests_job
+  stage: test
+  variables:
+    DISTRO: jammy
 
-test_focal_job:
-  extends: .job_cmn
-  stage: focal
-
-test_jammy_job:
-  extends: .job_cmn
-  stage: jammy
-
-test_jammy_latest_job:
-  extends: .job_cmn
-  stage: jammy-latest
+test_jammy_latest:
+  extends: .run_tests_job
+  stage: test
+  variables:
+    DISTRO: jammy-latest
