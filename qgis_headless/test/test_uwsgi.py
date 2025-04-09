@@ -1,7 +1,6 @@
 import re
 import shutil
 import socket
-import sys
 import time
 from pathlib import Path
 from signal import SIGTERM
@@ -17,11 +16,14 @@ WSGI_APP = Path(__file__).parent / "wsgi_app.py"
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.parametrize("mode", [
-    "dry_run",
-    pytest.param("no_request", marks=Issues.UWSGI_SEGFAULT),
-    pytest.param("do_request", marks=Issues.UWSGI_SEGFAULT),
-])
+@pytest.mark.parametrize(
+    "mode",
+    [
+        "dry_run",
+        pytest.param("no_request", marks=Issues.UWSGI_SEGFAULT),
+        pytest.param("do_request", marks=Issues.UWSGI_SEGFAULT),
+    ],
+)
 def test_segfault(mode):
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
