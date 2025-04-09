@@ -1,3 +1,19 @@
+stages:
+  - lint
+  - test
+
+pre_commit_check:
+  image: python:3.11
+  stage: lint
+  tags:
+    - ng-docker-dind
+  before_script:
+    - pip install pre-commit
+  script:
+    - pre-commit run --all-files
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+
 .run_tests_job:
   image: docker
   services:
@@ -21,9 +37,6 @@
       junit: ${REPORT_DIR}/rspec.xml
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
-
-stages:
-  - test
 
 test_focal:
   extends: .run_tests_job
