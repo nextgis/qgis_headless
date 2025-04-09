@@ -86,8 +86,27 @@ def test_default(params):
         param("attributes/default.qml", [], id="default"),
         param("attributes/osm-highway.qml", ["HIGHWAY", "NAME_EN", "NAME"], id="osm-highway"),
         param("attributes/data-defined.qml", ["size"], id="data-defined"),
-        param("attributes/rule-based-labeling.qml", ["a", "b", "c"] if QGIS_312 else None, id="rule-based-labeling"),
-        param("diagram/industries.qml", ["zern", "ovosch", "sad", "vinograd", "efir", "skotovod", "svinovod", "ptitcevod", "total"], id="diagram", marks=Issues.DIAGRAM_ATTRIBUTES),
+        param(
+            "attributes/rule-based-labeling.qml",
+            ["a", "b", "c"] if QGIS_312 else None,
+            id="rule-based-labeling",
+        ),
+        param(
+            "diagram/industries.qml",
+            [
+                "zern",
+                "ovosch",
+                "sad",
+                "vinograd",
+                "efir",
+                "skotovod",
+                "svinovod",
+                "ptitcevod",
+                "total",
+            ],
+            id="diagram",
+            marks=Issues.DIAGRAM_ATTRIBUTES,
+        ),
         # fmt: on
     ),
 )
@@ -182,6 +201,7 @@ def test_format(style, fmt, layer_type, exc, shared_datadir):
                 format=export_fmt,
                 layer_type=layer_type,
             )
+
 
 @pytest.mark.parametrize(
     "style, gt",
