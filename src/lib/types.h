@@ -30,69 +30,69 @@ class QgsMapLayer;
 
 namespace HeadlessRender
 {
-    enum class DataType
-    {
-        Raster,
-        Vector,
-        Unknown
-    };
+  enum class DataType
+  {
+    Raster,
+    Vector,
+    Unknown
+  };
 
-    enum class LogLevel
-    {
-        Debug,
-        Info,
-        Warning,
-        Critical
-    };
+  enum class LogLevel
+  {
+    Debug,
+    Info,
+    Warning,
+    Critical
+  };
 
-    enum class LayerGeometryType
-    {
-        Point,
-        LineString,
-        Polygon,
-        MultiPoint,
-        MultiLineString,
-        MultiPolygon,
-        PointZ,
-        LineStringZ,
-        PolygonZ,
-        MultiPointZ,
-        MultiLineStringZ,
-        MultiPolygonZ,
-        Unknown
-    };
+  enum class LayerGeometryType
+  {
+    Point,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+    PointZ,
+    LineStringZ,
+    PolygonZ,
+    MultiPointZ,
+    MultiLineStringZ,
+    MultiPolygonZ,
+    Unknown
+  };
 
-    enum class LayerAttributeType
-    {
-        Integer,
-        Real,
-        String,
-        Date,
-        Time,
-        DateTime,
-        Integer64
-    };
+  enum class LayerAttributeType
+  {
+    Integer,
+    Real,
+    String,
+    Date,
+    Time,
+    DateTime,
+    Integer64
+  };
 
-    enum class StyleFormat
-    {
-        QML,
-        SLD
-    };
+  enum class StyleFormat
+  {
+    QML,
+    SLD
+  };
 
-    enum SymbolRender
-    {
-        Uncheckable,
-        Unchecked,
-        Checked
-    };
+  enum SymbolRender
+  {
+    Uncheckable,
+    Unchecked,
+    Checked
+  };
 
-    typedef std::pair<bool, std::set<std::string>> UsedAttributes;
+  typedef std::pair<bool, std::set<std::string>> UsedAttributes;
 
-    typedef std::array<double, 2> ScaleRange;
+  typedef std::array<double, 2> ScaleRange;
 
-    typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
+  typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
-    typedef long StyleCategory;
-}
+  typedef long StyleCategory;
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_TYPES_H

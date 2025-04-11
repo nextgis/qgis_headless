@@ -27,24 +27,24 @@
 
 HeadlessRender::Image::Image( const QImage &qimage )
 {
-    mQImage = std::make_shared<QImage>( qimage.convertToFormat( QImage::Format_RGBA8888 ));
+  mQImage = std::make_shared<QImage>( qimage.convertToFormat( QImage::Format_RGBA8888 ) );
 }
 
 const uchar *HeadlessRender::Image::data() const
 {
-    return mQImage->constBits();
+  return mQImage->constBits();
 }
 
 std::size_t HeadlessRender::Image::size() const
 {
-#if QT_VERSION < QT_VERSION_CHECK(5,10,0)
-    return mQImage->byteCount();
+#if QT_VERSION < QT_VERSION_CHECK( 5, 10, 0 )
+  return mQImage->byteCount();
 #else
-    return mQImage->sizeInBytes();
+  return mQImage->sizeInBytes();
 #endif
 }
 
 std::pair<int, int> HeadlessRender::Image::sizeWidthHeight() const
 {
-    return std::make_pair( mQImage->size().width(), mQImage->size().height() );
+  return std::make_pair( mQImage->size().width(), mQImage->size().height() );
 }

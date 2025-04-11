@@ -22,37 +22,41 @@
 #include <qgscoordinatereferencesystem.h>
 #include <QString>
 
-static const QString EPSG_3857 = "PROJ: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
+static const QString EPSG_3857
+  = "PROJ: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 "
+    "+units=m +nadgrids=@null +wktext  +no_defs";
 static const QString EPSG_4326 = "PROJ: +proj=longlat +datum=WGS84 +no_def";
 
 HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( long epsg )
 {
-    CRS crs;
+  CRS crs;
 
-    switch ( epsg )
-    {
+  switch ( epsg )
+  {
     case 3857:
-        crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_3857 );
-        break;
+      crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_3857 );
+      break;
     case 4326:
-        crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_4326 );
-        break;
+      crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_4326 );
+      break;
     default:
-        throw std::invalid_argument( "Invalid epsg code" );
-        break;
-    }
+      throw std::invalid_argument( "Invalid epsg code" );
+      break;
+  }
 
-    return crs;
+  return crs;
 }
 
 HeadlessRender::CRS HeadlessRender::CRS::fromWkt( const std::string &wkt )
 {
-    CRS crs;
-    crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( QgsCoordinateReferenceSystem::fromWkt( QString::fromStdString( wkt ) ) );
-    return crs;
+  CRS crs;
+  crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>(
+    QgsCoordinateReferenceSystem::fromWkt( QString::fromStdString( wkt ) )
+  );
+  return crs;
 }
 
 HeadlessRender::QgsCoordinateReferenceSystemPtr HeadlessRender::CRS::qgsCoordinateReferenceSystem() const
 {
-    return mCRS;
+  return mCRS;
 }

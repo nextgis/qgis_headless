@@ -41,56 +41,58 @@ class QgsLayerTree;
 
 namespace HeadlessRender
 {
-    typedef size_t LayerIndex;
-    typedef std::shared_ptr<QgsMapSettings> QgsMapSettingsPtr;
-    typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
-    typedef std::tuple<double, double, double, double> Extent;
-    typedef std::tuple<int, int> Size;
-    typedef std::vector<LegendSymbol::Index> SymbolIndexVector;
-    typedef std::unordered_map<LayerIndex, SymbolIndexVector> RenderSymbols;
+  typedef size_t LayerIndex;
+  typedef std::shared_ptr<QgsMapSettings> QgsMapSettingsPtr;
+  typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
+  typedef std::tuple<double, double, double, double> Extent;
+  typedef std::tuple<int, int> Size;
+  typedef std::vector<LegendSymbol::Index> SymbolIndexVector;
+  typedef std::unordered_map<LayerIndex, SymbolIndexVector> RenderSymbols;
 
-    constexpr int DefaultRasterRenderSymbolCount = 5;
+  constexpr int DefaultRasterRenderSymbolCount = 5;
 
-    class QGIS_HEADLESS_EXPORT MapRequest
-    {
+  class QGIS_HEADLESS_EXPORT MapRequest
+  {
     public:
-        explicit MapRequest();
+      explicit MapRequest();
 
-        void setDpi( int dpi );
-        void setCrs( const CRS &crs );
-        LayerIndex addLayer( Layer &layer, Style &style, const std::string &label = "");
-        void addProject( const Project &project );
+      void setDpi( int dpi );
+      void setCrs( const CRS &crs );
+      LayerIndex addLayer( Layer &layer, Style &style, const std::string &label = "" );
+      void addProject( const Project &project );
 
-        ImagePtr renderImage( const Extent &extent, const Size &size, const RenderSymbols &symbols = {} );
-        ImagePtr renderLegend( const Size &size = Size() );
-        void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
+      ImagePtr renderImage( const Extent &extent, const Size &size, const RenderSymbols &symbols = {} );
+      ImagePtr renderLegend( const Size &size = Size() );
+      void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
 
-        std::vector<LegendSymbol> legendSymbols( LayerIndex index, const Size &size = Size(), int count = DefaultRasterRenderSymbolCount );
+      std::vector<LegendSymbol> legendSymbols(
+        LayerIndex index, const Size &size = Size(), int count = DefaultRasterRenderSymbolCount
+      );
 
     private:
-        void applyRenderSymbols(const RenderSymbols& symbols);
+      void applyRenderSymbols( const RenderSymbols &symbols );
 
-        QgsMapSettingsPtr mSettings;
-        QgsLayerTreePtr mQgsLayerTree;
-        std::vector<QgsMapLayerPtr> mLayers;
-        RenderSymbols mDefaultRenderSymbols;
-    };
+      QgsMapSettingsPtr mSettings;
+      QgsLayerTreePtr mQgsLayerTree;
+      std::vector<QgsMapLayerPtr> mLayers;
+      RenderSymbols mDefaultRenderSymbols;
+  };
 
-    QGIS_HEADLESS_EXPORT void init( int argc, char **argv );
+  QGIS_HEADLESS_EXPORT void init( int argc, char **argv );
 
-    QGIS_HEADLESS_EXPORT void deinit();
+  QGIS_HEADLESS_EXPORT void deinit();
 
-    QGIS_HEADLESS_EXPORT void setSvgPaths( const std::vector<std::string> &paths );
+  QGIS_HEADLESS_EXPORT void setSvgPaths( const std::vector<std::string> &paths );
 
-    QGIS_HEADLESS_EXPORT std::vector<std::string>  getSvgPaths();
+  QGIS_HEADLESS_EXPORT std::vector<std::string> getSvgPaths();
 
-    QGIS_HEADLESS_EXPORT const char *getVersion();
+  QGIS_HEADLESS_EXPORT const char *getVersion();
 
-    QGIS_HEADLESS_EXPORT const char *getQGISVersion();
+  QGIS_HEADLESS_EXPORT const char *getQGISVersion();
 
-    QGIS_HEADLESS_EXPORT int getQGISVersionInt();
+  QGIS_HEADLESS_EXPORT int getQGISVersionInt();
 
-    QGIS_HEADLESS_EXPORT void setLoggingLevel( HeadlessRender::LogLevel level );
-}
+  QGIS_HEADLESS_EXPORT void setLoggingLevel( HeadlessRender::LogLevel level );
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_H

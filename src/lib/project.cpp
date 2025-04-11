@@ -23,38 +23,42 @@
 #include <qgsproject.h>
 #include "exceptions.h"
 
-void EmptryDeleter(QgsMapLayer *ptr)
+void EmptryDeleter( QgsMapLayer *ptr )
 {
-    //QgsProject itself removes layers
-    Q_UNUSED(ptr)
+  //QgsProject itself removes layers
+  Q_UNUSED( ptr )
 }
 
 HeadlessRender::Project HeadlessRender::Project::fromFile( const std::string &filename )
 // Layers stored in QgsProject singleton, so we can't use more than one Project for now
 {
-    QgsProject *qgsProject = QgsProject::instance();
-    bool res = qgsProject->read( QString::fromStdString( filename ));
-    if ( !res )
-        throw HeadlessRender::QgisHeadlessError( "Unable to open project. Error message: " + QgsProject::instance()->error() );
+  QgsProject *qgsProject = QgsProject::instance();
+  bool res = qgsProject->read( QString::fromStdString( filename ) );
+  if ( !res )
+    throw HeadlessRender::QgisHeadlessError(
+      "Unable to open project. Error message: " + QgsProject::instance()->error()
+    );
 
-    Project project;
-    project.mCrs = HeadlessRender::CRS::fromWkt( qgsProject->crs().toWkt().toStdString() );
+  Project project;
+  project.mCrs = HeadlessRender::CRS::fromWkt( qgsProject->crs().toWkt().toStdString() );
 
-    QVector<QgsMapLayer*> layers = qgsProject->layers<QgsMapLayer *>();
-    for ( QgsMapLayer *layer : layers )
-    {
-        project.mLayers.push_back( HeadlessRender::Layer( HeadlessRender::QgsMapLayerPtr( layer, EmptryDeleter )));
-    }
+  QVector<QgsMapLayer *> layers = qgsProject->layers<QgsMapLayer *>();
+  for ( QgsMapLayer *layer : layers )
+  {
+    project.mLayers.push_back(
+      HeadlessRender::Layer( HeadlessRender::QgsMapLayerPtr( layer, EmptryDeleter ) )
+    );
+  }
 
-    return project;
+  return project;
 }
 
 HeadlessRender::CRS HeadlessRender::Project::crs() const
 {
-    return mCrs;
+  return mCrs;
 }
 
 QList<HeadlessRender::Layer> HeadlessRender::Project::layers() const
 {
-    return mLayers;
+  return mLayers;
 }

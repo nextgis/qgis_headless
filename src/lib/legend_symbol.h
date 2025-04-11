@@ -27,35 +27,41 @@
 
 namespace HeadlessRender
 {
-    class LegendSymbol;
-    using LegendSymbolPtr = std::shared_ptr<LegendSymbol>;
+  class LegendSymbol;
+  using LegendSymbolPtr = std::shared_ptr<LegendSymbol>;
 
-    class LegendSymbol
-    {
+  class LegendSymbol
+  {
     public:
-        using Index = int;
-        static LegendSymbol create( const ImagePtr icon, const QString &title, SymbolRender render, Index index, int rasterBand, bool hasTitle = true );
+      using Index = int;
+      static LegendSymbol create(
+        const ImagePtr icon, const QString &title, SymbolRender render, Index index,
+        int rasterBand, bool hasTitle = true
+      );
 
-        ImagePtr icon() const;
-        QString title() const;
-        bool hasCategory() const;
-        bool hasTitle() const;
-        void setHasCategory( bool hasCategory );
-        Index index() const;
-        SymbolRender render() const;
-        int rasterBand() const;
+      ImagePtr icon() const;
+      QString title() const;
+      bool hasCategory() const;
+      bool hasTitle() const;
+      void setHasCategory( bool hasCategory );
+      Index index() const;
+      SymbolRender render() const;
+      int rasterBand() const;
 
     private:
-        LegendSymbol( const ImagePtr icon, const QString &title, SymbolRender render, Index index, int rasterBand, bool hasTitle = true );
+      LegendSymbol(
+        const ImagePtr icon, const QString &title, SymbolRender render, Index index,
+        int rasterBand, bool hasTitle = true
+      );
 
-        ImagePtr mIcon;
-        QString mTitle;
-        bool mHasCategory = true;
-        bool mHasTitle = false;
-        SymbolRender mRender = SymbolRender::Uncheckable;
-        Index mIndex = 0;
-        int mRasterBand;
-    };
-}
+      ImagePtr mIcon;
+      QString mTitle;
+      bool mHasCategory = true;
+      bool mHasTitle = false;
+      SymbolRender mRender = SymbolRender::Uncheckable;
+      Index mIndex = 0;
+      int mRasterBand;
+  };
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_LEGEND_SYMBOL_H
