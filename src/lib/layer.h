@@ -32,38 +32,42 @@ class QgsMapLayer;
 
 namespace HeadlessRender
 {
-    class Style;
-    typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
+  class Style;
+  typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
-    class QGIS_HEADLESS_EXPORT Layer
-    {
+  class QGIS_HEADLESS_EXPORT Layer
+  {
     public:
-        struct FeatureData
-        {
-            qint64 id;
-            std::string wkb;
-            QVector<QVariant> attributes;
-        };
+      struct FeatureData
+      {
+          qint64 id;
+          std::string wkb;
+          QVector<QVariant> attributes;
+      };
 
-        Layer() = default;
+      Layer() = default;
 
-        static Layer fromOgr( const std::string &uri );
-        static Layer fromGdal( const std::string &uri );
-        static Layer fromData( LayerGeometryType geometryType, const CRS &crs, const QVector<QPair<QString, LayerAttributeType>> &attributeTypes, const QVector<FeatureData> &featureDataList );
+      static Layer fromOgr( const std::string &uri );
+      static Layer fromGdal( const std::string &uri );
+      static Layer fromData(
+        LayerGeometryType geometryType, const CRS &crs,
+        const QVector<QPair<QString, LayerAttributeType>> &attributeTypes,
+        const QVector<FeatureData> &featureDataList
+      );
 
-        QgsMapLayerPtr qgsMapLayer() const;
-        DataType type() const;
-        void setRendererSymbolColor( const QColor &color );
-        bool addStyle( Style &style, QString &error );
+      QgsMapLayerPtr qgsMapLayer() const;
+      DataType type() const;
+      void setRendererSymbolColor( const QColor &color );
+      bool addStyle( Style &style, QString &error );
 
     private:
-        explicit Layer( const QgsMapLayerPtr &qgsMapLayer );
+      explicit Layer( const QgsMapLayerPtr &qgsMapLayer );
 
-        QgsMapLayerPtr mLayer;
-        mutable DataType mType = DataType::Unknown;
+      QgsMapLayerPtr mLayer;
+      mutable DataType mType = DataType::Unknown;
 
-        friend class Project;
-    };
-}
+      friend class Project;
+  };
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_LAYER_H

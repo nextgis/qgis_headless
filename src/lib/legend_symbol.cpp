@@ -22,58 +22,62 @@
 
 using namespace HeadlessRender;
 
-LegendSymbol::LegendSymbol( const ImagePtr icon, const QString &title, const SymbolRender render, const Index index, int rasterBand, const bool hasTitle )
-    : mIcon( icon )
-    , mTitle( title )
-    , mHasTitle( hasTitle )
-    , mRender( render )
-    , mIndex( index )
-    , mRasterBand( rasterBand )
-{
+LegendSymbol::LegendSymbol(
+  const ImagePtr icon, const QString &title, const SymbolRender render, const Index index,
+  int rasterBand, const bool hasTitle
+)
+  : mIcon( icon )
+  , mTitle( title )
+  , mHasTitle( hasTitle )
+  , mRender( render )
+  , mIndex( index )
+  , mRasterBand( rasterBand )
+{}
 
-}
-
-LegendSymbol LegendSymbol::create(const ImagePtr icon, const QString &title, const SymbolRender render, Index index, int rasterBand, const bool hasTitle)
+LegendSymbol LegendSymbol::create(
+  const ImagePtr icon, const QString &title, const SymbolRender render, Index index,
+  int rasterBand, const bool hasTitle
+)
 {
-    return { icon, title, render, index, std::move( rasterBand ), hasTitle };
+  return { icon, title, render, index, std::move( rasterBand ), hasTitle };
 }
 
 ImagePtr LegendSymbol::icon() const
 {
-    return mIcon;
+  return mIcon;
 }
 
 QString LegendSymbol::title() const
 {
-    return mTitle;
+  return mTitle;
 }
 
 bool LegendSymbol::hasCategory() const
 {
-    return mHasCategory;
+  return mHasCategory;
 }
 
 bool LegendSymbol::hasTitle() const
 {
-    return mHasTitle;
+  return mHasTitle;
 }
 
 void LegendSymbol::setHasCategory( const bool hasCategory )
 {
-    mHasCategory = hasCategory;
+  mHasCategory = hasCategory;
 }
 
 LegendSymbol::Index LegendSymbol::index() const
 {
-    return mIndex;
+  return mIndex;
 }
 
 SymbolRender LegendSymbol::render() const
 {
-    return mRender;
+  return mRender;
 }
 
 int LegendSymbol::rasterBand() const
 {
-    return mRasterBand;
+  return mRasterBand;
 }

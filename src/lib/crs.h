@@ -28,17 +28,18 @@ class QgsCoordinateReferenceSystem;
 
 namespace HeadlessRender
 {
-    typedef std::shared_ptr<QgsCoordinateReferenceSystem> QgsCoordinateReferenceSystemPtr;
+  typedef std::shared_ptr<QgsCoordinateReferenceSystem> QgsCoordinateReferenceSystemPtr;
 
-    class QGIS_HEADLESS_EXPORT CRS
-    {
+  class QGIS_HEADLESS_EXPORT CRS
+  {
     public:
-        static CRS fromEPSG( long epsg );
-        static CRS fromWkt( const std::string &wkt );
-        QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
+      static CRS fromEPSG( long epsg );
+      static CRS fromWkt( const std::string &wkt );
+      QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
+
     private:
-        QgsCoordinateReferenceSystemPtr mCRS;
-    };
-}
+      QgsCoordinateReferenceSystemPtr mCRS;
+  };
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_CRS_H

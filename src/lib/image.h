@@ -29,24 +29,24 @@ class QImage;
 
 namespace HeadlessRender
 {
-    typedef std::shared_ptr<QImage> QImagePtr;
+  typedef std::shared_ptr<QImage> QImagePtr;
 
-    class QGIS_HEADLESS_EXPORT Image: public IRawData
-    {
+  class QGIS_HEADLESS_EXPORT Image : public IRawData
+  {
     public:
-        Image() = default;
-        explicit Image( const QImage &qimage );
+      Image() = default;
+      explicit Image( const QImage &qimage );
 
-        std::pair<int, int> sizeWidthHeight() const;
+      std::pair<int, int> sizeWidthHeight() const;
 
-        const uchar *data() const override;
-        std::size_t size() const override;
+      const uchar *data() const override;
+      std::size_t size() const override;
 
     private:
-        QImagePtr mQImage;
-    };
+      QImagePtr mQImage;
+  };
 
-    typedef std::shared_ptr<Image> ImagePtr;
-}
+  typedef std::shared_ptr<Image> ImagePtr;
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_IMAGE_H

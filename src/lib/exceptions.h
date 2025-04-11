@@ -26,33 +26,41 @@
 
 namespace HeadlessRender
 {
-    class QgisHeadlessError : public std::exception
-    {
+  class QgisHeadlessError : public std::exception
+  {
     public:
-        QgisHeadlessError( const QString &message ):errorMessage( message.toStdString() ) {}
-        const char * what() const throw() override { return errorMessage.c_str(); }
+      QgisHeadlessError( const QString &message ) : errorMessage( message.toStdString() )
+      {}
+      const char *what() const throw() override
+      {
+        return errorMessage.c_str();
+      }
+
     private:
-        std::string errorMessage;
-    };
+      std::string errorMessage;
+  };
 
-    class StyleValidationError : public QgisHeadlessError
-    {
+  class StyleValidationError : public QgisHeadlessError
+  {
     public:
-        StyleValidationError( const QString &message ): QgisHeadlessError( message ) {}
-    };
+      StyleValidationError( const QString &message ) : QgisHeadlessError( message )
+      {}
+  };
 
-    class StyleTypeMismatch : public StyleValidationError
-    {
+  class StyleTypeMismatch : public StyleValidationError
+  {
     public:
-        StyleTypeMismatch( const QString &message ): StyleValidationError( message ) {}
-    };
+      StyleTypeMismatch( const QString &message ) : StyleValidationError( message )
+      {}
+  };
 
-    class InvalidLayerSource : public QgisHeadlessError
-    {
+  class InvalidLayerSource : public QgisHeadlessError
+  {
     public:
-        InvalidLayerSource( const QString &message ): QgisHeadlessError( message ) {}
-    };
+      InvalidLayerSource( const QString &message ) : QgisHeadlessError( message )
+      {}
+  };
 
-}
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_EXCEPTIONS_H

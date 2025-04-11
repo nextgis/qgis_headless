@@ -20,18 +20,15 @@
 
 #include "raw_data.h"
 
-HeadlessRender::RawData::RawData(const QByteArray &byteArray)
-    : mData(byteArray)
-{
-
-}
+HeadlessRender::RawData::RawData( const QByteArray &byteArray ) : mData( byteArray )
+{}
 
 const uchar *HeadlessRender::RawData::data() const
 {
-    return reinterpret_cast<const uchar *>( mData.constData() );
+  return reinterpret_cast<const uchar *>( mData.constData() );
 }
 
 std::size_t HeadlessRender::RawData::size() const
 {
-    return mData.size();
+  return mData.size();
 }

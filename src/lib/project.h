@@ -27,19 +27,18 @@
 
 namespace HeadlessRender
 {
-    class QGIS_HEADLESS_EXPORT Project
-    {
+  class QGIS_HEADLESS_EXPORT Project
+  {
     public:
-        static Project fromFile( const std::string &filename );
+      static Project fromFile( const std::string &filename );
 
-        CRS crs() const;
-        QList<Layer> layers() const;
+      CRS crs() const;
+      QList<Layer> layers() const;
 
     private:
-        CRS mCrs;
-        QList<Layer> mLayers;
-
-    };
-}
+      CRS mCrs;
+      QList<Layer> mLayers;
+  };
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_PROJECT_H

@@ -26,28 +26,29 @@
 
 namespace HeadlessRender
 {
-    class QGIS_HEADLESS_EXPORT IRawData
-    {
+  class QGIS_HEADLESS_EXPORT IRawData
+  {
     public:
-        virtual ~IRawData(){}
-        virtual const uchar *data() const = 0;
-        virtual std::size_t size() const = 0;
-    };
+      virtual ~IRawData()
+      {}
+      virtual const uchar *data() const = 0;
+      virtual std::size_t size() const = 0;
+  };
 
-    typedef std::shared_ptr<IRawData> RawDataPtr;
+  typedef std::shared_ptr<IRawData> RawDataPtr;
 
-    class QGIS_HEADLESS_EXPORT RawData: public IRawData
-    {
+  class QGIS_HEADLESS_EXPORT RawData : public IRawData
+  {
     public:
-        RawData() = default;
-        explicit RawData( const QByteArray &byteArray );
+      RawData() = default;
+      explicit RawData( const QByteArray &byteArray );
 
-        const uchar *data() const override;
-        std::size_t size() const override;
+      const uchar *data() const override;
+      std::size_t size() const override;
 
     private:
-        QByteArray mData;
-    };
-}
+      QByteArray mData;
+  };
+} //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_RAWDATA_H
