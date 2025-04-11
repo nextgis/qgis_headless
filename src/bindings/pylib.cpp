@@ -287,6 +287,8 @@ PYBIND11_MODULE( _qgis_headless, m )
             return py::cast( true );
           case HeadlessRender::SymbolRender::Unchecked:
             return py::cast( false );
+          default:
+            break;
         }
         return py::none();
       }

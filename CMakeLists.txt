@@ -68,6 +68,8 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   set (DLLIMPORT "__declspec(dllimport)")
 endif()
 
+add_definitions(-D_USE_MATH_DEFINES)
+
 add_subdirectory(src)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
