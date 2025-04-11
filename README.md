@@ -4,7 +4,7 @@ Headless rendering library using QGIS
 
 ## Installation to Virtualenv
 
-1. Install dependecies: 
+1. Install dependecies:
 
    * `libqgis-dev`
    * `qt5-image-formats-plugins` (usually installed via dependencies)
@@ -25,10 +25,27 @@ Headless rendering library using QGIS
     $ python -m pytest qgis_headless/test/
     ```
 
-
 ## Running Python Tests in Docker
 
 Ubuntu Jammy (for example):
 
-    $ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
-    $ docker run --rm qgis_headless:jammy ./pytest-runner
+``` shell
+$ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
+$ docker run --rm qgis_headless:jammy ./pytest-runner
+```
+
+## Developer Notes
+
+This project uses `pre-commit` to enforce code quality standards.
+
+First, make sure `pre-commit` is installed:
+
+```shell
+$ pip install pre-commit
+```
+
+Then, enable it in the project by running:
+
+``` shell
+$ pre-commit install
+```
