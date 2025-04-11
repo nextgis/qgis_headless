@@ -31,8 +31,9 @@ class CMakeBuild(build_ext):
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + os.path.abspath(os.path.split(extdir)[0]),
             "-DCMAKE_BUILD_TYPE=" + config,
         ]
-
-        build_args = ["--config", config, "--", "-j2"]
+        extra_cmake_args = os.environ.get("CMAKE_ARGS", "")
+        if extra_cmake_args:
+            cmake_args += extra_cmake_args.split()
 
         env = os.environ.copy()
         subprocess.check_call(
@@ -42,6 +43,7 @@ class CMakeBuild(build_ext):
         )
 
         if not self.dry_run:
+            build_args = ["--config", config, "--", "-j2"]
             subprocess.check_call(
                 ["cmake", "--build", "."] + build_args,
                 cwd=self.build_temp,
