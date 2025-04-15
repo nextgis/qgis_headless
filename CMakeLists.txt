@@ -18,7 +18,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(qgis_headless)
 
 if(NOT DEFINED PACKAGE_VENDOR)
@@ -67,6 +67,8 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   set (DLLEXPORT "__declspec(dllexport)")
   set (DLLIMPORT "__declspec(dllimport)")
 endif()
+
+set(CMAKE_CXX_STANDARD 17)
 
 add_definitions(-D_USE_MATH_DEFINES)
 
