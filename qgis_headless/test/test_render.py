@@ -607,7 +607,7 @@ def test_attribute_color(save_img, shared_datadir):
     data = shared_datadir / "landuse" / "landuse.geojson"
     layer = Layer.from_ogr(data)
 
-    style = (shared_datadir / "landuse" / "landuse.qml").read_text()
+    style = (shared_datadir / "landuse" / "landuse.qml").read_text("utf-8")
 
     img = save_img(
         render_vector(
