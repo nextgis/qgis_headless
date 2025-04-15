@@ -16,4 +16,4 @@ repos:
     rev: v20.1.0
     hooks:
     - id: clang-format
-      exclude: (src/bindings/pybind11|\.geojson)
+      exclude: (src/bindings/pybind11|\.json|\.geojson)
