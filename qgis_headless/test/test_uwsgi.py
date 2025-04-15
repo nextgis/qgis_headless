@@ -1,3 +1,4 @@
+import platform
 import re
 import shutil
 import socket
@@ -15,6 +16,7 @@ from .known_issues import Issues
 WSGI_APP = Path(__file__).parent / "wsgi_app.py"
 
 
+@pytest.mark.skipif(platform.system() == "Windows", reason="uwsgi is not supported on Windows")
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "mode",

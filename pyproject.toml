@@ -24,6 +24,15 @@ tests = [
     "requests",
     "uwsgi",
 ]
+tests-win = [
+    "lxml",
+    "pillow",
+    "pytest-benchmark",
+    "pytest-datadir",
+    "pytest-timeout",
+    "pytest",
+    "requests",
+]
 
 [tool.setuptools]
 packages = ["qgis_headless"]
