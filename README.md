@@ -31,7 +31,7 @@ Ubuntu Jammy (for example):
 
 ``` shell
 $ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
-$ docker run --rm qgis_headless:jammy ./pytest-runner
+$ docker run --rm qgis_headless:jammy ./scripts/pytest-runner
 ```
 
 ## Developer Notes

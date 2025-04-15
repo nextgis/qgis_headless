@@ -27,7 +27,7 @@ pre_commit_check:
   script:
     - docker build -t qgis_headless:${DISTRO} -f Dockerfile.${DISTRO} .
     - mkdir -p ${REPORT_DIR}
-    - docker run -v ${CI_PROJECT_DIR}/${REPORT_DIR}:/mnt --rm qgis_headless:${DISTRO} ./pytest-runner
+    - docker run -v ${CI_PROJECT_DIR}/${REPORT_DIR}:/mnt --rm qgis_headless:${DISTRO} ./scripts/pytest-runner
   allow_failure: false
   artifacts:
     when: always
