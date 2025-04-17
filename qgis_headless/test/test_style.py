@@ -86,6 +86,7 @@ def test_default(params):
         param("attributes/default.qml", [], id="default"),
         param("attributes/osm-highway.qml", ["HIGHWAY", "NAME_EN", "NAME"], id="osm-highway"),
         param("attributes/data-defined.qml", ["size"], id="data-defined"),
+        param("attributes/25d-expression.qml", None, id="25D-expression"),
         param(
             "attributes/rule-based-labeling.qml",
             ["a", "b", "c"] if QGIS_312 else None,

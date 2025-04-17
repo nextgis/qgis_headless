@@ -26,6 +26,7 @@
 #include <qgsrenderer.h>
 #include <qgsrendercontext.h>
 #include <qgsmarkersymbollayer.h>
+#include "qgsfeaturerequest.h"
 #include <qgsfillsymbollayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsvectorlayerlabeling.h>
@@ -462,7 +463,11 @@ UsedAttributes Style::readUsedAttributes() const
   }
 
   for ( const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ) )
+  {
+    if ( attr == QgsFeatureRequest::ALL_ATTRIBUTES )
+      return std::make_pair( false, usedAttributes );
     usedAttributes.insert( attr.toStdString() );
+  }
 
   return std::make_pair( true, usedAttributes );
 }
