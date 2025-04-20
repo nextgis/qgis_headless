@@ -35,9 +35,15 @@ namespace HeadlessRender
   class Style;
   typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
+  /**
+   * Represents a map layer (supports both vector and raster layer types).
+   */
   class QGIS_HEADLESS_EXPORT Layer
   {
     public:
+      /**
+       * Represents data of vector layer's object.
+       */
       struct FeatureData
       {
           qint64 id;
@@ -45,19 +51,56 @@ namespace HeadlessRender
           QVector<QVariant> attributes;
       };
 
-      Layer() = default;
-
+      /**
+       * Creates a vector layer from a data source.
+       * \param uri points to a data source (e.g., file, database, or service) with vector layer.
+       * \returns vector layer, loaded from the specified data source.
+       */
       static Layer fromOgr( const std::string &uri );
+
+      /**
+       * Creates a raster layer from a data source.
+       * \param uri points to a data source (e.g., file, database, or service) with raster layer.
+       * \returns raster layer, loaded from the specified data source.
+       */
       static Layer fromGdal( const std::string &uri );
+
+      /**
+       * Creates a vector layer of given geometry type, CRS with attributes of given types from QVector of FeatureList
+       * \param geometryType type of geometry for vector layer.
+       * \param crs CRS of layer.
+       * \param attributeTypes names and types of attributive data of layer.
+       * \param featureDataList spatial and attributive data of layer's objects.
+       * \returns new vector non-file related layer.
+       */
       static Layer fromData(
         LayerGeometryType geometryType, const CRS &crs,
         const QVector<QPair<QString, LayerAttributeType>> &attributeTypes,
         const QVector<FeatureData> &featureDataList
       );
 
+      /**
+       * Returns a shared_ptr to the underlying QgsMapLayer object.
+       */
       QgsMapLayerPtr qgsMapLayer() const;
+
+      /**
+       * Returns type of layer: raster or vector.
+       */
       DataType type() const;
+
+      /**
+       * Sets the color of layer's symbol in legend.
+       * \param color the color that will be set for the layer designation in the legend.
+       */
       void setRendererSymbolColor( const QColor &color );
+
+      /**
+       * Applies style to layer.
+       * \param style the style that will be applied.
+       * \param error the message with the reason for the error, if such occurs.
+       * \returns true, if style was successfully applied, overwise returns false.
+       */
       bool addStyle( Style &style, QString &error );
 
     private:
