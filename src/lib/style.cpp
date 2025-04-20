@@ -166,7 +166,7 @@ Style Style::fromFile(
 
 Style Style::fromDefaults(
   const QColor &color, LayerGeometryType layerGeometryType /* = LayerGeometryType::Undefined */,
-  DataType layerType /* = DataType::Unknown */, StyleFormat format /* = StyleFormat::QML */
+  DataType layerType /* = DataType::Unknown */
 )
 {
   Style style;

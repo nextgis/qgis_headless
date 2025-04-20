@@ -61,7 +61,7 @@ namespace HeadlessRender
 
       static Style fromDefaults(
         const QColor &color, LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
-        DataType layerType = DataType::Unknown, StyleFormat format = StyleFormat::QML
+        DataType layerType = DataType::Unknown
       );
 
       const QDomDocument &data() const;
