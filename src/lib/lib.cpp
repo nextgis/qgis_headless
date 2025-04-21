@@ -104,6 +104,9 @@ namespace
       qFatal( "%s", logMessage.constData() );
   }
 
+  /**
+   * Creates a copy of current global expression context, including mapSettings' scope
+   */
   QgsExpressionContext createExpressionContext( HeadlessRender::QgsMapSettingsPtr mapSettings )
   {
     QgsExpressionContext expressionContext;
@@ -269,9 +272,9 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::
 
   QPainter painter( &img );
 
-  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
   mSettings->setOutputSize( { width, height } );
   mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
 
   applyRenderSymbols( symbols.empty() ? mDefaultRenderSymbols : symbols );
 
@@ -327,9 +330,9 @@ void HeadlessRender::MapRequest::exportPdf(
   int width = std::get<0>( size );
   int height = std::get<1>( size );
 
-  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
   mSettings->setOutputSize( { width, height } );
   mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
+  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
 
   QPrinter printer;
   printer.setOutputFileName( QString::fromStdString( filepath ) );

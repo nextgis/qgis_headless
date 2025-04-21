@@ -833,9 +833,8 @@ def test_label_variables(save_img, shared_datadir):
 
     stat = image_stat(img)
 
-    assert stat.red.max == 255, "Point is missing"
-    assert stat.green.max == 255, "Map unit label is missing"
-    assert stat.blue.max == 255, "Map scale label is missing"
+    assert stat.blue.max == 255, "Point is missing"
+    assert stat.green.max == 255, "Map scale or unit is wrong"
 
 
 @pytest.mark.parametrize(
