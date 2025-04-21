@@ -48,8 +48,7 @@ PYBIND11_MODULE( _qgis_headless, m )
     HeadlessRender::StyleTypeMismatch>( m, "StyleTypeMismatch", styleValidationErrorHandle );
   py::register_exception<
     HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
-  py::register_exception<
-    HeadlessRender::InvalidCRSError>( m, "InvalidCRSError", qgisHeadlessErrorHandle );
+  py::register_exception<HeadlessRender::InvalidCRSError>( m, "InvalidCRSError", qgisHeadlessErrorHandle );
 
 
   py::class_<HeadlessRender::Layer> layer( m, "Layer" );

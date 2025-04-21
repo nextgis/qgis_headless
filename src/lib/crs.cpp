@@ -51,10 +51,10 @@ HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( long epsg )
 HeadlessRender::CRS HeadlessRender::CRS::fromWkt( const std::string &wkt )
 {
   CRS crs;
-  crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( 
+  crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>(
     QgsCoordinateReferenceSystem::fromWkt( wkt.c_str() )
   );
-  if (!crs.mCRS->isValid())
+  if ( !crs.mCRS->isValid() )
   {
     throw InvalidCRSError( "Invalid wkt definition: '" + crs.mCRS->toWkt() + "'" );
   }

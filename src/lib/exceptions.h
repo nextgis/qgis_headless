@@ -61,7 +61,7 @@ namespace HeadlessRender
       {}
   };
 
-  class InvalidCRSError: public QgisHeadlessError
+  class InvalidCRSError : public QgisHeadlessError
   {
     public:
       using QgisHeadlessError::QgisHeadlessError;

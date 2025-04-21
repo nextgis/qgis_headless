@@ -1,5 +1,6 @@
-from qgis_headless import CRS, InvalidCRSError
 import pytest
+
+from qgis_headless import CRS, InvalidCRSError
 
 
 def test_crs_from_epsg_valid():
@@ -14,32 +15,14 @@ def test_crs_from_epsg_invalid():
 
 def test_crs_from_wkt_valid():
     CRS.from_wkt(
-        'GEOGCRS["WGS 84",' \
-        'ENSEMBLE["World Geodetic System 1984 ensemble",' \
-            'MEMBER["World Geodetic System 1984 (Transit)"],' \
-            'MEMBER["World Geodetic System 1984 (G730)"],' \
-            'MEMBER["World Geodetic System 1984 (G873)"],' \
-            'MEMBER["World Geodetic System 1984 (G1150)"],' \
-            'MEMBER["World Geodetic System 1984 (G1674)"],' \
-            'MEMBER["World Geodetic System 1984 (G1762)"],' \
-            'MEMBER["World Geodetic System 1984 (G2139)"],' \
-            'ELLIPSOID["WGS 84",6378137,298.257223563,' \
-                'LENGTHUNIT["metre",1]],' \
-            'ENSEMBLEACCURACY[2.0]],' \
-        'PRIMEM["Greenwich",0,' \
-            'ANGLEUNIT["degree",0.0174532925199433]],' \
-        'CS[ellipsoidal,2],' \
-            'AXIS["geodetic latitude (Lat)",north,' \
-                'ORDER[1],' \
-                'ANGLEUNIT["degree",0.0174532925199433]],' \
-            'AXIS["geodetic longitude (Lon)",east,' \
-                'ORDER[2],' \
-                'ANGLEUNIT["degree",0.0174532925199433]],' \
-        'USAGE[' \
-            'SCOPE["Horizontal component of 3D system."],' \
-            'AREA["World."],' \
-            'BBOX[-90,-180,90,180]],' \
-        'ID["EPSG",4326]]')
+        'GEOGCS["WGS 84",'
+        'DATUM["WGS_1984",'
+        'SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],'
+        'AUTHORITY["EPSG","6326"]],'
+        'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],'
+        'UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],'
+        'AUTHORITY["EPSG","4326"]]'
+    )
 
 
 def test_crs_from_wkt_invalid():
