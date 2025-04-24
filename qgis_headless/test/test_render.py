@@ -825,7 +825,6 @@ def test_raster_dem_default_style(save_img, shared_datadir):
     assert approx(stat.red.mean) == approx(stat.green.mean) == approx(stat.blue.mean)
 
 
-@Issues.WRONG_MAP_SCALE
 def test_label_variables(save_img, shared_datadir):
     layer = Layer.from_ogr(shared_datadir / "zero/data.geojson")
     style = Style.from_file(shared_datadir / "zero/label/variables.qml")

@@ -14,5 +14,4 @@ class Issues:
     )
     UWSGI_SEGFAULT = xfail(reason="uWSGI segfault during SIGTERM")
     SVG_MARKER_NOT_RESOLVED = xfail(reason="SVG markers are not being resolved")
-    WRONG_MAP_SCALE = xfail(reason="@map_scale always returns 1")
     WRONG_CALC_ELLIPSOID = xfail(reason="Wrong ellipsoid for calculations")
