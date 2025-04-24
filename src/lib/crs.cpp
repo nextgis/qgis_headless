@@ -52,7 +52,7 @@ HeadlessRender::CRS HeadlessRender::CRS::fromWkt( const std::string &wkt )
 {
   CRS crs;
   crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>(
-    QgsCoordinateReferenceSystem::fromWkt( wkt.c_str() )
+    QgsCoordinateReferenceSystem::fromWkt( QString::fromStdString( wkt ) )
   );
   if ( !crs.mCRS->isValid() )
   {
