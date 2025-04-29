@@ -38,6 +38,7 @@
 class QImage;
 class QgsMapSettings;
 class QgsLayerTree;
+class QgsRectangle;
 
 namespace HeadlessRender
 {
@@ -68,6 +69,14 @@ namespace HeadlessRender
       std::vector<LegendSymbol> legendSymbols(
         LayerIndex index, const Size &size = Size(), int count = DefaultRasterRenderSymbolCount
       );
+
+    protected:
+      /**
+       * Prepares mSettings for rendering
+       * \param outputSize size of the rendered image
+       * \param extent extent for rendering
+       */
+      void prepareForRendering( const QSize &outputSize, const QgsRectangle &extent );
 
     private:
       void applyRenderSymbols( const RenderSymbols &symbols );

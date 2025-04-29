@@ -272,9 +272,7 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::
 
   QPainter painter( &img );
 
-  mSettings->setOutputSize( { width, height } );
-  mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
+  prepareForRendering( { width, height }, QgsRectangle( minx, miny, maxx, maxy ) );
 
   applyRenderSymbols( symbols.empty() ? mDefaultRenderSymbols : symbols );
 
@@ -330,9 +328,7 @@ void HeadlessRender::MapRequest::exportPdf(
   int width = std::get<0>( size );
   int height = std::get<1>( size );
 
-  mSettings->setOutputSize( { width, height } );
-  mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
+  prepareForRendering( { width, height }, QgsRectangle( minx, miny, maxx, maxy ) );
 
   QPrinter printer;
   printer.setOutputFileName( QString::fromStdString( filepath ) );
@@ -566,6 +562,18 @@ std::vector<HeadlessRender::LegendSymbol> HeadlessRender::MapRequest::
   std::vector<HeadlessRender::LegendSymbol> legendSymbols;
   processLegendGroup( legendModel.rootGroup()->children(), legendSymbols, legendModel, legendSettings, ctx, image, 0, rasterRenderer, featureRenderer, count );
   return legendSymbols;
+}
+
+void HeadlessRender::MapRequest::prepareForRendering( const QSize &outputSize, const QgsRectangle &extent )
+{
+  mSettings->setOutputSize( outputSize );
+  mSettings->setExtent( extent );
+  auto expressionContext = createExpressionContext( mSettings );
+  expressionContext.lastScope()->addVariable(
+    QgsExpressionContextScope::
+      StaticVariable( QStringLiteral( "project_ellipsoid" ), mSettings->destinationCrs().ellipsoidAcronym(), true, true )
+  );
+  mSettings->setExpressionContext( expressionContext );
 }
 
 void HeadlessRender::MapRequest::applyRenderSymbols( const RenderSymbols &symbols )

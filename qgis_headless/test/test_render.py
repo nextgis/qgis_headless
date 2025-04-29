@@ -873,7 +873,6 @@ def test_label_marker(qml, resolve, save_img, shared_datadir):
     assert stat.green.max == 255, "Label marker is missing"
 
 
-@Issues.WRONG_CALC_ELLIPSOID
 def test_calc_area(save_img, shared_datadir):
     data = shared_datadir / "rough_australia.geojson"
     layer = Layer.from_ogr(data)
@@ -884,4 +883,5 @@ def test_calc_area(save_img, shared_datadir):
 
     stat = image_stat(img)
 
-    assert (stat.red.max, stat.green.max, stat.blue.max) == (0, 255, 0)
+    assert stat.alpha.max > 0, "Layer is missing"
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (64, 255, 64)
