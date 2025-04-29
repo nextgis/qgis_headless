@@ -274,7 +274,12 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::
 
   mSettings->setOutputSize( { width, height } );
   mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
+  auto exprCtx = createExpressionContext( mSettings );
+  exprCtx.lastScope()->addVariable(
+    QgsExpressionContextScope::
+      StaticVariable( QStringLiteral( "project_ellipsoid" ), mSettings->destinationCrs().ellipsoidAcronym(), true, true )
+  );
+  mSettings->setExpressionContext( exprCtx );
 
   applyRenderSymbols( symbols.empty() ? mDefaultRenderSymbols : symbols );
 
@@ -332,7 +337,12 @@ void HeadlessRender::MapRequest::exportPdf(
 
   mSettings->setOutputSize( { width, height } );
   mSettings->setExtent( QgsRectangle( minx, miny, maxx, maxy ) );
-  mSettings->setExpressionContext( createExpressionContext( mSettings ) );
+  auto exprCtx = createExpressionContext( mSettings );
+  exprCtx.lastScope()->addVariable(
+    QgsExpressionContextScope::
+      StaticVariable( QStringLiteral( "project_ellipsoid" ), mSettings->destinationCrs().ellipsoidAcronym(), true, true )
+  );
+  mSettings->setExpressionContext( exprCtx );
 
   QPrinter printer;
   printer.setOutputFileName( QString::fromStdString( filepath ) );
