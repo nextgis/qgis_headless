@@ -28,7 +28,9 @@
 namespace HeadlessRender
 {
   /**
-   * Represents project with list of layers and CRS. We can't use more than one Project for now.
+   * Represents project with list of layers and CRS.
+   *
+   * \warning We can't use more than one Project for now.
    */
   class QGIS_HEADLESS_EXPORT Project
   {

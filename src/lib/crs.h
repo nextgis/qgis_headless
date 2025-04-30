@@ -48,12 +48,12 @@ namespace HeadlessRender
        * Creates a CRS from a WKT spatial ref sys definition string.
        * \param wkt WKT for the desired spatial reference system.
        * \returns matching CRS, or throw an exception InvalidCRSError if string could not be matched
-       * \throws Invalid CRSError
+       * \throws InvalidCRSError
        */
       static CRS fromWkt( const std::string &wkt );
 
       /**
-       * Converts a CRS to shared_ptr to QgsCoordinateReferenceSystem.
+       * Returns a shared_ptr to the underlying QgsCoordinateReferenceSystem object.
        */
       QgsCoordinateReferenceSystemPtr qgsCoordinateReferenceSystem() const;
 

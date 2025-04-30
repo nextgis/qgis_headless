@@ -36,7 +36,7 @@ namespace HeadlessRender
   typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
   /**
-   * Represents map layer (vector and raster layer types)
+   * Represents a map layer (supports both vector and raster layer types).
    */
   class QGIS_HEADLESS_EXPORT Layer
   {
@@ -52,21 +52,16 @@ namespace HeadlessRender
       };
 
       /**
-       * Creates an empty layer.
-       */
-      Layer() = default;
-
-      /**
-       * Creates a vector layer from file.
-       * \param uri points to file with vector layer.
-       * \returns vector layer, loaded from file.
+       * Creates a vector layer from a data source.
+       * \param uri points to a data source (e.g., file, database, or service) with vector layer.
+       * \returns vector layer, loaded from the specified data source.
        */
       static Layer fromOgr( const std::string &uri );
 
       /**
-       * Creates a raster layer from file.
-       * \param uri points to file with raster layer.
-       * \returns raster layer, loaded from file.
+       * Creates a raster layer from a data source.
+       * \param uri points to a data source (e.g., file, database, or service) with raster layer.
+       * \returns raster layer, loaded from the specified data source.
        */
       static Layer fromGdal( const std::string &uri );
 
@@ -76,7 +71,7 @@ namespace HeadlessRender
        * \param crs CRS of layer.
        * \param attributeTypes names and types of attributive data of layer.
        * \param featureDataList spatial and attributive data of layer's objects.
-       * \returns new vector non-file related layer. 
+       * \returns new vector non-file related layer.
        */
       static Layer fromData(
         LayerGeometryType geometryType, const CRS &crs,
@@ -85,7 +80,7 @@ namespace HeadlessRender
       );
 
       /**
-       * Returns layer as QGIS layer.
+       * Returns a shared_ptr to the underlying QgsMapLayer object.
        */
       QgsMapLayerPtr qgsMapLayer() const;
 

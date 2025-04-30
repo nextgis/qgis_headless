@@ -38,11 +38,6 @@ namespace HeadlessRender
   {
     public:
       /**
-       * Constructs a null image.
-       */
-      Image() = default;
-
-      /**
        * Constructs image from a given QImage.
        * \param qimage QImage to be copied.
        */
