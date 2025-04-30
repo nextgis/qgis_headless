@@ -85,7 +85,7 @@ PYBIND11_MODULE( _qgis_headless, m )
     .value( "LT_UNKNOWN", HeadlessRender::DataType::Unknown )
     .export_values();
 
-  layer.def( py::init<>() )
+  layer
     .def_static(
       "from_ogr",
       []( const py::object &uri ) { return HeadlessRender::Layer::fromOgr( py::str( uri ) ); }
@@ -298,7 +298,6 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );
 
   py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
-    .def( py::init<>() )
     .def( "size", &HeadlessRender::Image::sizeWidthHeight )
     .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
       return py::memoryview::from_memory( img->data(), img->size() );
