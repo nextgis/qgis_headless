@@ -43,22 +43,19 @@ namespace HeadlessRender
   class StyleValidationError : public QgisHeadlessError
   {
     public:
-      StyleValidationError( const QString &message ) : QgisHeadlessError( message )
-      {}
+      using QgisHeadlessError::QgisHeadlessError;
   };
 
   class StyleTypeMismatch : public StyleValidationError
   {
     public:
-      StyleTypeMismatch( const QString &message ) : StyleValidationError( message )
-      {}
+      using StyleValidationError::StyleValidationError;
   };
 
   class InvalidLayerSource : public QgisHeadlessError
   {
     public:
-      InvalidLayerSource( const QString &message ) : QgisHeadlessError( message )
-      {}
+      using QgisHeadlessError::QgisHeadlessError;
   };
 
   class InvalidCRSError : public QgisHeadlessError
