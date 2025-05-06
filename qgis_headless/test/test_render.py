@@ -885,3 +885,17 @@ def test_calc_area(save_img, shared_datadir):
 
     assert stat.alpha.max > 0, "Layer is missing"
     assert (stat.red.max, stat.green.max, stat.blue.max) == (64, 255, 64)
+
+
+def test_rendering_order(save_img, shared_datadir):
+    data = shared_datadir / "rendering-order" / "overlapping_points.geojson"
+    layer = Layer.from_ogr(data)
+
+    style = (shared_datadir / "rendering-order" / "overlapping_points.qml").read_text()
+
+    image = save_img(render_vector(layer, style, (-70000, -70000, 70000, 70000)))
+
+    stat = image_stat(image)
+
+    assert stat.alpha.max > 0, "Points are missing"
+    assert stat.red.max < 128 and stat.green.max == 128, "Incorrect rendering order"
