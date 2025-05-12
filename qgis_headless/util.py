@@ -97,3 +97,35 @@ def render_raster(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)
     req.add_layer(layer, style)
 
     return to_pil(req.render_image(extent, size))
+
+
+def render_legend(
+    layer,
+    style,
+    layerName="",
+    size=(256, 256),
+    dpi=96,
+    crs=CRS.from_epsg(3857),
+    svg_resolver=None,
+    style_format=None,
+):
+    req = MapRequest()
+    req.set_dpi(dpi)
+    req.set_crs(crs)
+
+    if not isinstance(layer, Layer):
+        layer = Layer.from_ogr(layer)
+
+    if not isinstance(style, Style):
+        style = Style.from_string(
+            style,
+            svg_resolver=svg_resolver,
+            format=style_format if style_format else StyleFormat.QML,
+        )
+    else:
+        assert svg_resolver is None, f"ignoring svg_resolver: {svg_resolver!r}"
+        assert style_format is None, f"ignoring style_format: {style_format!r}"
+
+    req.add_layer(layer, style, layerName)
+
+    return to_pil(req.render_legend(size))
