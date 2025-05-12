@@ -140,3 +140,43 @@ def render_raster(
     req.add_layer(layer, style)
 
     return to_pil(req.render_image(extent, size))
+
+
+def render_legend(
+    layer: Union[Layer, Path, str],
+    style: Union[Style, Path, str],
+    layerName: str = "",
+    size: Tuple[int, int] = (256, 256),
+    dpi: int = 96,
+    crs: CRS = CRS.from_epsg(3857),
+    svg_resolver: Optional[Callable[[str], str]] = None,
+    style_format: Optional[StyleFormat] = None,
+):
+    """Renders a legend image for a given map layer and style."""
+    request = MapRequest()
+    request.set_dpi(dpi)
+    request.set_crs(crs)
+
+    if not isinstance(layer, Layer):
+        layer = Layer.from_ogr(layer)
+
+    if isinstance(style, Style):
+        assert svg_resolver is None, f"ignoring svg_resolver: {svg_resolver!r}"
+        assert style_format is None, f"ignoring style_format: {style_format!r}"
+
+    elif isinstance(style, Path):
+        style = Style.from_file(
+            style,
+            svg_resolver=svg_resolver,
+            format=style_format if style_format else StyleFormat.QML,
+        )
+    elif isinstance(style, str):
+        style = Style.from_string(
+            style,
+            svg_resolver=svg_resolver,
+            format=style_format if style_format else StyleFormat.QML,
+        )
+
+    request.add_layer(layer, style, layerName)
+
+    return to_pil(request.render_legend(size))
