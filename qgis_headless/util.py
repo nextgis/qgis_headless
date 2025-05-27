@@ -1,10 +1,17 @@
 from binascii import a2b_hex
 from collections import namedtuple
-from typing import Tuple
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, Union
 
-from qgis_headless import CRS, Layer, MapRequest, Style, StyleFormat
+from qgis_headless import CRS, Image, Layer, MapRequest, Style, StyleFormat
 
-BandStat = namedtuple("BandStat", ["min", "max", "mean"])
+if TYPE_CHECKING:
+    import PIL.Image
+
+    PilImage = PIL.Image.Image
+
+
+BandStat = namedtuple("BandStat", ["min", "max", "mean", "nonzero"])
 ImageStat = namedtuple("ImageStat", ["red", "green", "blue", "alpha"])
 
 EXTENT_ONE = (-0.5, -0.5, 0.5, 0.5)
@@ -18,7 +25,7 @@ WKB_LINESTRING = a2b_hex("010200000002000000000000000000000000000000000000000000
 # fmt: on
 
 
-def to_pil(source):
+def to_pil(source: Image) -> "PilImage":
     from PIL import Image  # Optional dependency
 
     im = Image.frombuffer("RGBA", source.size(), source.to_bytes(), "raw")
@@ -30,12 +37,40 @@ def to_pil(source):
     return im
 
 
-def image_stat(image):
+def image_stat(image: "PilImage") -> ImageStat:
+    """
+    Calculate statistical information for an image.
+
+    This function computes statistics for each band (R, G, B, A) of the given image,
+    including the minimum and maximum pixel values, the mean pixel value, and the
+    count of non-zero pixels.
+
+    :param image: A PIL Image object to analyze.
+    :type image: PIL.Image.Image
+    :return: An ImageStat object containing the computed statistics for each band.
+    :rtype: ImageStat
+    """
+
     from PIL.ImageStat import Stat  # Optional dependency
 
     stat = Stat(image)
+
+    nonzero = [0, 0, 0, 0]
+    for r, g, b, a in image.getdata():
+        if r != 0:
+            nonzero[0] += 1
+        if g != 0:
+            nonzero[1] += 1
+        if b != 0:
+            nonzero[2] += 1
+        if a != 0:
+            nonzero[3] += 1
+
     return ImageStat(
-        *[BandStat(stat.extrema[b][0], stat.extrema[b][1], stat.mean[b]) for b in range(4)]
+        *[
+            BandStat(stat.extrema[band][0], stat.extrema[band][1], stat.mean[band], nonzero[band])
+            for band in range(4)
+        ]
     )
 
 
@@ -46,15 +81,16 @@ def is_same_color(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) ->
 
 
 def render_vector(
-    layer,
-    style,
-    extent,
-    size=(256, 256),
-    dpi=96,
-    crs=CRS.from_epsg(3857),
-    svg_resolver=None,
-    style_format=None,
+    layer: Union[Layer, Path, str],
+    style: Union[Style, str],
+    extent: Tuple[float, float, float, float],
+    size: Union[int, Tuple[int, int]] = (256, 256),
+    dpi: int = 96,
+    crs: CRS = CRS.from_epsg(3857),
+    svg_resolver: Optional[Callable[[str], str]] = None,
+    style_format: Optional[StyleFormat] = None,
 ):
+    """Renders a vector image for a given map layer and style."""
     req = MapRequest()
     req.set_dpi(dpi)
     req.set_crs(crs)
@@ -80,7 +116,14 @@ def render_vector(
     return to_pil(req.render_image(extent, size))
 
 
-def render_raster(layer, style, extent, size=(256, 256), crs=CRS.from_epsg(3857)):
+def render_raster(
+    layer: Union[Layer, Path, str],
+    style: Union[Style, str],
+    extent: Tuple[float, float, float, float],
+    size: Union[int, Tuple[int, int]] = (256, 256),
+    crs: CRS = CRS.from_epsg(3857),
+):
+    """Renders a raster image for a given map layer and style."""
     req = MapRequest()
     req.set_dpi(96)
     req.set_crs(crs)
