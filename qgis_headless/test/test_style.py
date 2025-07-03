@@ -41,17 +41,19 @@ def test_empty_string(shared_datadir):
 
 
 @pytest.mark.parametrize(
-    "params",
+    "layer_type, params",
     (
-        dict(layer_type=LT_RASTER),
-        dict(layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_POINT, color=(14, 15, 16, 250)),
-        dict(layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_LINESTRING, color=(7, 6, 5, 4)),
-        dict(layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_POLYGON, color=(7, 6, 5, 4)),
+        (LT_RASTER, dict()),
+        (LT_VECTOR, dict(layer_geometry_type=Layer.GT_POINT, color=(14, 15, 16, 250))),
+        (LT_VECTOR, dict(layer_geometry_type=Layer.GT_LINESTRING, color=(7, 6, 5, 4))),
+        (LT_VECTOR, dict(layer_geometry_type=Layer.GT_POLYGON, color=(7, 6, 5, 4))),
     ),
 )
-def test_default(params):
-    style = Style.from_defaults(**params)
+def test_default(layer_type, params):
+    style = Style.from_defaults(layer_type=layer_type, **params)
     qml = style.to_string()
+
+    Style.from_string(qml, layer_type=layer_type)
 
     root = etree.parse(StringIO(qml), parser=etree.XMLParser()).getroot()
 
