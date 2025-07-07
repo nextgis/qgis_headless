@@ -20,6 +20,7 @@ from qgis_headless import (
 )
 from qgis_headless.util import (
     EXTENT_ONE,
+    RED,
     WKB_POINT_00,
     image_stat,
     render_raster,
@@ -644,28 +645,41 @@ def test_calc_area(save_img, shared_datadir):
     assert (stat.red.max, stat.green.max, stat.blue.max) == (64, 255, 64)
 
 
-def test_rendering_order(save_img, shared_datadir):
-    data = shared_datadir / "rendering-order" / "overlapping_points.geojson"
-    layer = Layer.from_ogr(data)
-    extent = (-70000, -70000, 70000, 70000)
+@pytest.mark.parametrize(
+    "layer_name, style_name, extent",
+    (
+        ("asc.geojson", "asc-single.qml", (0.0, 8.0, 24.0, 16.0)),
+        ("asc.geojson", "asc-categorized.qml", (0.0, 8.0, 24.0, 16.0)),
+        ("desc.geojson", "desc-single.qml", (0.0, 0.0, 24.0, 8.0)),
+        ("desc.geojson", "desc-categorized.qml", (0.0, 0.0, 24.0, 8.0)),
+    ),
+)
+def test_rendering_order(layer_name, style_name, extent, save_img, shared_datadir):
+    def left_overlaps_right(image) -> bool:
+        COLOR_CHECK_POINTS = ((105, 127), (176, 127))
+        for point in COLOR_CHECK_POINTS:
+            if not image.getpixel(point) == RED:
+                return False
+        return True
 
-    style = (shared_datadir / "rendering-order" / "overlapping_points.qml").read_text()
+    crs = CRS.from_epsg(4326)
 
-    image_with_red_dots = save_img(render_vector(layer, style, extent))
-    stat = image_stat(image_with_red_dots)
+    layer = Layer.from_ogr(shared_datadir / "rendering-order" / layer_name)
+    style: str = (shared_datadir / "rendering-order" / style_name).read_text()
 
-    assert stat.alpha.max > 0, "Points are missing"
-    assert stat.green.max == 255 and stat.green.nonzero > stat.red.nonzero, (
-        "Incorrect rendering order"
+    # Direct rendering order:
+
+    image = save_img(render_vector(layer, style, extent, crs=crs))
+    assert left_overlaps_right(image)
+
+    # Inverted rendering order:
+
+    inverted_style = (
+        style.replace('asc="1"', 'asc="0"')
+        if 'asc="1"' in style
+        else style.replace('asc="0"', 'asc="1"')
     )
-
-    # Invert rendering order
-
-    style = style.replace('asc="1"', 'asc="0"')
-    image_with_red_dots = save_img(render_vector(layer, style, extent))
-    stat = image_stat(image_with_red_dots)
-
-    assert stat.alpha.max > 0, "Points are missing"
-    assert stat.red.max == 255 and stat.red.nonzero > stat.green.nonzero, (
-        "Incorrect rendering order"
+    inverted_image = save_img(
+        render_vector(layer, inverted_style, extent, crs=crs), suffix="-inverted"
     )
+    assert not left_overlaps_right(inverted_image)
