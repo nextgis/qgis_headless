@@ -2,6 +2,7 @@ import gc
 import json
 import re
 from pathlib import Path
+from typing import Optional
 
 import _qgis_headless
 import pytest
@@ -71,22 +72,33 @@ def fetch(cache):
 
 @pytest.fixture()
 def save_img(request):
-    def _do(img, name=None):
+    def _do(img, name: Optional[str] = None, *, suffix: Optional[str] = None):
         return img
 
-    if opt := request.config.getoption("--img-output"):
-        base = Path(opt) / request.function.__name__
-        rid = request.node.callspec.id if hasattr(request.node, "callspec") else None
-        if rid:
-            base = base / rid
+    if img_output_path := request.config.getoption("--img-output"):
+        base = Path(img_output_path) / str(request.function.__name__)
+        subtest_name = request.node.callspec.id if hasattr(request.node, "callspec") else None
+        if subtest_name:
+            base = base / str(subtest_name)
 
-        def _do(img, name=None):
-            out = base
+        def _do(img, name: Optional[str] = None, *, suffix: Optional[str] = None):
             if name:
-                out = out / name
+                directory = base
+            else:
+                directory = base.parent
+                name = base.name
 
-            out.parent.mkdir(parents=True, exist_ok=True)
-            img.save(out.with_suffix(".png"))
+            if name.endswith(".png"):
+                name = name[:-4]
+
+            if suffix:
+                name += suffix
+
+            name += ".png"
+
+            directory.mkdir(parents=True, exist_ok=True)
+
+            img.save(directory / name)
             return img
 
     return _do

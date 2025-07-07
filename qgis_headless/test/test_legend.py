@@ -14,6 +14,11 @@ from qgis_headless import (
     set_svg_paths,
 )
 from qgis_headless.util import (
+    BLUE,
+    GRAY_128,
+    GREEN,
+    RED,
+    TRANSPARENT,
     image_stat,
     is_same_color,
     render_legend,
@@ -59,12 +64,6 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
         "Higher DPI should produce bigger legend"
     )
 
-
-RED = (255, 0, 0, 255)
-GREEN = (0, 255, 0, 255)
-BLUE = (0, 0, 255, 255)
-TRANSPARENT = (0, 0, 0, 0)
-GRAY_128 = (128, 128, 128, 128)
 
 LEGEND_DEFAULT_SIZES = [20, 40]
 
