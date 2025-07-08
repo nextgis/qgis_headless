@@ -52,8 +52,10 @@ namespace HeadlessRender
     const QString QGIS = "qgis";
     const QString LAYER_GEOMETRY_TYPE = "layerGeometryType";
     const QString PIPE = "pipe";
+    const QString PROVIDER = "provider";
     const QString RASTER_PROPERTIES = "rasterproperties";
     const QString RASTER_RENDERER = "rasterrenderer";
+    const QString RESAMPLING = "resampling";
     const QString DIAGRAM_CATEGORY = "DiagramCategory";
     const QString ENABLED = "enabled";
     const QString STYLED_LAYER_DESCRIPTOR = "StyledLayerDescriptor";
@@ -299,20 +301,38 @@ DataType Style::type() const
 {
   if ( mType == DataType::Unknown && !mData.isNull() )
   {
+    bool isRaster = false;
     QDomElement root = mData.firstChildElement( TAGS::QGIS );
 
     QDomNode pipeNode = root.firstChildElement( TAGS::PIPE );
-    if ( pipeNode.isNull() ) // old project
+    if ( pipeNode.isNull() )
+    {
+      // old project
       pipeNode = root;
-
-    QDomElement rendererElement;
-    //rasterlayerproperties element there -> old format (1.8 and early 1.9)
-    if ( !root.firstChildElement( TAGS::RASTER_PROPERTIES ).isNull() )
-      rendererElement = root.firstChildElement( TAGS::RASTER_RENDERER );
+    }
     else
-      rendererElement = pipeNode.firstChildElement( TAGS::RASTER_RENDERER );
+    {
+      QDomNode providerNode = pipeNode.firstChildElement( TAGS::PROVIDER );
+      if ( !providerNode.isNull() )
+      {
+        QDomNode resamplingNode = providerNode.firstChildElement( TAGS::RESAMPLING );
+        isRaster = !resamplingNode.isNull();
+      }
+    }
 
-    mType = rendererElement.isNull() ? DataType::Vector : DataType::Raster;
+    if ( !isRaster )
+    {
+      QDomElement rendererElement;
+      //rasterlayerproperties element there -> old format (1.8 and early 1.9)
+      if ( !root.firstChildElement( TAGS::RASTER_PROPERTIES ).isNull() )
+        rendererElement = root.firstChildElement( TAGS::RASTER_RENDERER );
+      else
+        rendererElement = pipeNode.firstChildElement( TAGS::RASTER_RENDERER );
+
+      isRaster = !rendererElement.isNull();
+    }
+
+    mType = isRaster ? DataType::Raster : DataType::Vector;
   }
 
   return mType;

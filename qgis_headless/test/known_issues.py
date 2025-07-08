@@ -15,4 +15,3 @@ class Issues:
     UWSGI_SEGFAULT = xfail(reason="uWSGI segfault during SIGTERM")
     SVG_MARKER_NOT_RESOLVED = xfail(reason="SVG markers are not being resolved")
     WRONG_FIDS = xfail(reason="Features are not assigned fids and use sequential numbers instead")
-    UNREADABLE_DEFAULT_STYLE = xfail(reason="Default raster style is not readable")
