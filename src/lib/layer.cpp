@@ -87,9 +87,16 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
     createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
   disableVectorSimplify( qgsLayer );
 
+  if ( !qgsLayer->startEditing() )
+    throw HeadlessRender::QgisHeadlessError( "start editing failed" );
+
+  QgsFeatureList features;
+
   for ( const auto &data : featureDataList )
   {
     QgsFeature feature( fields, data.id );
+    if ( feature.id() != data.id )
+      throw HeadlessRender::QgisHeadlessError( "this is not good!" );
 
     QgsGeometry geom;
 
@@ -102,8 +109,36 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
     feature.setAttributes( QgsAttributes( data.attributes ) );
     feature.setGeometry( geom );
 
-    qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert );
+    // if ( !qgsLayer->addFeature( feature, QgsFeatureSink::FastInsert ) )
+    //   std::cout << "addFeature fail " << qgsLayer->isEditable() << std::endl;
+
+    features.append( feature );
   }
+
+  //if ( !qgsLayer->dataProvider()->addFeatures( features, QgsFeatureSink::RollBackOnErrors ) )
+  if ( !qgsLayer->addFeatures( features, QgsFeatureSink::RollBackOnErrors ) )
+    //if ( !qgsLayer->addFeatures( features, QgsFeatureSink::FastInsert ) )
+    //throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
+    throw HeadlessRender::QgisHeadlessError( "addFeatures fail" );
+
+  if ( !qgsLayer->commitChanges( true ) )
+    throw HeadlessRender::QgisHeadlessError( "commit changes failed" );
+
+  auto f0 = qgsLayer->getFeature( 0 );
+  auto v0 = f0.attribute( 1 ).toString().toStdString();
+  std::cout << "feature " << f0.id() << " " << v0 << " WWW" << std::endl;
+
+  auto f1 = qgsLayer->getFeature( 1 );
+  auto v1 = f1.attribute( 1 ).toString().toStdString();
+  std::cout << "feature " << f1.id() << " " << v1 << " WWW" << std::endl;
+
+  auto f3 = qgsLayer->getFeature( 3 );
+  auto v3 = f3.attribute( 1 ).toString().toStdString();
+  std::cout << "feature " << f3.id() << " " << v3 << " WWW" << std::endl;
+
+  auto f5 = qgsLayer->getFeature( 5 );
+  auto v5 = f5.attribute( 1 ).toString().toStdString();
+  std::cout << "feature " << f5.id() << " " << v5 << " WWW" << std::endl;
 
   return Layer( QgsMapLayerPtr( qgsLayer ) );
 }
