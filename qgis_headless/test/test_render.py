@@ -22,6 +22,7 @@ from qgis_headless import (
 )
 from qgis_headless.util import (
     EXTENT_ONE,
+    WKB_POINT_00,
     image_stat,
     is_same_color,
     render_raster,
@@ -835,6 +836,18 @@ def test_label_variables(save_img, shared_datadir):
 
     assert stat.blue.max == 255, "Point is missing"
     assert stat.green.max == 255, "Map scale or unit is wrong"
+
+
+def test_fid_variable(save_img, shared_datadir):
+    style = Style.from_file(shared_datadir / "zero/fid-is-5.qml")
+    crs = CRS.from_epsg(3857)
+    feature = (5, WKB_POINT_00, ())
+    layer = Layer.from_data(Layer.GT_POINT, crs, (), (feature,))
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE))
+    stat = image_stat(img)
+
+    assert stat.green.max == 255, "Wrong colour from @id"
 
 
 @pytest.mark.parametrize(
