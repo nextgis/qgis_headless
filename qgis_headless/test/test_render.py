@@ -683,3 +683,23 @@ def test_rendering_order(layer_name, style_name, extent, save_img, shared_datadi
         render_vector(layer, inverted_style, extent, crs=crs), suffix="-inverted"
     )
     assert not left_overlaps_right(inverted_image)
+
+
+def test_random_colors(save_img, shared_datadir):
+    data = shared_datadir / "raster" / "paletted.tif"
+    style = Style.from_defaults()
+
+    layer = Layer.from_gdal(data)
+    img1 = save_img(render_raster(layer, style, (-5.0, -5.0, 85.0, 5.0), (8, 1)), "1")
+
+    # Reload layer:
+
+    layer = Layer.from_gdal(data)
+    img2 = save_img(render_raster(layer, style, (-5.0, -5.0, 85.0, 5.0), (8, 1)), "2")
+
+    assert image_stat(img1).alpha.max > 0 and image_stat(img2).alpha.max > 0, (
+        "One of the layers is missing"
+    )
+
+    for i in range(8):
+        assert img1.getpixel((i, 0)) == img2.getpixel((i, 0))
