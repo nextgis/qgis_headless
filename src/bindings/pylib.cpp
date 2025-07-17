@@ -50,6 +50,10 @@ PYBIND11_MODULE( _qgis_headless, m )
     HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
   py::register_exception<HeadlessRender::InvalidCRSError>( m, "InvalidCRSError", qgisHeadlessErrorHandle );
 
+  py::class_<HeadlessRender::CRS>( m, "CRS" )
+    .def( py::init<>() )
+    .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG, py::arg( "epsg" ) )
+    .def_static( "from_wkt", &HeadlessRender::CRS::fromWkt, py::arg( "wkt" ) );
 
   py::class_<HeadlessRender::Layer> layer( m, "Layer" );
 
@@ -88,115 +92,124 @@ PYBIND11_MODULE( _qgis_headless, m )
   layer
     .def_static(
       "from_ogr",
-      []( const py::object &uri ) { return HeadlessRender::Layer::fromOgr( py::str( uri ) ); }
+      []( const py::object &uri ) { return HeadlessRender::Layer::fromOgr( py::str( uri ) ); },
+      py::arg( "uri" )
     )
     .def_static(
       "from_gdal",
-      []( const py::object &uri ) { return HeadlessRender::Layer::fromGdal( py::str( uri ) ); }
+      []( const py::object &uri ) { return HeadlessRender::Layer::fromGdal( py::str( uri ) ); },
+      py::arg( "uri" )
     )
-    .def_static( "from_data", []( HeadlessRender::LayerGeometryType geometryType, const HeadlessRender::CRS &crs, const py::tuple &attrTypes, const py::tuple &features ) {
-      QVector<QPair<QString, HeadlessRender::LayerAttributeType>> attributeTypes;
-      QVector<HeadlessRender::Layer::FeatureData> featureData;
+    .def_static(
+      "from_data",
+      []( HeadlessRender::LayerGeometryType geometryType, const HeadlessRender::CRS &crs, const py::tuple &attrTypes, const py::tuple &features ) {
+        QVector<QPair<QString, HeadlessRender::LayerAttributeType>> attributeTypes;
+        QVector<HeadlessRender::Layer::FeatureData> featureData;
 
-      for ( const auto &it : attrTypes )
-      {
-        const py::tuple &attr = it.cast<py::tuple>();
-        attributeTypes.append(
-          qMakePair( QString::fromStdString( attr[0].cast<std::string>() ), attr[1].cast<HeadlessRender::LayerAttributeType>() )
-        );
-      }
-
-      for ( const auto &it : features )
-      {
-        HeadlessRender::Layer::FeatureData feature;
-
-        const py::tuple &feat = it.cast<py::tuple>();
-
-        feature.id = feat[0].cast<qint64>();
-        feature.wkb = feat[1].cast<std::string>();
-
-
-        int idx = 0;
-        for ( const auto &attr : feat[2] )
+        for ( const auto &it : attrTypes )
         {
-          HeadlessRender::LayerAttributeType attrType = attributeTypes[idx++].second;
-
-          if ( attr.is_none() )
-          {
-            feature.attributes.append(
-              QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
-            );
-            continue;
-          }
-
-          switch ( attrType )
-          {
-            case HeadlessRender::LayerAttributeType::Integer:
-              feature.attributes.append( attr.cast<int>() );
-              break;
-            case HeadlessRender::LayerAttributeType::Real:
-              feature.attributes.append( attr.cast<double>() );
-              break;
-            case HeadlessRender::LayerAttributeType::String:
-              feature.attributes.append( QString::fromStdString( attr.cast<std::string>() ) );
-              break;
-            case HeadlessRender::LayerAttributeType::Date:
-            {
-              const py::tuple &params = attr.cast<py::tuple>();
-              int y = params[0].cast<int>();
-              int m = params[1].cast<int>();
-              int d = params[2].cast<int>();
-              feature.attributes.append( QDate( y, m, d ) );
-              break;
-            }
-            case HeadlessRender::LayerAttributeType::Time:
-            {
-              const py::tuple &params = attr.cast<py::tuple>();
-              int h = params[0].cast<int>();
-              int m = params[1].cast<int>();
-              int s = params[2].cast<int>();
-              feature.attributes.append( QTime( h, m, s ) );
-              break;
-            }
-            case HeadlessRender::LayerAttributeType::DateTime:
-            {
-              const py::tuple &params = attr.cast<py::tuple>();
-
-              int year = params[0].cast<int>();
-              int month = params[1].cast<int>();
-              int day = params[2].cast<int>();
-              int hour = params[3].cast<int>();
-              int min = params[4].cast<int>();
-              int sec = params[5].cast<int>();
-
-              QDateTime datetime;
-              datetime.setDate( QDate( year, month, day ) );
-              datetime.setTime( QTime( hour, min, sec ) );
-
-              feature.attributes.append( datetime );
-              break;
-            }
-            case HeadlessRender::LayerAttributeType::Integer64:
-              feature.attributes.append( attr.cast<qint64>() );
-              break;
-          }
+          const py::tuple &attr = it.cast<py::tuple>();
+          attributeTypes.append(
+            qMakePair( QString::fromStdString( attr[0].cast<std::string>() ), attr[1].cast<HeadlessRender::LayerAttributeType>() )
+          );
         }
 
-        featureData.append( feature );
-      }
+        for ( const auto &it : features )
+        {
+          HeadlessRender::Layer::FeatureData feature;
 
-      return HeadlessRender::Layer::fromData( geometryType, crs, attributeTypes, featureData );
+          const py::tuple &feat = it.cast<py::tuple>();
+
+          feature.id = feat[0].cast<qint64>();
+          feature.wkb = feat[1].cast<std::string>();
+
+
+          int idx = 0;
+          for ( const auto &attr : feat[2] )
+          {
+            HeadlessRender::LayerAttributeType attrType = attributeTypes[idx++].second;
+
+            if ( attr.is_none() )
+            {
+              feature.attributes.append(
+                QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
+              );
+              continue;
+            }
+
+            switch ( attrType )
+            {
+              case HeadlessRender::LayerAttributeType::Integer:
+                feature.attributes.append( attr.cast<int>() );
+                break;
+              case HeadlessRender::LayerAttributeType::Real:
+                feature.attributes.append( attr.cast<double>() );
+                break;
+              case HeadlessRender::LayerAttributeType::String:
+                feature.attributes.append( QString::fromStdString( attr.cast<std::string>() ) );
+                break;
+              case HeadlessRender::LayerAttributeType::Date:
+              {
+                const py::tuple &params = attr.cast<py::tuple>();
+                int y = params[0].cast<int>();
+                int m = params[1].cast<int>();
+                int d = params[2].cast<int>();
+                feature.attributes.append( QDate( y, m, d ) );
+                break;
+              }
+              case HeadlessRender::LayerAttributeType::Time:
+              {
+                const py::tuple &params = attr.cast<py::tuple>();
+                int h = params[0].cast<int>();
+                int m = params[1].cast<int>();
+                int s = params[2].cast<int>();
+                feature.attributes.append( QTime( h, m, s ) );
+                break;
+              }
+              case HeadlessRender::LayerAttributeType::DateTime:
+              {
+                const py::tuple &params = attr.cast<py::tuple>();
+
+                int year = params[0].cast<int>();
+                int month = params[1].cast<int>();
+                int day = params[2].cast<int>();
+                int hour = params[3].cast<int>();
+                int min = params[4].cast<int>();
+                int sec = params[5].cast<int>();
+
+                QDateTime datetime;
+                datetime.setDate( QDate( year, month, day ) );
+                datetime.setTime( QTime( hour, min, sec ) );
+
+                feature.attributes.append( datetime );
+                break;
+              }
+              case HeadlessRender::LayerAttributeType::Integer64:
+                feature.attributes.append( attr.cast<qint64>() );
+                break;
+            }
+          }
+
+          featureData.append( feature );
+        }
+
+        return HeadlessRender::Layer::fromData( geometryType, crs, attributeTypes, featureData );
+      },
+      py::arg( "geometry_type" ), py::arg( "crs" ), py::arg( "attribute_types" ),
+      py::arg( "features" )
+    );
+
+  py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
+    .def( "size", &HeadlessRender::Image::sizeWidthHeight )
+    .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
+      return py::memoryview::from_memory( img->data(), img->size() );
     } );
-
-  py::class_<HeadlessRender::CRS>( m, "CRS" )
-    .def( py::init<>() )
-    .def_static( "from_epsg", &HeadlessRender::CRS::fromEPSG )
-    .def_static( "from_wkt", &HeadlessRender::CRS::fromWkt );
 
   py::enum_<HeadlessRender::StyleFormat>( m, "StyleFormat" )
     .value( "QML", HeadlessRender::StyleFormat::QML )
-    .value( "SLD", HeadlessRender::StyleFormat::SLD )
-    .export_values();
+    .value( "SLD", HeadlessRender::StyleFormat::SLD );
+  m.attr( "SF_QML" ) = HeadlessRender::StyleFormat::QML;
+  m.attr( "SF_SLD" ) = HeadlessRender::StyleFormat::SLD;
 
   py::class_<HeadlessRender::Style>( m, "Style" )
     .def_static(
@@ -297,12 +310,6 @@ PYBIND11_MODULE( _qgis_headless, m )
     )
     .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );
 
-  py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
-    .def( "size", &HeadlessRender::Image::sizeWidthHeight )
-    .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
-      return py::memoryview::from_memory( img->data(), img->size() );
-    } );
-
   py::class_<HeadlessRender::RawData, std::shared_ptr<HeadlessRender::RawData>>( m, "RawData" )
     .def( py::init<>() )
     .def( "size", &HeadlessRender::RawData::size )
@@ -312,16 +319,20 @@ PYBIND11_MODULE( _qgis_headless, m )
 
   py::class_<HeadlessRender::Project>( m, "Project" )
     .def( py::init<>() )
-    .def_static( "from_file", []( const py::object &filename ) {
-      return HeadlessRender::Project::fromFile( py::str( filename ) );
-    } );
+    .def_static(
+      "from_file",
+      []( const py::object &filename ) {
+        return HeadlessRender::Project::fromFile( py::str( filename ) );
+      },
+      py::arg( "filename" )
+    );
 
   py::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
     .def( py::init<>() )
-    .def( "set_dpi", &HeadlessRender::MapRequest::setDpi )
-    .def( "set_crs", &HeadlessRender::MapRequest::setCrs )
+    .def( "set_dpi", &HeadlessRender::MapRequest::setDpi, py::arg( "dpi" ) )
+    .def( "set_crs", &HeadlessRender::MapRequest::setCrs, py::arg( "crs" ) )
     .def( "add_layer", &HeadlessRender::MapRequest::addLayer, py::arg( "layer" ), py::arg( "style" ), py::arg( "label" ) = "" )
-    .def( "add_project", &HeadlessRender::MapRequest::addProject )
+    .def( "add_project", &HeadlessRender::MapRequest::addProject, py::arg( "project" ) )
     .def(
       "render_image",
       []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size, const py::object &symbols ) {
@@ -342,7 +353,7 @@ PYBIND11_MODULE( _qgis_headless, m )
       py::arg( "extent" ), py::arg( "size" ), py::kw_only(), py::arg( "symbols" ) = py::none()
     )
     .def( "render_legend", &HeadlessRender::MapRequest::renderLegend, py::arg( "size" ) = HeadlessRender::Size() )
-    .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf )
+    .def( "export_pdf", &HeadlessRender::MapRequest::exportPdf, py::arg( "filepath" ), py::arg( "extent" ), py::arg( "size" ) )
     .def(
       "legend_symbols", &HeadlessRender::MapRequest::legendSymbols, py::arg( "index" ),
       py::arg( "size" ) = HeadlessRender::Size(),
@@ -358,12 +369,12 @@ PYBIND11_MODULE( _qgis_headless, m )
         v.push_back( const_cast<char *>( s.c_str() ) );
       return HeadlessRender::init( v.size(), v.data() );
     },
-    "Library initialization"
+    "Library initialization", py::arg( "args" )
   );
 
   m.def( "deinit", &HeadlessRender::deinit, "Library deinitialization" );
 
-  m.def( "set_svg_paths", &HeadlessRender::setSvgPaths, "Set SVG search paths" );
+  m.def( "set_svg_paths", &HeadlessRender::setSvgPaths, "Set SVG search paths", py::arg( "paths" ) );
 
   m.def( "get_svg_paths", &HeadlessRender::getSvgPaths, "Get SVG search paths" );
 
@@ -373,5 +384,5 @@ PYBIND11_MODULE( _qgis_headless, m )
 
   m.def( "get_qgis_version_int", &HeadlessRender::getQGISVersionInt, "Get QGIS library version (number)" );
 
-  m.def( "set_logging_level", &HeadlessRender::setLoggingLevel, "Set logging level" );
+  m.def( "set_logging_level", &HeadlessRender::setLoggingLevel, "Set logging level", py::arg( "level" ) );
 }
