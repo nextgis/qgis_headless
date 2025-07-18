@@ -122,19 +122,17 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer(
   const QgsVectorLayer::LayerOptions &layerOptions
 )
 {
-  return QgsMapLayerPtr(
-    new QgsVectorLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions )
-  );
+  return std::make_shared<
+    QgsVectorLayer>( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions );
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
 {
   QgsRasterLayer::LayerOptions layerOptions;
   layerOptions.loadDefaultStyle = false;
-  auto layer = HeadlessRender::QgsMapLayerPtr(
-    new QgsRasterLayer( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions )
-  );
-  static_cast<QgsRasterLayer *>( layer.get() )->setDataProvider( "gdal" );
+  auto layer = std::make_shared<
+    QgsRasterLayer>( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions );
+  layer->setDataProvider( "gdal" );
   return layer;
 }
 

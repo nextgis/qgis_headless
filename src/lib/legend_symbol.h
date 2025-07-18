@@ -48,7 +48,7 @@ namespace HeadlessRender
        * \param hasTitle determines whether layer has a title in a legend.
        */
       static LegendSymbol create(
-        const ImagePtr icon, const QString &title, SymbolRender render, Index index,
+        const ImagePtr &icon, const QString &title, SymbolRender render, Index index,
         int rasterBand, bool hasTitle = true
       );
 
@@ -95,7 +95,7 @@ namespace HeadlessRender
 
     private:
       LegendSymbol(
-        const ImagePtr icon, const QString &title, SymbolRender render, Index index,
+        const ImagePtr &icon, const QString &title, SymbolRender render, Index index,
         int rasterBand, bool hasTitle = true
       );
 

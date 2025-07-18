@@ -179,7 +179,8 @@ int HeadlessRender::getQGISVersionInt()
 }
 
 HeadlessRender::MapRequest::MapRequest()
-  : mSettings( new QgsMapSettings ), mQgsLayerTree( new QgsLayerTree )
+  : mSettings( std::make_shared<QgsMapSettings>() )
+  , mQgsLayerTree( std::make_shared<QgsLayerTree>() )
 {
   mSettings->setBackgroundColor( Qt::transparent );
   mSettings->setFlag( Qgis::MapSettingsFlag::RenderBlocking );

@@ -644,8 +644,8 @@ QString Style::exportToString( const StyleFormat format ) const
       if ( !qgsMapLayer )
         throw QgisHeadlessError( errorMessage );
 
-      QgsSymbol *qgsSymbol;
-      QgsSymbolLayer *qgsSymbolLayer;
+      std::unique_ptr<QgsSymbol> qgsSymbol;
+      std::unique_ptr<QgsSymbolLayer> qgsSymbolLayer;
 
       QVariantMap props;
       props[QStringLiteral( "color" )] = mDefaultStyleParams.color.name( QColor::NameFormat::HexArgb );
@@ -656,33 +656,34 @@ QString Style::exportToString( const StyleFormat format ) const
         case LayerGeometryType::PointZ:
         case LayerGeometryType::MultiPoint:
         case LayerGeometryType::MultiPointZ:
-          qgsSymbol = new QgsMarkerSymbol;
-          qgsSymbolLayer = QgsSimpleMarkerSymbolLayer::create( props );
+          qgsSymbol = std::make_unique<QgsMarkerSymbol>();
+          qgsSymbolLayer.reset( QgsSimpleMarkerSymbolLayer::create( props ) );
           break;
         case LayerGeometryType::LineString:
         case LayerGeometryType::LineStringZ:
         case LayerGeometryType::MultiLineString:
         case LayerGeometryType::MultiLineStringZ:
-          qgsSymbol = new QgsLineSymbol;
-          qgsSymbolLayer = QgsSimpleLineSymbolLayer::create( props );
+          qgsSymbol = std::make_unique<QgsLineSymbol>();
+          qgsSymbolLayer.reset( QgsSimpleLineSymbolLayer::create( props ) );
           break;
         case LayerGeometryType::Polygon:
         case LayerGeometryType::PolygonZ:
         case LayerGeometryType::MultiPolygon:
         case LayerGeometryType::MultiPolygonZ:
-          qgsSymbol = new QgsFillSymbol;
-          qgsSymbolLayer = QgsSimpleFillSymbolLayer::create( props );
+          qgsSymbol = std::make_unique<QgsFillSymbol>();
+          qgsSymbolLayer.reset( QgsSimpleFillSymbolLayer::create( props ) );
           break;
         case LayerGeometryType::Unknown:
-          qgsSymbol = nullptr;
-          qgsSymbolLayer = nullptr;
+          // Both qgsSymbol and qgsSymbolLayer are nullptr
           break;
       }
 
       if ( qgsSymbol && qgsSymbolLayer )
       {
-        qgsSymbol->changeSymbolLayer( 0, qgsSymbolLayer );
-        QgsSingleSymbolRenderer *qgsSingleSymbolRenderer = new QgsSingleSymbolRenderer( qgsSymbol );
+        qgsSymbol->changeSymbolLayer( 0, qgsSymbolLayer.release() );
+        QgsSingleSymbolRenderer *qgsSingleSymbolRenderer = new QgsSingleSymbolRenderer(
+          qgsSymbol.release()
+        );
         static_cast<QgsVectorLayer *>( qgsMapLayer.get() )->setRenderer( qgsSingleSymbolRenderer );
       }
     }
