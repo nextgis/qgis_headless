@@ -13,15 +13,15 @@ Headless rendering library using QGIS
 
 2. Create virtualenv, activate it and install the package there:
 
-    ```
+    ``` shell
     $ python3 -m venv env
     $ source env/bin/activate
-    $ pip install --editable ./[tests]
+    $ pip install --editable ./[dev,tests]
     ```
 
 3. Run the tests:
 
-    ```
+    ``` shell
     $ python -m pytest qgis_headless/test/
     ```
 

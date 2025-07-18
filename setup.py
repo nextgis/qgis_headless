@@ -11,7 +11,7 @@ here = path.abspath(path.dirname(__file__))
 
 class CMakeExtension(Extension):
     def __init__(self, name):
-        Extension.__init__(self, name, sources=[])
+        super().__init__(name, sources=[])
 
 
 class CMakeBuild(build_ext):
@@ -23,13 +23,13 @@ class CMakeBuild(build_ext):
         if not os.path.isdir(self.build_temp):
             makedirs(self.build_temp)
 
-        extdir = self.get_ext_fullpath(ext.name)
+        extdir = path.abspath(path.dirname(self.get_ext_fullpath(ext.name)))
 
         config = "Debug" if self.debug else "Release"
         cmake_args = [
-            "-DPYTHON_EXECUTABLE=" + sys.executable,
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + os.path.abspath(os.path.split(extdir)[0]),
-            "-DCMAKE_BUILD_TYPE=" + config,
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
+            f"-DCMAKE_BUILD_TYPE={config}",
         ]
         extra_cmake_args = os.environ.get("CMAKE_ARGS", "")
         if extra_cmake_args:
@@ -37,18 +37,20 @@ class CMakeBuild(build_ext):
 
         env = os.environ.copy()
         subprocess.check_call(
-            ["cmake", os.path.abspath(os.path.dirname(__file__))] + cmake_args,
+            ["cmake", here] + cmake_args,
             cwd=self.build_temp,
             env=env,
         )
 
-        if not self.dry_run:
-            build_args = ["--config", config, "--", "-j2"]
-            subprocess.check_call(
-                ["cmake", "--build", "."] + build_args,
-                cwd=self.build_temp,
-                env=env,
-            )
+        if self.dry_run:
+            return
+
+        build_args = ["--config", config, "--", "-j2"]
+        subprocess.check_call(
+            ["cmake", "--build", "."] + build_args,
+            cwd=self.build_temp,
+            env=env,
+        )
 
 
 setup(

@@ -56,6 +56,38 @@ file(READ ${CMAKE_SOURCE_DIR}/qgis_headless/__init__.py INPUT_TEXT)
 string(REPLACE "from _qgis_headless" "from ._qgis_headless" INPUT_TEXT "${INPUT_TEXT}")
 file(WRITE ${CMAKE_BINARY_DIR}/__init__.py "${INPUT_TEXT}")
 
+# Generate or copy stub
+
+# Always use the stub from the source directory for installation
+set(PYI_SOURCE_FILE "${CMAKE_SOURCE_DIR}/_qgis_headless.pyi")
+set(PYI_OUTPUT_FILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/_qgis_headless.pyi")
+
+find_program(PYBIND11_STUBGEN_EXEC pybind11-stubgen)
+if(PYBIND11_STUBGEN_EXEC)
+  add_custom_command(
+    TARGET ${PY_LIB_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E env
+      PYTHONPATH=$<TARGET_FILE_DIR:${PY_LIB_NAME}>
+      ${PYBIND11_STUBGEN_EXEC} _qgis_headless --output-dir ${CMAKE_SOURCE_DIR}
+      --enum-class-locations LayerType:_qgis_headless
+      --enum-class-locations GeometryType:_qgis_headless.Layer
+      # --enum-class-locations StyleFormat:_qgis_headless
+    WORKING_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+    COMMENT "Generating .pyi stub with pybind11-stubgen into source directory"
+  )
+else()
+  message(WARNING "pybind11-stubgen not found, using pre-generated stub from source directory.")
+endif()
+
+add_custom_command(
+  TARGET ${PY_LIB_NAME}
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${PYI_SOURCE_FILE}" "${PYI_OUTPUT_FILE}"
+  COMMENT "Copying .pyi stub next to .so for installation"
+)
+
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   install(TARGETS ${PY_LIB_NAME}
     LIBRARY DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless
@@ -67,5 +99,5 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   )
   install(FILES ${PY_FILES} DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless COMPONENT python)
   install(FILES ${CMAKE_SOURCE_DIR}/qgis_headless/_qgis_headless.py.tmplt DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless COMPONENT python RENAME _qgis_headless.py)
-
+  install(FILES "${PYI_SOURCE_FILE}" DESTINATION ${PYTHON_SITE_PACKAGES}/qgis_headless COMPONENT python)
 endif()

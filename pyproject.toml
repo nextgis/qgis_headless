@@ -14,6 +14,9 @@ dynamic = ["version"]
 qgis_headless = "qgis_headless.script:main"
 
 [project.optional-dependencies]
+dev = [
+    "pybind11-stubgen",
+]
 tests = [
     "lxml",
     "pillow",
