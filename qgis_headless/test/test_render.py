@@ -838,6 +838,7 @@ def test_label_variables(save_img, shared_datadir):
     assert stat.green.max == 255, "Map scale or unit is wrong"
 
 
+@Issues.WRONG_FIDS
 def test_fid_variable(save_img, shared_datadir):
     style = Style.from_file(shared_datadir / "zero/fid-is-5.qml")
     crs = CRS.from_epsg(3857)

@@ -43,7 +43,7 @@ def test_empty_string(shared_datadir):
 @pytest.mark.parametrize(
     "layer_type, params",
     (
-        (LT_RASTER, dict()),
+        pytest.param(LT_RASTER, dict(), marks=Issues.UNREADABLE_DEFAULT_STYLE),
         (LT_VECTOR, dict(layer_geometry_type=Layer.GT_POINT, color=(14, 15, 16, 250))),
         (LT_VECTOR, dict(layer_geometry_type=Layer.GT_LINESTRING, color=(7, 6, 5, 4))),
         (LT_VECTOR, dict(layer_geometry_type=Layer.GT_POLYGON, color=(7, 6, 5, 4))),
