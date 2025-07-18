@@ -23,7 +23,7 @@
 using namespace HeadlessRender;
 
 LegendSymbol::LegendSymbol(
-  const ImagePtr icon, const QString &title, const SymbolRender render, const Index index,
+  const ImagePtr &icon, const QString &title, const SymbolRender render, const Index index,
   int rasterBand, const bool hasTitle
 )
   : mIcon( icon )
@@ -35,7 +35,7 @@ LegendSymbol::LegendSymbol(
 {}
 
 LegendSymbol LegendSymbol::create(
-  const ImagePtr icon, const QString &title, const SymbolRender render, Index index,
+  const ImagePtr &icon, const QString &title, const SymbolRender render, Index index,
   int rasterBand, const bool hasTitle
 )
 {

@@ -30,7 +30,7 @@
 #include <qgssymbol.h>
 #include <QByteArray>
 
-void disableVectorSimplify( QgsVectorLayer *qgsVectorLayer )
+void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
 {
   QgsVectorSimplifyMethod simplifyMethod = qgsVectorLayer->simplifyMethod();
 #if _QGIS_VERSION_INT < 33800
@@ -52,25 +52,25 @@ HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
   QgsVectorLayer::LayerOptions layerOptions;
   layerOptions.loadDefaultStyle = false;
 
-  QgsVectorLayer *qgsVectorLayer
-    = new QgsVectorLayer( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ), layerOptions );
+  auto &&qgsVectorLayer = std::make_shared<
+    QgsVectorLayer>( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ), layerOptions );
   if ( !qgsVectorLayer->isValid() )
     throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
 
   disableVectorSimplify( qgsVectorLayer );
-  return Layer( QgsMapLayerPtr( qgsVectorLayer ) );
+  return Layer( qgsVectorLayer );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
-  QgsRasterLayer *qgsRasterLayer = new QgsRasterLayer( QString::fromStdString( uri ) );
+  auto &&qgsRasterLayer = std::make_shared<QgsRasterLayer>( QString::fromStdString( uri ) );
   if ( !qgsRasterLayer->isValid() )
     throw HeadlessRender::InvalidLayerSource(
       "Layer source is invalid, error message: "
       + qgsRasterLayer->error().message( QgsErrorMessage::Text )
     );
 
-  return Layer( QgsMapLayerPtr( qgsRasterLayer ) );
+  return Layer( qgsRasterLayer );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromData(
@@ -83,8 +83,10 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
   for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
     fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
 
-  QgsVectorLayer *qgsLayer = QgsMemoryProviderUtils::
-    createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
+  std::shared_ptr<QgsVectorLayer> qgsLayer(
+    QgsMemoryProviderUtils::
+      createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() )
+  );
   disableVectorSimplify( qgsLayer );
 
   for ( const auto &data : featureDataList )
@@ -92,12 +94,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
     QgsFeature feature( fields, data.id );
 
     QgsGeometry geom;
-
-    size_t wkbBufSize = data.wkb.length();
-    unsigned char *wkbBuf = new unsigned char[wkbBufSize]; // unmanaged memory is deleted in a geom.fromWkb
-    memcpy( wkbBuf, data.wkb.c_str(), wkbBufSize );
-
-    geom.fromWkb( wkbBuf, wkbBufSize );
+    geom.fromWkb( QByteArray::fromStdString( data.wkb ) );
 
     feature.setAttributes( QgsAttributes( data.attributes ) );
     feature.setGeometry( geom );
@@ -105,7 +102,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
     qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert );
   }
 
-  return Layer( QgsMapLayerPtr( qgsLayer ) );
+  return Layer( qgsLayer );
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
@@ -131,17 +128,17 @@ void HeadlessRender::Layer::setRendererSymbolColor( const QColor &color )
   if ( type() != HeadlessRender::DataType::Vector )
     return;
 
-  QgsVectorLayer *layer = dynamic_cast< QgsVectorLayer * >( mLayer.get() );
+  auto &&layer = std::dynamic_pointer_cast< QgsVectorLayer >( mLayer );
   if ( !layer )
     return;
 
   QgsSingleSymbolRenderer *singleRenderer = dynamic_cast< QgsSingleSymbolRenderer * >(
     layer->renderer()
   );
-  QgsSymbol *newSymbol = nullptr;
+  std::unique_ptr<QgsSymbol> newSymbol;
 
   if ( singleRenderer && singleRenderer->symbol() )
-    newSymbol = singleRenderer->symbol()->clone();
+    newSymbol.reset( singleRenderer->symbol()->clone() );
 
   const QgsSingleSymbolRenderer *embeddedRenderer = nullptr;
   if ( !newSymbol && layer->renderer()->embeddedRenderer() )
@@ -150,19 +147,21 @@ void HeadlessRender::Layer::setRendererSymbolColor( const QColor &color )
       layer->renderer()->embeddedRenderer()
     );
     if ( embeddedRenderer && embeddedRenderer->symbol() )
-      newSymbol = embeddedRenderer->symbol()->clone();
+      newSymbol.reset( embeddedRenderer->symbol()->clone() );
   }
 
   if ( newSymbol )
   {
     newSymbol->setColor( color );
     if ( singleRenderer )
-      singleRenderer->setSymbol( newSymbol );
+    {
+      singleRenderer->setSymbol( newSymbol.release() );
+    }
     else if ( embeddedRenderer )
     {
-      QgsSingleSymbolRenderer *newRenderer = embeddedRenderer->clone();
-      newRenderer->setSymbol( newSymbol );
-      layer->renderer()->setEmbeddedRenderer( newRenderer );
+      std::unique_ptr<QgsSingleSymbolRenderer> newRenderer( embeddedRenderer->clone() );
+      newRenderer->setSymbol( newSymbol.release() );
+      layer->renderer()->setEmbeddedRenderer( newRenderer.release() );
     }
   }
 }
