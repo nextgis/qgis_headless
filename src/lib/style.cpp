@@ -444,49 +444,66 @@ UsedAttributes Style::readUsedAttributes() const
   std::set<std::string> usedAttributes;
 
   if ( isDefaultStyle() )
+  {
     return std::make_pair( true, usedAttributes );
+  }
 
   QString errorMessage;
   QgsVectorLayerPtr qgsVectorLayer = createTemporaryVectorLayerWithStyle( errorMessage );
   if ( !qgsVectorLayer )
+  {
     throw QgisHeadlessError( errorMessage );
+  }
 
   if ( hasEnabledDiagrams( qgsVectorLayer ) )
     return std::make_pair( false, usedAttributes );
 
   QgsRenderContext renderContext;
 
-  QgsAbstractVectorLayerLabeling *abstractVectorLayerLabeling = qgsVectorLayer->labeling();
-  if ( abstractVectorLayerLabeling )
+  QgsAbstractVectorLayerLabeling *labeling = qgsVectorLayer->labeling();
+  if ( labeling )
   {
     QSet<QString> fields;
 
-    if ( abstractVectorLayerLabeling->type() == LabelingType::RuleBased )
+    if ( labeling->type() == LabelingType::RuleBased )
     {
-      QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>(
-        abstractVectorLayerLabeling
-      );
-      if ( ruleBasedLabeling->rootRule() )
+      QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>( labeling );
+      if ( ruleBasedLabeling && ruleBasedLabeling->rootRule() )
+      {
         for ( const QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
+        {
           fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
+        }
+      }
     }
 
-    for ( const QString &providerId : qgsVectorLayer->labeling()->subProviders() )
+    for ( const QString &providerId : labeling->subProviders() )
     {
-      fields.unite(
-        qgsVectorLayer->labeling()->settings( providerId ).referencedFields( renderContext )
-      );
+      fields.unite( labeling->settings( providerId ).referencedFields( renderContext ) );
     }
 
     for ( const QString &field : fields )
+    {
       usedAttributes.insert( field.toStdString() );
+    }
   }
 
-  for ( const QString &attr : qgsVectorLayer->renderer()->usedAttributes( renderContext ) )
+  auto &&renderer = qgsVectorLayer->renderer();
+  for ( const QString &attribute : renderer->usedAttributes( renderContext ) )
   {
-    if ( attr == QgsFeatureRequest::ALL_ATTRIBUTES )
+    if ( attribute == QgsFeatureRequest::ALL_ATTRIBUTES )
+    {
       return std::make_pair( false, usedAttributes );
-    usedAttributes.insert( attr.toStdString() );
+    }
+    usedAttributes.insert( attribute.toStdString() );
+  }
+
+  if ( renderer->orderByEnabled() )
+  {
+    for ( auto &&attribute : renderer->orderBy().usedAttributes() )
+    {
+      usedAttributes.insert( attribute.toStdString() );
+    }
   }
 
   return std::make_pair( true, usedAttributes );
