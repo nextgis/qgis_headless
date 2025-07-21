@@ -455,8 +455,21 @@ UsedAttributes Style::readUsedAttributes() const
     throw QgisHeadlessError( errorMessage );
   }
 
+#if VERSION_INT >= 33000
+  const QgsDiagramRenderer *diagramRenderer = qgsVectorLayer->diagramRenderer();
+  if ( diagramRenderer )
+  {
+    for ( auto &&attribute : diagramRenderer->referencedFields() )
+    {
+      usedAttributes.insert( attribute.toStdString() );
+    }
+  }
+#else
   if ( hasEnabledDiagrams( qgsVectorLayer ) )
+  {
     return std::make_pair( false, usedAttributes );
+  }
+#endif
 
   QgsRenderContext renderContext;
 
@@ -506,7 +519,7 @@ UsedAttributes Style::readUsedAttributes() const
     }
   }
 
-  return std::make_pair( true, usedAttributes );
+  return std::make_pair( true, std::move( usedAttributes ) );
 }
 
 bool Style::hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const

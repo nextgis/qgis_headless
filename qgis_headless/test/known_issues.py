@@ -8,7 +8,10 @@ xfail = partial(pytest.mark.xfail, strict=True)
 
 
 class Issues:
-    DIAGRAM_ATTRIBUTES = xfail(reason="https://github.com/qgis/QGIS/issues/33810")
+    DIAGRAM_ATTRIBUTES = xfail(
+        condition=get_qgis_version_int() < 33000,
+        reason="https://github.com/qgis/QGIS/issues/33810",
+    )
     GRADIENT = xfail(
         condition=get_qgis_version_int() < 33200, reason="Only edge gradient colours are drawn"
     )
