@@ -110,6 +110,10 @@ def test_default(layer_type, params):
             id="diagram",
             marks=Issues.DIAGRAM_ATTRIBUTES,
         ),
+        param("rendering-order/asc-single.qml", ["order"]),
+        param("rendering-order/desc-single.qml", ["order"]),
+        param("rendering-order/asc-categorized.qml", ["order"]),
+        param("rendering-order/desc-categorized.qml", ["order"]),
         # fmt: on
     ),
 )
