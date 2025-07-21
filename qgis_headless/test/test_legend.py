@@ -25,6 +25,8 @@ from qgis_headless.util import (
     to_pil,
 )
 
+from .known_issues import Issues
+
 QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 
 
@@ -68,7 +70,7 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
 LEGEND_DEFAULT_SIZES = [20, 40]
 
 legend_symbols_params = []
-for id, geometry_type, style, sizes, expected in [
+for id, geometry_type, style, sizes, expected, mark in [
     (
         "zero_red_circle",
         Layer.GT_POINT,
@@ -77,6 +79,7 @@ for id, geometry_type, style, sizes, expected in [
         [
             (None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=RED)),
         ],
+        (),
     ),
     (
         "default_point",
@@ -84,6 +87,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(color=GRAY_128),
         LEGEND_DEFAULT_SIZES,
         ((None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=GRAY_128)),),
+        (),
     ),
     (
         "default_linestring",
@@ -91,6 +95,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(color=GRAY_128),
         LEGEND_DEFAULT_SIZES,
         ((None, dict(ct=TRANSPARENT, cb=TRANSPARENT)),),
+        (),
     ),
     (
         "default_polygon",
@@ -98,6 +103,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(color=GRAY_128),
         LEGEND_DEFAULT_SIZES,
         ((None, GRAY_128),),
+        (),
     ),
     (
         "contour_rgb",
@@ -108,6 +114,7 @@ for id, geometry_type, style, sizes, expected in [
             ("primary horizontals", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
             ("secondary horizontals", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
+        (),
     ),
     (
         "thick_outline",
@@ -115,6 +122,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(file="thick-outline.qml"),
         LEGEND_DEFAULT_SIZES,
         ((None, dict()),),
+        (),
     ),
     (
         "big_symbol",
@@ -122,6 +130,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(file="big-symbol.qml"),
         LEGEND_DEFAULT_SIZES,
         ((None, dict()),),
+        (),
     ),
     (
         "bar_chart",
@@ -134,6 +143,7 @@ for id, geometry_type, style, sizes, expected in [
             ("green", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
             ("blue", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
+        Issues.DIAGRAM_SYMBOLS,
     ),
     (
         "pie_chart",
@@ -146,6 +156,7 @@ for id, geometry_type, style, sizes, expected in [
             ("green", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
             ("blue", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
+        Issues.DIAGRAM_SYMBOLS,
     ),
 ]:
     for size in sizes:
@@ -153,7 +164,7 @@ for id, geometry_type, style, sizes, expected in [
             size = (size, size)
         param_id = f"{id}-{size[0]}x{size[1]}"
         legend_symbols_params.append(
-            pytest.param(geometry_type, style, size, expected, id=param_id)
+            pytest.param(geometry_type, style, size, expected, id=param_id, marks=mark)
         )
 
 

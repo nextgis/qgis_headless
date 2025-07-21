@@ -12,6 +12,10 @@ class Issues:
         condition=get_qgis_version_int() < 33000,
         reason="https://github.com/qgis/QGIS/issues/33810",
     )
+    DIAGRAM_SYMBOLS = pytest.mark.xfail(
+        condition=get_qgis_version_int() <= 32216,
+        reason="Rendering of diagram legend symbols is incorrect in QGIS 2.20 and older",
+    )
     GRADIENT = xfail(
         condition=get_qgis_version_int() < 33200, reason="Only edge gradient colours are drawn"
     )
