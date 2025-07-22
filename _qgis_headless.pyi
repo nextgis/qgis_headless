@@ -15,6 +15,7 @@ __all__ = [
     "LT_VECTOR",
     "Layer",
     "LayerType",
+    "LayerTypeMismatch",
     "LegendSymbol",
     "LogLevel",
     "MapRequest",
@@ -216,6 +217,7 @@ class Layer:
     def from_gdal(uri: typing.Any) -> Layer: ...
     @staticmethod
     def from_ogr(uri: typing.Any) -> Layer: ...
+    def clone_to_memory(self) -> Layer: ...
 
 class LayerType:
     """
@@ -248,6 +250,9 @@ class LayerType:
     def name(self) -> str: ...
     @property
     def value(self) -> int: ...
+
+class LayerTypeMismatch(QgisHeadlessError):
+    pass
 
 class LegendSymbol:
     def icon(self) -> Image: ...

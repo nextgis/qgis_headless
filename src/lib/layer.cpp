@@ -173,3 +173,34 @@ bool HeadlessRender::Layer::addStyle( HeadlessRender::Style &style, QString &err
 
   return style.importToLayer( mLayer, error );
 }
+
+HeadlessRender::Layer HeadlessRender::Layer::cloneToMemory() const
+{
+  auto &&vectorLayer = std::dynamic_pointer_cast<QgsVectorLayer>( mLayer );
+  if ( type() == DataType::Vector && vectorLayer )
+  {
+    std::shared_ptr<QgsVectorLayer> qgsLayer(
+      QgsMemoryProviderUtils::
+        createMemoryLayer( "layername", vectorLayer->fields(), vectorLayer->wkbType(), vectorLayer->crs() )
+    );
+    disableVectorSimplify( qgsLayer );
+
+    auto &&featureIterator = vectorLayer->getFeatures();
+
+    QgsFeature currentFeature;
+    size_t i = 0;
+    while ( featureIterator.nextFeature( currentFeature ) )
+    {
+      if ( !qgsLayer->dataProvider()->addFeature( currentFeature, QgsFeatureSink::FastInsert ) )
+      {
+        throw QgisHeadlessError( "An error occurred while cloning the layer to memory" );
+      }
+    }
+
+    return Layer( qgsLayer );
+  }
+  else
+  {
+    throw LayerTypeMismatch( "Cannot clone raster layer to memory" );
+  }
+}

@@ -103,6 +103,13 @@ namespace HeadlessRender
        */
       bool addStyle( Style &style, QString &error );
 
+      /**
+       * Creates a copy of layer in memory. Only for vector layers.
+       * \warning All data of layer will be copied to memory!
+       * \returns A copy of layer.
+       */
+      Layer cloneToMemory() const;
+
     private:
       explicit Layer( const QgsMapLayerPtr &qgsMapLayer );
 

@@ -49,6 +49,7 @@ PYBIND11_MODULE( _qgis_headless, m )
   py::register_exception<
     HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
   py::register_exception<HeadlessRender::InvalidCRSError>( m, "InvalidCRSError", qgisHeadlessErrorHandle );
+  py::register_exception<HeadlessRender::LayerTypeMismatch>( m, "LayerTypeMismatch", qgisHeadlessErrorHandle );
 
   py::class_<HeadlessRender::CRS>( m, "CRS" )
     .def( py::init<>() )
@@ -197,7 +198,9 @@ PYBIND11_MODULE( _qgis_headless, m )
       },
       py::arg( "geometry_type" ), py::arg( "crs" ), py::arg( "attribute_types" ),
       py::arg( "features" )
-    );
+    )
+
+    .def( "clone_to_memory", &HeadlessRender::Layer::cloneToMemory );
 
   py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
     .def( "size", &HeadlessRender::Image::sizeWidthHeight )
