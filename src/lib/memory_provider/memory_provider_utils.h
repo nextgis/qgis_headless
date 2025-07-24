@@ -18,40 +18,29 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef QGIS_HEADLESS_UTILS_H
-#define QGIS_HEADLESS_UTILS_H
+#ifndef QGIS_HEADLESS_MEMORY_PROVIDER_UTILS_H
+#define QGIS_HEADLESS_MEMORY_PROVIDER_UTILS_H
 
-#include <QVariant>
+#include <memory>
 
-#include <qgsvectorlayer.h>
+#include <qgscoordinatereferencesystem.h>
+#include <qgsfeature.h>
 #include <qgswkbtypes.h>
 
 #include "types.h"
 
-namespace HeadlessRender
+class QgsFields;
+
+namespace HeadlessRender::MemoryProviderUtils
 {
-#if _QGIS_VERSION_INT >= 33000
-  using QgisGeometryType = Qgis::WkbType;
-#else
-  using QgisGeometryType = QgsWkbTypes::Type;
-#endif
-
-  QgisGeometryType layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType );
-  QVariant::Type layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType );
-
-  QgsMapLayerPtr createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions );
-  QgsMapLayerPtr createTemporaryRasterLayer();
-  QgsMapLayerPtr createTemporaryLayerByType(
-    HeadlessRender::DataType type, const QgsVectorLayer::LayerOptions &layerOptions
-  );
+  void registerMemoryProvider();
 
   QgsVectorLayerPtr createMemoryLayer(
-    QgsFeatureList &features, const QgsFields &fields, QgisGeometryType geometryType,
-    const QgsCoordinateReferenceSystem &crs = QgsCoordinateReferenceSystem()
+    const QString &name, const QgsFields &fields,
+    Qgis::WkbType geometryType = Qgis::WkbType::NoGeometry,
+    const QgsCoordinateReferenceSystem &crs = QgsCoordinateReferenceSystem(),
+    bool loadDefaultStyle = true
   );
-  QgsVectorLayerPtr cloneLayerToMemory( const QgsVectorLayerPtr &layer );
+} //namespace HeadlessRender::MemoryProviderUtils
 
-  void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer );
-} //namespace HeadlessRender
-
-#endif // QGIS_HEADLESS_UTILS_H
+#endif

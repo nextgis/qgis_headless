@@ -21,4 +21,7 @@ class Issues:
     )
     UWSGI_SEGFAULT = xfail(reason="uWSGI segfault during SIGTERM")
     SVG_MARKER_NOT_RESOLVED = xfail(reason="SVG markers are not being resolved")
-    WRONG_FIDS = xfail(reason="Features are not assigned fids and use sequential numbers instead")
+    WRONG_FIDS = xfail(
+        condition=get_qgis_version_int() < 33000,
+        reason="Features are not assigned fids and use sequential numbers instead",
+    )

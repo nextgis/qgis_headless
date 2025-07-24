@@ -47,6 +47,22 @@ set(LIB_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/project.h
 )
 
+if(${QGIS_CORE_VERSION} VERSION_GREATER_EQUAL 3.30)
+  list(APPEND LIB_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.cpp
+  )
+
+  list(APPEND LIB_PRIVATE_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.h
+  )
+endif()
+
 add_library(${LIB_NAME} ${LIB_SOURCES} ${LIB_PUBLIC_HEADERS} ${LIB_PRIVATE_HEADERS})
 
 target_include_directories(${LIB_NAME} PRIVATE ${QGIS_CORE_INCLUDE_DIRS})
@@ -60,6 +76,10 @@ target_link_libraries(${LIB_NAME}
   Qt5::PrintSupport
   ${QGIS_CORE_LIBRARIES}
 )
+
+if(${QGIS_CORE_VERSION} VERSION_GREATER_EQUAL 3.30)
+  set_target_properties(${LIB_NAME} PROPERTIES AUTOMOC ON)
+endif()
 
 target_compile_definitions (${LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")

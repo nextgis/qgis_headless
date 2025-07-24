@@ -20,83 +20,51 @@
 
 #include "utils.h"
 #include <qgsrasterlayer.h>
+#include "exceptions.h"
 
-#if _QGIS_VERSION_INT < 33000
-QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType(
-  HeadlessRender::LayerGeometryType geometryType
-)
+#if _QGIS_VERSION_INT >= 33000
+#include "memory_provider/memory_provider_utils.h"
 #else
-Qgis::WkbType HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
+#include <qgsmemoryproviderutils.h>
 #endif
+
+using namespace HeadlessRender;
+
+QgisGeometryType HeadlessRender::layerGeometryTypeToQgsWkbType( LayerGeometryType geometryType )
 {
   switch ( geometryType )
   {
-#if _QGIS_VERSION_INT < 33000
-    case HeadlessRender::LayerGeometryType::Point:
-      return QgsWkbTypes::Type::Point;
-    case HeadlessRender::LayerGeometryType::LineString:
-      return QgsWkbTypes::Type::LineString;
-    case HeadlessRender::LayerGeometryType::Polygon:
-      return QgsWkbTypes::Type::Polygon;
-    case HeadlessRender::LayerGeometryType::MultiPoint:
-      return QgsWkbTypes::Type::MultiPoint;
-    case HeadlessRender::LayerGeometryType::MultiLineString:
-      return QgsWkbTypes::Type::MultiLineString;
-    case HeadlessRender::LayerGeometryType::MultiPolygon:
-      return QgsWkbTypes::Type::MultiPolygon;
-    case HeadlessRender::LayerGeometryType::PointZ:
-      return QgsWkbTypes::Type::PointZ;
-    case HeadlessRender::LayerGeometryType::LineStringZ:
-      return QgsWkbTypes::Type::LineStringZ;
-    case HeadlessRender::LayerGeometryType::PolygonZ:
-      return QgsWkbTypes::Type::PolygonZ;
-    case HeadlessRender::LayerGeometryType::MultiPointZ:
-      return QgsWkbTypes::Type::MultiPointZ;
-    case HeadlessRender::LayerGeometryType::MultiLineStringZ:
-      return QgsWkbTypes::Type::MultiLineStringZ;
-    case HeadlessRender::LayerGeometryType::MultiPolygonZ:
-      return QgsWkbTypes::Type::MultiPolygonZ;
-    case HeadlessRender::LayerGeometryType::Unknown:
-      return QgsWkbTypes::Type::Unknown;
-#else
-    case HeadlessRender::LayerGeometryType::Point:
-      return Qgis::WkbType::Point;
-    case HeadlessRender::LayerGeometryType::LineString:
-      return Qgis::WkbType::LineString;
-    case HeadlessRender::LayerGeometryType::Polygon:
-      return Qgis::WkbType::Polygon;
-    case HeadlessRender::LayerGeometryType::MultiPoint:
-      return Qgis::WkbType::MultiPoint;
-    case HeadlessRender::LayerGeometryType::MultiLineString:
-      return Qgis::WkbType::MultiLineString;
-    case HeadlessRender::LayerGeometryType::MultiPolygon:
-      return Qgis::WkbType::MultiPolygon;
-    case HeadlessRender::LayerGeometryType::PointZ:
-      return Qgis::WkbType::PointZ;
-    case HeadlessRender::LayerGeometryType::LineStringZ:
-      return Qgis::WkbType::LineStringZ;
-    case HeadlessRender::LayerGeometryType::PolygonZ:
-      return Qgis::WkbType::PolygonZ;
-    case HeadlessRender::LayerGeometryType::MultiPointZ:
-      return Qgis::WkbType::MultiPointZ;
-    case HeadlessRender::LayerGeometryType::MultiLineStringZ:
-      return Qgis::WkbType::MultiLineStringZ;
-    case HeadlessRender::LayerGeometryType::MultiPolygonZ:
-      return Qgis::WkbType::MultiPolygonZ;
-    case HeadlessRender::LayerGeometryType::Unknown:
-      return Qgis::WkbType::Unknown;
-#endif
+    case LayerGeometryType::Point:
+      return QgisGeometryType::Point;
+    case LayerGeometryType::LineString:
+      return QgisGeometryType::LineString;
+    case LayerGeometryType::Polygon:
+      return QgisGeometryType::Polygon;
+    case LayerGeometryType::MultiPoint:
+      return QgisGeometryType::MultiPoint;
+    case LayerGeometryType::MultiLineString:
+      return QgisGeometryType::MultiLineString;
+    case LayerGeometryType::MultiPolygon:
+      return QgisGeometryType::MultiPolygon;
+    case LayerGeometryType::PointZ:
+      return QgisGeometryType::PointZ;
+    case LayerGeometryType::LineStringZ:
+      return QgisGeometryType::LineStringZ;
+    case LayerGeometryType::PolygonZ:
+      return QgisGeometryType::PolygonZ;
+    case LayerGeometryType::MultiPointZ:
+      return QgisGeometryType::MultiPointZ;
+    case LayerGeometryType::MultiLineStringZ:
+      return QgisGeometryType::MultiLineStringZ;
+    case LayerGeometryType::MultiPolygonZ:
+      return QgisGeometryType::MultiPolygonZ;
+    case LayerGeometryType::Unknown:
+      return QgisGeometryType::Unknown;
   }
-#if _QGIS_VERSION_INT < 33000
-  return QgsWkbTypes::Type::Unknown;
-#else
-  return Qgis::WkbType::Unknown;
-#endif
+  return QgisGeometryType::Unknown;
 }
 
-QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType(
-  HeadlessRender::LayerAttributeType attributeType
-)
+QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType( LayerAttributeType attributeType )
 {
   switch ( attributeType )
   {
@@ -118,15 +86,13 @@ QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType(
   return QVariant::Int;
 }
 
-HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer(
-  const QgsVectorLayer::LayerOptions &layerOptions
-)
+QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions )
 {
   return std::make_shared<
     QgsVectorLayer>( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions );
 }
 
-HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
+QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
 {
   QgsRasterLayer::LayerOptions layerOptions;
   layerOptions.loadDefaultStyle = false;
@@ -136,7 +102,7 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
   return layer;
 }
 
-HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryLayerByType(
+QgsMapLayerPtr HeadlessRender::createTemporaryLayerByType(
   const DataType type, const QgsVectorLayer::LayerOptions &layerOptions
 )
 {
@@ -144,4 +110,53 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryLayerByType(
     return createTemporaryRasterLayer();
   else
     return createTemporaryVectorLayer( layerOptions );
+}
+
+QgsVectorLayerPtr HeadlessRender::createMemoryLayer(
+  QgsFeatureList &features, const QgsFields &fields, QgisGeometryType geometryType,
+  const QgsCoordinateReferenceSystem &crs
+)
+{
+#if _QGIS_VERSION_INT >= 33000
+  auto layer = MemoryProviderUtils::createMemoryLayer( "layername", fields, geometryType, crs );
+#else
+  QgsVectorLayerPtr layer(
+    QgsMemoryProviderUtils::createMemoryLayer( "layername", fields, geometryType, crs )
+  );
+#endif
+
+  disableVectorSimplify( layer );
+  if ( !layer->dataProvider()
+       || !layer->dataProvider()->addFeatures( features, QgsFeatureSink::RollBackOnErrors ) )
+  {
+    throw QgisHeadlessError( "An error occurred while cloning features to the memory layer" );
+  }
+  return layer;
+}
+
+QgsVectorLayerPtr HeadlessRender::cloneLayerToMemory( const QgsVectorLayerPtr &layer )
+{
+  auto &&featureIterator = layer->getFeatures();
+  QgsFeatureList features;
+
+  QgsFeature currentFeature;
+  while ( featureIterator.nextFeature( currentFeature ) )
+  {
+    features.append( currentFeature );
+  }
+
+  return createMemoryLayer( features, layer->fields(), layer->wkbType(), layer->crs() );
+}
+
+void HeadlessRender::disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
+{
+  QgsVectorSimplifyMethod simplifyMethod = qgsVectorLayer->simplifyMethod();
+#if _QGIS_VERSION_INT >= 33800
+  simplifyMethod.setSimplifyHints(
+    Qgis::VectorRenderingSimplificationFlags( Qgis::VectorRenderingSimplificationFlag::NoSimplification )
+  );
+#else
+  simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
+#endif
+  qgsVectorLayer->setSimplifyMethod( simplifyMethod );
 }

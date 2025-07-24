@@ -20,7 +20,13 @@
 
 #include "lib.h"
 
-#include "version.h"
+#include <cstdlib>
+
+#include <QApplication>
+#include <QSizeF>
+#include <QPrinter>
+#include <QJsonArray>
+
 #include <qgsnetworkaccessmanager.h>
 #include <qgslegendrenderer.h>
 #include <qgslegendsettings.h>
@@ -43,12 +49,11 @@
 #include <qgscolorrampshader.h>
 
 #include "exceptions.h"
+#include "version.h"
 
-#include <QApplication>
-#include <QSizeF>
-#include <QPrinter>
-#include <QJsonArray>
-#include <cstdlib>
+#if _QGIS_VERSION_INT >= 33000
+#include "memory_provider/memory_provider_utils.h"
+#endif
 
 namespace
 {
@@ -137,8 +142,14 @@ void HeadlessRender::init( int argc, char **argv )
   QByteArray platform( "offscreen" );
   qputenv( "QT_QPA_PLATFORM", platform );
 
-  app = new QgsApplication( argc, argv, false, "", platform );
+  auto &&qgsApp = std::make_unique<QgsApplication>( argc, argv, false, "", platform );
   QgsApplication::initQgis();
+
+#if _QGIS_VERSION_INT >= 33000
+  MemoryProviderUtils::registerMemoryProvider();
+#endif
+
+  app = qgsApp.release();
 }
 
 void HeadlessRender::deinit()

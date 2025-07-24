@@ -18,30 +18,18 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include "layer.h"
-#include "crs.h"
-#include "utils.h"
-#include "exceptions.h"
-#include "style.h"
-#include <qgsvectorlayer.h>
-#include <qgsrasterlayer.h>
-#include <qgsmemoryproviderutils.h>
-#include <qgssinglesymbolrenderer.h>
-#include <qgssymbol.h>
 #include <QByteArray>
 
-void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
-{
-  QgsVectorSimplifyMethod simplifyMethod = qgsVectorLayer->simplifyMethod();
-#if _QGIS_VERSION_INT < 33800
-  simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
-#else
-  simplifyMethod.setSimplifyHints(
-    Qgis::VectorRenderingSimplificationFlags( Qgis::VectorRenderingSimplificationFlag::NoSimplification )
-  );
-#endif
-  qgsVectorLayer->setSimplifyMethod( simplifyMethod );
-}
+#include <qgsrasterlayer.h>
+#include <qgssinglesymbolrenderer.h>
+#include <qgssymbol.h>
+#include <qgsvectorlayer.h>
+
+#include "crs.h"
+#include "exceptions.h"
+#include "layer.h"
+#include "style.h"
+#include "utils.h"
 
 HeadlessRender::Layer::Layer( const HeadlessRender::QgsMapLayerPtr &qgsMapLayer )
   : mLayer( qgsMapLayer )
@@ -81,28 +69,26 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
 {
   QgsFields fields;
   for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
+  {
     fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
+  }
 
-  std::shared_ptr<QgsVectorLayer> qgsLayer(
-    QgsMemoryProviderUtils::
-      createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() )
-  );
-  disableVectorSimplify( qgsLayer );
-
+  QgsFeatureList features;
   for ( const auto &data : featureDataList )
   {
     QgsFeature feature( fields, data.id );
+    feature.setAttributes( QgsAttributes( data.attributes ) );
 
     QgsGeometry geom;
     geom.fromWkb( QByteArray::fromStdString( data.wkb ) );
-
-    feature.setAttributes( QgsAttributes( data.attributes ) );
     feature.setGeometry( geom );
 
-    qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert );
+    features.append( feature );
   }
 
-  return Layer( qgsLayer );
+  return Layer(
+    createMemoryLayer( features, fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() )
+  );
 }
 
 HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
@@ -179,25 +165,7 @@ HeadlessRender::Layer HeadlessRender::Layer::cloneToMemory() const
   auto &&vectorLayer = std::dynamic_pointer_cast<QgsVectorLayer>( mLayer );
   if ( type() == DataType::Vector && vectorLayer )
   {
-    std::shared_ptr<QgsVectorLayer> qgsLayer(
-      QgsMemoryProviderUtils::
-        createMemoryLayer( "layername", vectorLayer->fields(), vectorLayer->wkbType(), vectorLayer->crs() )
-    );
-    disableVectorSimplify( qgsLayer );
-
-    auto &&featureIterator = vectorLayer->getFeatures();
-
-    QgsFeature currentFeature;
-    size_t i = 0;
-    while ( featureIterator.nextFeature( currentFeature ) )
-    {
-      if ( !qgsLayer->dataProvider()->addFeature( currentFeature, QgsFeatureSink::FastInsert ) )
-      {
-        throw QgisHeadlessError( "An error occurred while cloning the layer to memory" );
-      }
-    }
-
-    return Layer( qgsLayer );
+    return Layer( cloneLayerToMemory( vectorLayer ) );
   }
   else
   {

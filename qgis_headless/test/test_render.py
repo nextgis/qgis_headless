@@ -592,6 +592,7 @@ def test_fid_variable(save_img, shared_datadir):
     img = save_img(render_vector(layer, style, EXTENT_ONE))
     stat = image_stat(img)
 
+    assert stat.alpha.max > 0, "Layer is missing"
     assert stat.green.max == 255, "Wrong colour from @id"
 
 

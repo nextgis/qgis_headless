@@ -27,6 +27,7 @@
 #include <memory>
 
 class QgsMapLayer;
+class QgsVectorLayer;
 
 namespace HeadlessRender
 {
@@ -86,13 +87,14 @@ namespace HeadlessRender
     Checked
   };
 
-  typedef std::pair<bool, std::set<std::string>> UsedAttributes;
+  using UsedAttributes = std::pair<bool, std::set<std::string>>;
 
-  typedef std::array<double, 2> ScaleRange;
+  using ScaleRange = std::array<double, 2>;
 
-  typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
+  using StyleCategory = long;
 
-  typedef long StyleCategory;
+  using QgsMapLayerPtr = std::shared_ptr<QgsMapLayer>;
+  using QgsVectorLayerPtr = std::shared_ptr<QgsVectorLayer>;
 } //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_TYPES_H

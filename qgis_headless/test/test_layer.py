@@ -5,7 +5,7 @@ from xml.sax.saxutils import quoteattr
 
 import pytest
 
-from qgis_headless import CRS, InvalidLayerSource, Layer
+from qgis_headless import CRS, InvalidLayerSource, Layer, LayerTypeMismatch
 from qgis_headless.util import (
     EXTENT_ONE,
     WKB_LINESTRING,
@@ -114,8 +114,9 @@ def test_geometry_crash():
             total += 1
             # fmt: off
             check_call([executable, "-c", dedent("""
-                from qgis_headless import Layer, CRS, init
+                from qgis_headless import Layer, CRS, init, deinit
                 from binascii import a2b_hex
+                import gc
 
                 FEATURE = (
                     0,
@@ -144,6 +145,9 @@ def test_geometry_crash():
                 init([])
 
                 layer = Layer.from_data(Layer.GT_MULTILINESTRING, CRS.from_epsg(3857), (), (FEATURE, ))
+                del layer
+                gc.collect()
+                deinit()
             """)])
             # fmt: on
         except CalledProcessError:
@@ -157,3 +161,22 @@ def test_wrong_source(shared_datadir):
         Layer.from_ogr(shared_datadir / "raster" / "rounds.tif")
     with pytest.raises(InvalidLayerSource):
         Layer.from_gdal(shared_datadir / "poly.geojson")
+
+
+@pytest.mark.parametrize(
+    "file",
+    (
+        pytest.param("zero/data.geojson"),
+        pytest.param("line.geojson"),
+        pytest.param("rough_australia.geojson"),
+    ),
+)
+def test_clone_vector(file, shared_datadir):
+    file_layer = Layer.from_ogr(shared_datadir / file)
+    file_layer.clone_to_memory()
+
+
+def test_clone_raster(shared_datadir):
+    file_layer = Layer.from_gdal(shared_datadir / "raster/rounds.tif")
+    with pytest.raises(LayerTypeMismatch):
+        file_layer.clone_to_memory()
