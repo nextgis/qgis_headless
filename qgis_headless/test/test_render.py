@@ -21,7 +21,6 @@ from qgis_headless import (
 from qgis_headless.util import (
     EXTENT_ONE,
     RED,
-    WKB_POINT_00,
     image_stat,
     render_raster,
     render_vector,
@@ -584,16 +583,45 @@ def test_label_variables(save_img, shared_datadir):
 
 @Issues.WRONG_FIDS
 def test_fid_variable(save_img, shared_datadir):
-    style = Style.from_file(shared_datadir / "zero/fid-is-5.qml")
+    style = Style.from_file(shared_datadir / "fid-points.qml")
     crs = CRS.from_epsg(3857)
-    feature = (5, WKB_POINT_00, ())
-    layer = Layer.from_data(Layer.GT_POINT, crs, (), (feature,))
 
-    img = save_img(render_vector(layer, style, EXTENT_ONE))
+    features = (
+        (
+            8,
+            b"\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+            (),
+        ),
+        (
+            50,
+            b"\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00$@\x00\x00\x00\x00\x00\x00\x00\x00",
+            (),
+        ),
+        (3, b"\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x004@\x00\x00\x00\x00\x00\x00\x00\x00", ()),
+        # Negative ids are treated as not set and will be changed when added to the layer. In this case, -1 must become 51
+        (
+            -1,
+            b"\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00>@\x00\x00\x00\x00\x00\x00\x00\x00",
+            (),
+        ),
+    )
+
+    expected_colors = (
+        (191, 227, 84, 255),
+        (230, 96, 89, 255),
+        (186, 23, 211, 255),
+        (35, 95, 216, 255),
+    )
+    check_points = ((32, 128), (96, 128), (160, 128), (225, 128))
+
+    layer = Layer.from_data(Layer.GT_POINT, crs, (), features)
+
+    img = save_img(render_vector(layer, style, (-5, -5, 35, 5)))
     stat = image_stat(img)
 
     assert stat.alpha.max > 0, "Layer is missing"
-    assert stat.green.max == 255, "Wrong colour from @id"
+    for color, point, feature in zip(expected_colors, check_points, features):
+        assert img.getpixel(point) == color, f"Wrong color from @id={feature[0]}"
 
 
 @pytest.mark.parametrize(

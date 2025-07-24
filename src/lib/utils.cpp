@@ -129,7 +129,7 @@ QgsVectorLayerPtr HeadlessRender::createMemoryLayer(
   if ( !layer->dataProvider()
        || !layer->dataProvider()->addFeatures( features, QgsFeatureSink::RollBackOnErrors ) )
   {
-    throw QgisHeadlessError( "An error occurred while cloning features to the memory layer" );
+    throw MemoryLayerError( "An error occurred while cloning features to the memory layer" );
   }
   return layer;
 }

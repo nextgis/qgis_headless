@@ -5,7 +5,7 @@ from xml.sax.saxutils import quoteattr
 
 import pytest
 
-from qgis_headless import CRS, InvalidLayerSource, Layer, LayerTypeMismatch
+from qgis_headless import CRS, InvalidLayerSource, Layer, LayerTypeMismatch, MemoryLayerError
 from qgis_headless.util import (
     EXTENT_ONE,
     WKB_LINESTRING,
@@ -16,6 +16,8 @@ from qgis_headless.util import (
     image_stat,
     render_vector,
 )
+
+from .known_issues import Issues
 
 
 @pytest.mark.parametrize(
@@ -180,3 +182,17 @@ def test_clone_raster(shared_datadir):
     file_layer = Layer.from_gdal(shared_datadir / "raster/rounds.tif")
     with pytest.raises(LayerTypeMismatch):
         file_layer.clone_to_memory()
+
+
+@Issues.WRONG_FIDS
+def test_fid_collision():
+    with pytest.raises(MemoryLayerError):
+        Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (),
+            (
+                (1, WKB_POINT_00, ()),
+                (1, WKB_POINT_00, ()),
+            ),
+        )
