@@ -32,6 +32,7 @@
 
 class QgsColorRamp;
 class QgsFeatureRenderer;
+class QgsHeatmapRenderer;
 class QgsLayerTreeNode;
 class QgsLayerTreeModelLegendNode;
 class QgsMultiBandColorRenderer;
@@ -100,7 +101,17 @@ namespace HeadlessRender
         const QgsFeatureRenderer *renderer
       );
 
-      LegendSymbol renderDefaultVectorLayerSymbol(
+      LegendSymbolsContainer renderHeatmapSymbols(
+        const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
+        const QgsHeatmapRenderer *renderer
+      );
+
+      LegendSymbolsContainer renderDefaultVectorLayerSymbols(
+        const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
+        const QgsFeatureRenderer *renderer
+      );
+
+      LegendSymbol renderVectorLayerSymbol(
         QgsLayerTreeModelLegendNode *node, LegendRenderContext &context,
         const QgsFeatureRenderer *renderer
       );
