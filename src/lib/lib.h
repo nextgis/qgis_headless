@@ -31,26 +31,17 @@
 #include "layer.h"
 #include "style.h"
 #include "image.h"
+#include "legend_request.h"
 #include "legend_symbol.h"
 #include "raw_data.h"
 #include "project.h"
 
-class QImage;
-class QgsMapSettings;
-class QgsLayerTree;
 class QgsRectangle;
 
 namespace HeadlessRender
 {
-  typedef size_t LayerIndex;
-  typedef std::shared_ptr<QgsMapSettings> QgsMapSettingsPtr;
-  typedef std::shared_ptr<QgsLayerTree> QgsLayerTreePtr;
-  typedef std::tuple<double, double, double, double> Extent;
-  typedef std::tuple<int, int> Size;
-  typedef std::vector<LegendSymbol::Index> SymbolIndexVector;
-  typedef std::unordered_map<LayerIndex, SymbolIndexVector> RenderSymbols;
-
-  constexpr int DefaultRasterRenderSymbolCount = 5;
+  using SymbolIndexVector = std::vector<LegendSymbol::Index>;
+  using RenderSymbols = std::unordered_map<LayerIndex, SymbolIndexVector>;
 
   class QGIS_HEADLESS_EXPORT MapRequest
   {
@@ -83,7 +74,7 @@ namespace HeadlessRender
 
       QgsMapSettingsPtr mSettings;
       QgsLayerTreePtr mQgsLayerTree;
-      std::vector<QgsMapLayerPtr> mLayers;
+      std::vector<Layer> mLayers;
       RenderSymbols mDefaultRenderSymbols;
   };
 
