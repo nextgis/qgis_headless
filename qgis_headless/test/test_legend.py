@@ -302,3 +302,120 @@ def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
 
     stat = image_stat(save_img(render_legend(data_path, style_path, "Marker")))
     assert stat.blue.max == 255, "Blue marker is missing"
+
+
+@pytest.mark.parametrize(
+    "layer_file, style_file, expected",
+    (
+        (
+            "raster/rounds.tif",
+            "raster/rounds.qml",
+            (
+                (None, (255, 0, 0, 255)),
+                (None, (0, 255, 0, 255)),
+                (None, (0, 0, 255, 255)),
+            ),
+        ),
+        (
+            "raster/sochi-aster-dem.tif",
+            "raster/sochi-aster-dem-single-band.qml",
+            (
+                ("0", (0, 0, 0, 255)),
+                ("812.5", (63, 63, 63, 255)),
+                ("1625", (127, 127, 127, 255)),
+                ("2437.5", (191, 191, 191, 255)),
+                ("3250", (255, 255, 255, 255)),
+            ),
+        ),
+        (
+            "raster/sochi-aster-dem.tif",
+            "raster/sochi-aster-dem-paletted.qml",
+            (
+                ("0", (87, 99, 234, 255)),
+                ("50", (174, 139, 70, 255)),
+                ("100", (32, 214, 175, 255)),
+            ),
+        ),
+        (
+            "raster/sochi-aster-dem.tif",
+            "raster/sochi-aster-dem-pseudo-color-discrete.qml",
+            (
+                ("<= 464", (215, 25, 28, 255)),
+                ("464 - 929", (240, 124, 74, 255)),
+                ("929 - 1393", (254, 201, 129, 255)),
+                ("1393 - 1857", (255, 255, 192, 255)),
+                ("1857 - 2321", (196, 230, 135, 255)),
+                ("2321 - 2786", (119, 195, 92, 255)),
+                ("> 2786", (26, 150, 65, 255)),
+            ),
+        ),
+        (
+            "raster/sochi-aster-dem.tif",
+            "raster/sochi-aster-dem-pseudo-color-exact.qml",
+            (
+                ("0", (215, 25, 28, 255)),
+                ("542", (240, 124, 74, 255)),
+                ("1083", (254, 201, 129, 255)),
+                ("1625", (255, 255, 192, 255)),
+                ("2167", (196, 230, 135, 255)),
+                ("2708", (119, 195, 92, 255)),
+                ("3250", (26, 150, 65, 255)),
+            ),
+        ),
+        (
+            "raster/sochi-aster-dem.tif",
+            "raster/sochi-aster-dem-pseudo-color-interpolated.qml",
+            (
+                ("0", (26, 150, 65, 255)),
+                ("812.5", (166, 217, 106, 255)),
+                ("1625", (255, 255, 192, 255)),
+                ("2437.5", (253, 174, 97, 255)),
+                ("3250", (215, 25, 28, 255)),
+            ),
+        ),
+        (
+            "heatmap/heatmap-points.geojson",
+            "heatmap/heatmap.qml",
+            (
+                ("0", (43, 131, 186, 255)),
+                ("0.25", (171, 221, 164, 255)),
+                ("0.5", (255, 255, 191, 255)),
+                ("0.75", (253, 174, 97, 255)),
+                ("1", (215, 25, 28, 255)),
+            ),
+        ),
+        (
+            "heatmap/heatmap-points.geojson",
+            "heatmap/heatmap-limited.qml",
+            (
+                ("0", (43, 131, 186, 255)),
+                ("0.75", (171, 221, 164, 255)),
+                ("1.5", (255, 255, 191, 255)),
+                ("2.25", (253, 174, 97, 255)),
+                ("3", (215, 25, 28, 255)),
+            ),
+        ),
+    ),
+)
+def test_legend_color_ramp(layer_file, style_file, expected, save_img, shared_datadir):
+    style = Style.from_file(shared_datadir / style_file)
+    if layer_file.endswith(".tif"):
+        layer = Layer.from_gdal(shared_datadir / layer_file)
+    else:
+        layer = Layer.from_ogr(shared_datadir / layer_file)
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    symbols = req.legend_symbols(0, LEGEND_DEFAULT_SIZES)
+
+    symbols_count = len(symbols)
+    expected_count = len(expected)
+    assert symbols_count == expected_count, "Symbols count mismatch"
+
+    for symbol, (expected_title, expected_color) in zip(symbols, expected):
+        assert symbol.title() == expected_title, "Symbols title mismatch"
+        stat = image_stat(save_img(to_pil(symbol.icon()), symbol.title()))
+        assert is_same_color(
+            (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max), expected_color
+        ), "color mismatch"
