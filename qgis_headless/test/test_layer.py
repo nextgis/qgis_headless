@@ -5,7 +5,7 @@ from xml.sax.saxutils import quoteattr
 
 import pytest
 
-from qgis_headless import CRS, InvalidLayerSource, Layer
+from qgis_headless import CRS, InvalidLayerSource, Layer, MemoryLayerError
 from qgis_headless.test.known_issues import Issues
 from qgis_headless.util import (
     EXTENT_ONE,
@@ -186,3 +186,17 @@ def test_wrong_source(shared_datadir):
         Layer.from_ogr(shared_datadir / "raster" / "rounds.tif")
     with pytest.raises(InvalidLayerSource):
         Layer.from_gdal(shared_datadir / "poly.geojson")
+
+
+@Issues.WRONG_FIDS
+def test_fid_collision():
+    with pytest.raises(MemoryLayerError):
+        Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (),
+            (
+                (1, WKB_POINT_00, ()),
+                (1, WKB_POINT_00, ()),
+            ),
+        )

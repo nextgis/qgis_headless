@@ -19,6 +19,7 @@ __all__: list[str] = [
     "LegendSymbol",
     "LogLevel",
     "MapRequest",
+    "MemoryLayerError",
     "Project",
     "QgisHeadlessError",
     "RawData",
@@ -332,6 +333,9 @@ class MapRequest:
     ) -> Image: ...
     def set_crs(self, crs: CRS) -> None: ...
     def set_dpi(self, dpi: typing.SupportsInt) -> None: ...
+
+class MemoryLayerError(QgisHeadlessError):
+    pass
 
 class Project:
     @staticmethod

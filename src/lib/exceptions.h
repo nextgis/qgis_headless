@@ -64,6 +64,11 @@ namespace HeadlessRender
       using QgisHeadlessError::QgisHeadlessError;
   };
 
+  class MemoryLayerError : public QgisHeadlessError
+  {
+    public:
+      using QgisHeadlessError::QgisHeadlessError;
+  };
 } //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_EXCEPTIONS_H

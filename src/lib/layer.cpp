@@ -99,7 +99,10 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
     feature.setAttributes( QgsAttributes( data.attributes ) );
     feature.setGeometry( geom );
 
-    qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert );
+    if ( !qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert ) )
+    {
+      throw MemoryLayerError( "An error occurred while cloning features to the memory layer" );
+    }
   }
 
   return Layer( qgsLayer );
