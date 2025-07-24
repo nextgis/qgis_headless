@@ -21,6 +21,7 @@
 #include "legend_request.h"
 
 #include <qgscolorramp.h>
+#include <qgsheatmaprenderer.h>
 #include <qgslayertree.h>
 #include <qgslayertreemodel.h>
 #include <qgslayertreenode.h>
@@ -46,6 +47,7 @@ namespace RendererType
   const auto SINGLEBANDGRAY = QStringLiteral( "singlebandgray" );
   const auto SINGLEBANDPSEUDOCOLOR = QStringLiteral( "singlebandpseudocolor" );
 
+  const auto HEATMAP = QStringLiteral( "heatmapRenderer" );
 } //namespace RendererType
 
 void LegendRequest::setDpi( int dpi ) noexcept
@@ -119,7 +121,7 @@ class LegendRequest::LegendRenderContext final
 };
 
 LegendRequest::LegendRenderContext::LegendRenderContext( double dpi, const Size &imageSize )
-  : image( std::get<0>( imageSize ), std::get<1>( imageSize ), QImage::Format_ARGB32_Premultiplied )
+  : image( std::get<0>( imageSize ), std::get<1>( imageSize ), QImage::Format_RGBA8888 )
   , painter( &image )
   , qgsRenderContext( QgsRenderContext::fromQPainter( &painter ) )
 {
@@ -191,11 +193,39 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderVectorLayerSymbols(
   const QgsFeatureRenderer *renderer
 )
 {
+  if ( renderer->type() == RendererType::HEATMAP )
+  {
+    return renderHeatmapSymbols( layerNodes, context, static_cast<const QgsHeatmapRenderer *>( renderer ) );
+  }
+  else
+  {
+    return renderDefaultVectorLayerSymbols( layerNodes, context, renderer );
+  }
+}
+
+LegendRequest::LegendSymbolsContainer LegendRequest::renderHeatmapSymbols(
+  const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
+  const QgsHeatmapRenderer *renderer
+)
+{
+  double max = renderer->maximumValue();
+  if ( max == 0 )
+  {
+    max = 1;
+  }
+  return renderColorRampSymbols( context, *renderer->colorRamp(), 0, max );
+}
+
+LegendRequest::LegendSymbolsContainer LegendRequest::renderDefaultVectorLayerSymbols(
+  const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
+  const QgsFeatureRenderer *renderer
+)
+{
   LegendSymbolsContainer symbols;
   symbols.reserve( layerNodes.length() );
   for ( auto &&node : layerNodes )
   {
-    symbols.push_back( renderDefaultVectorLayerSymbol( node, context, renderer ) );
+    symbols.push_back( renderVectorLayerSymbol( node, context, renderer ) );
   }
 
   if ( symbols.size() == 1 )
@@ -206,7 +236,7 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderVectorLayerSymbols(
   return symbols;
 }
 
-LegendSymbol LegendRequest::renderDefaultVectorLayerSymbol(
+LegendSymbol LegendRequest::renderVectorLayerSymbol(
   QgsLayerTreeModelLegendNode *node, LegendRenderContext &context, const QgsFeatureRenderer *renderer
 )
 {
@@ -340,9 +370,17 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderColorRampSymbols(
 
   for ( size_t i = 0; i < mColorRampSymbolsCount; i++ )
   {
+#if _QGIS_VERSION_INT >= 33000
     symbols.push_back(
       renderRasterLayerSymbol( context.drawImage( colorRamp.color( interpStep * i ) ), QString::number( min + step * i ), rasterBand )
     );
+#else
+    QColor color( colorRamp.color( interpStep * i ) );
+    color.setAlpha( 255 );
+    symbols.push_back(
+      renderRasterLayerSymbol( context.drawImage( color ), QString::number( min + step * i ), rasterBand )
+    );
+#endif
   }
   return symbols;
 }
