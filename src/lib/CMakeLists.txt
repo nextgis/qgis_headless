@@ -26,6 +26,8 @@ set(LIB_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/style.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_symbol.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/random_color_generator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/random_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/raw_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/project.cpp
 )
@@ -43,6 +45,8 @@ set(LIB_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_symbol.h
   ${CMAKE_CURRENT_SOURCE_DIR}/exceptions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/types.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/random_color_generator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/random_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/raw_data.h
   ${CMAKE_CURRENT_SOURCE_DIR}/project.h
 )

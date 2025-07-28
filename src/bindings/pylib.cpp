@@ -28,6 +28,7 @@
 #include <lib.h>
 #include <exceptions.h>
 #include <utils.h>
+#include <random_device.h>
 
 namespace py = pybind11;
 
@@ -326,6 +327,10 @@ PYBIND11_MODULE( _qgis_headless, m )
       },
       py::arg( "filename" )
     );
+
+  py::class_<HeadlessRender::RandomDevice>( m, "RandomDevice" )
+    .def( py::init<HeadlessRender::RandomDevice::SeedType>(), py::arg( "seed" ) )
+    .def( "seed", &HeadlessRender::RandomDevice::seed );
 
   py::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
     .def( py::init<>() )
