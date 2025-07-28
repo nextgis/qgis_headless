@@ -237,6 +237,10 @@ PYBIND11_MODULE( _qgis_headless, m )
   m.attr( "SF_QML" ) = HeadlessRender::StyleFormat::QML;
   m.attr( "SF_SLD" ) = HeadlessRender::StyleFormat::SLD;
 
+  py::class_<HeadlessRender::RandomDevice>( m, "RandomDevice" )
+    .def( py::init<HeadlessRender::RandomDevice::SeedType>(), py::arg( "seed" ) )
+    .def( "seed", &HeadlessRender::RandomDevice::seed );
+
   py::class_<HeadlessRender::Style>( m, "Style" )
     .def_static(
       "from_string", &HeadlessRender::Style::fromString, py::arg( "string" ),
@@ -280,7 +284,10 @@ PYBIND11_MODULE( _qgis_headless, m )
     )
     .def_static(
       "from_defaults",
-      []( const std::optional<py::tuple> &color, HeadlessRender::LayerGeometryType layer_geometry_type, HeadlessRender::DataType layer_type ) {
+      [](
+        const std::optional<py::tuple> &color, HeadlessRender::LayerGeometryType layer_geometry_type,
+        HeadlessRender::DataType layer_type, const HeadlessRender::RandomDevice &randomDevice
+      ) {
         QColor qcolor;
         if ( color.has_value() )
         {
@@ -292,11 +299,12 @@ PYBIND11_MODULE( _qgis_headless, m )
 
           qcolor = { r, g, b, a };
         }
-        return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type );
+        return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type, randomDevice );
       },
       py::arg( "color" ) = py::none(),
       py::arg( "layer_geometry_type" ) = HeadlessRender::LayerGeometryType::Unknown,
-      py::arg( "layer_type" ) = HeadlessRender::DataType::Unknown
+      py::arg( "layer_type" ) = HeadlessRender::DataType::Unknown,
+      py::arg( "random_device" ) = HeadlessRender::RandomDevice()
     )
     .def(
       "to_string",
@@ -352,10 +360,6 @@ PYBIND11_MODULE( _qgis_headless, m )
       },
       py::arg( "filename" )
     );
-
-  py::class_<HeadlessRender::RandomDevice>( m, "RandomDevice" )
-    .def( py::init<HeadlessRender::RandomDevice::SeedType>(), py::arg( "seed" ) )
-    .def( "seed", &HeadlessRender::RandomDevice::seed );
 
   py::class_<HeadlessRender::MapRequest>( m, "MapRequest" )
     .def( py::init<>() )
