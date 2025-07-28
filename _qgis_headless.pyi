@@ -20,6 +20,7 @@ __all__ = [
     "MapRequest",
     "Project",
     "QgisHeadlessError",
+    "RandomDevice",
     "RawData",
     "SF_QML",
     "SF_SLD",
@@ -320,6 +321,10 @@ class Project:
 class QgisHeadlessError(Exception):
     pass
 
+class RandomDevice:
+    def __init__(self, seed: int) -> None: ...
+    def seed(self) -> int: ...
+
 class RawData:
     def __init__(self) -> None: ...
     def size(self) -> int: ...
@@ -331,6 +336,7 @@ class Style:
         color: typing.Any = None,
         layer_geometry_type: Layer.GeometryType = Layer.GeometryType.GT_UNKNOWN,
         layer_type: LayerType = LayerType.LT_UNKNOWN,
+        random_device: RandomDevice = ...,
     ) -> Style: ...
     @staticmethod
     def from_file(

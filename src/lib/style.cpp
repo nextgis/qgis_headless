@@ -168,11 +168,11 @@ Style Style::fromFile(
 
 Style Style::fromDefaults(
   const QColor &color, LayerGeometryType layerGeometryType /* = LayerGeometryType::Undefined */,
-  DataType layerType /* = DataType::Unknown */
+  DataType layerType /* = DataType::Unknown */, const RandomDevice &randomDevice /* = RandomDevice() */
 )
 {
   Style style;
-  style.init( { color, layerGeometryType, layerType } );
+  style.init( { color, layerGeometryType, layerType, randomDevice } );
   return style;
 }
 
@@ -759,4 +759,9 @@ QDomDocument &Style::data()
 QColor Style::defaultStyleColor() const
 {
   return mDefaultStyleParams.color;
+}
+
+const RandomDevice &Style::getRandomDevice() const
+{
+  return mDefaultStyleParams.randomDevice;
 }

@@ -1,5 +1,6 @@
 import os
 import os.path
+import time
 from binascii import a2b_hex
 from itertools import product
 from tempfile import NamedTemporaryFile
@@ -12,6 +13,7 @@ from qgis_headless import (
     CRS,
     Layer,
     MapRequest,
+    RandomDevice,
     Style,
     StyleFormat,
     StyleTypeMismatch,
@@ -685,17 +687,23 @@ def test_rendering_order(layer_name, style_name, extent, save_img, shared_datadi
     assert not left_overlaps_right(inverted_image)
 
 
-def test_random_colors(save_img, shared_datadir):
+@pytest.mark.parametrize(
+    "style",
+    (Style.from_defaults(), Style.from_defaults(random_device=RandomDevice(int(time.time())))),
+)
+def test_random_colors(style, save_img, shared_datadir):
     data = shared_datadir / "raster" / "paletted.tif"
-    style = Style.from_defaults()
+
+    extent = (-5.0, -5.0, 85.0, 5.0)
+    image_size = (8, 1)
 
     layer = Layer.from_gdal(data)
-    img1 = save_img(render_raster(layer, style, (-5.0, -5.0, 85.0, 5.0), (8, 1)), "1")
+    img1 = save_img(render_raster(layer, style, extent, image_size), "1")
 
     # Reload layer:
 
     layer = Layer.from_gdal(data)
-    img2 = save_img(render_raster(layer, style, (-5.0, -5.0, 85.0, 5.0), (8, 1)), "2")
+    img2 = save_img(render_raster(layer, style, extent, image_size), "2")
 
     assert image_stat(img1).alpha.max > 0 and image_stat(img2).alpha.max > 0, (
         "One of the layers is missing"

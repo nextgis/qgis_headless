@@ -43,6 +43,7 @@
 #include <qgscolorrampshader.h>
 
 #include "exceptions.h"
+#include "random_color_generator.h"
 
 #include <QApplication>
 #include <QSizeF>
@@ -205,7 +206,36 @@ HeadlessRender::LayerIndex HeadlessRender::MapRequest::
 
   if ( style.isDefaultStyle() )
   {
+#if _QGIS_VERSION_INT >= 33000
+    // If the default style used for a paletted raster, we need to regenerate the colors with RandomColorGenerator.
+    if ( layer.type() == DataType::Raster )
+    {
+      if ( auto &&rasterLayer = std::dynamic_pointer_cast<QgsRasterLayer>( qgsMapLayer ) )
+      {
+        if ( auto &&palettedRendered = dynamic_cast<QgsPalettedRasterRenderer *>(
+               rasterLayer->renderer()
+             ) )
+        {
+          auto classes = palettedRendered->multiValueClasses();
+          auto randomColors = RandomColorGenerator( style.getRandomDevice(), classes.length() );
+
+          auto classesIt = classes.begin();
+          for ( auto &&randomColor : randomColors )
+          {
+            classesIt->color = randomColor;
+            classesIt++;
+          }
+          palettedRendered->setMultiValueClasses( classes );
+        }
+      }
+    }
+    else
+    {
+      layer.setRendererSymbolColor( style.defaultStyleColor() );
+    }
+#else
     layer.setRendererSymbolColor( style.defaultStyleColor() );
+#endif
   }
   else
   {
