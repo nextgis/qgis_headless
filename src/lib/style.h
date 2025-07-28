@@ -28,6 +28,7 @@
 #include <QColor>
 #include <QDomDocument>
 
+#include "random_device.h"
 #include "types.h"
 
 class QDomDocument;
@@ -89,7 +90,7 @@ namespace HeadlessRender
        */
       static Style fromDefaults(
         const QColor &color, LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
-        DataType layerType = DataType::Unknown
+        DataType layerType = DataType::Unknown, const RandomDevice &randomDevice = RandomDevice()
       );
 
       /**
@@ -129,6 +130,8 @@ namespace HeadlessRender
        */
       QColor defaultStyleColor() const;
 
+      const RandomDevice &getRandomDevice() const;
+
       /**
        * Returns XML-string, containing style in given format.
        */
@@ -156,6 +159,7 @@ namespace HeadlessRender
           QColor color;
           LayerGeometryType layerGeometryType;
           DataType layerType;
+          RandomDevice randomDevice;
       };
 
       Style() = default;
