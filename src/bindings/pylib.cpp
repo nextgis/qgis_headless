@@ -239,12 +239,12 @@ PYBIND11_MODULE( _qgis_headless, m )
     )
     .def(
       "used_attributes",
-      []( const HeadlessRender::Style &style ) -> py::object {
+      []( const HeadlessRender::Style &style ) -> std::optional<std::set<std::string>> {
         const auto &result = style.usedAttributes();
         if ( result.first )
-          return py::cast( result.second );
+          return result.second;
         else
-          return py::none();
+          return std::optional<std::set<std::string>>();
       }
     )
     .def(
@@ -257,11 +257,11 @@ PYBIND11_MODULE( _qgis_headless, m )
     )
     .def_static(
       "from_defaults",
-      []( const py::object &color, HeadlessRender::LayerGeometryType layer_geometry_type, HeadlessRender::DataType layer_type ) {
+      []( const std::optional<py::tuple> &color, HeadlessRender::LayerGeometryType layer_geometry_type, HeadlessRender::DataType layer_type ) {
         QColor qcolor;
-        if ( !color.is_none() )
+        if ( color.has_value() )
         {
-          const py::tuple &colorTuple = color.cast<py::tuple>();
+          const py::tuple &colorTuple = color.value();
           int r = colorTuple[0].cast<int>();
           int g = colorTuple[1].cast<int>();
           int b = colorTuple[2].cast<int>();
@@ -287,10 +287,10 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def( "icon", &HeadlessRender::LegendSymbol::icon )
     .def(
       "title",
-      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> py::object {
+      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> std::optional<py::str> {
         const QString title = legendSymbol.title();
         if ( !legendSymbol.hasTitle() || !legendSymbol.hasCategory() && title.isEmpty() )
-          return py::none();
+          return std::optional<py::str>();
         else
           return py::cast( title.toStdString() );
       }
@@ -298,7 +298,7 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def( "index", &HeadlessRender::LegendSymbol::index )
     .def(
       "render",
-      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> py::object {
+      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> std::optional<py::bool_> {
         switch ( legendSymbol.render() )
         {
           case HeadlessRender::SymbolRender::Checked:
@@ -338,12 +338,15 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def( "add_project", &HeadlessRender::MapRequest::addProject, py::arg( "project" ) )
     .def(
       "render_image",
-      []( HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent, const HeadlessRender::Size &size, const py::object &symbols ) {
-        if ( symbols.is_none() )
+      [](
+        HeadlessRender::MapRequest &mapRequest, const HeadlessRender::Extent &extent,
+        const HeadlessRender::Size &size, const std::optional<py::tuple> &symbols
+      ) {
+        if ( !symbols.has_value() )
           return mapRequest.renderImage( extent, size );
 
         HeadlessRender::RenderSymbols renderSymbols;
-        for ( const auto &it : symbols.cast<py::tuple>() )
+        for ( const auto &it : symbols.value() )
         {
           const auto layerRenderSymbols = it.cast<py::tuple>();
           HeadlessRender::SymbolIndexVector symbolIndexVector;
