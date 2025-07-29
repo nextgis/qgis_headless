@@ -22,7 +22,7 @@ set(PY_LIB_NAME _${PROJECT_NAME})
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/cmake ${CMAKE_MODULE_PATH})
 
-include(pybind11Tools)
+add_subdirectory(pybind11)
 pybind11_add_module(${PY_LIB_NAME}
   ${CMAKE_CURRENT_SOURCE_DIR}/pylib.cpp
   ${LIB_SOURCES}

@@ -18,16 +18,19 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <pybind11.h>
-#include <stl.h>
-#include <functional.h>
-#include <numpy.h>
-#include <QDateTime>
-#include <QColor>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/functional.h>
+#include <pybind11/numpy.h>
 
 #include <lib.h>
 #include <exceptions.h>
 #include <utils.h>
+
+// Undefining Qt macro slots for preventing collision with pybind11 declarations:
+#ifdef slots
+#undef slots
+#endif
 
 namespace py = pybind11;
 
