@@ -19,6 +19,7 @@ pre_commit_check:
   image: docker
   variables:
     REPORT_DIR: report/${DISTRO}
+    GIT_SUBMODULE_STRATEGY: recursive
   script:
     - docker build -t qgis_headless:${DISTRO} -f Dockerfile.${DISTRO} .
     - mkdir -p ${REPORT_DIR}
