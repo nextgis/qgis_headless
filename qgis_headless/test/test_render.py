@@ -600,15 +600,8 @@ def test_fid_variable(save_img, shared_datadir):
 @pytest.mark.parametrize(
     "qml, resolve",
     [
-        pytest.param(
-            "zero/label/marker-svg.qml", True, id="svg", marks=Issues.SVG_MARKER_NOT_RESOLVED
-        ),
-        pytest.param(
-            "zero/label/marker-symbol-svg.qml",
-            True,
-            id="symbol_svg",
-            marks=Issues.SVG_MARKER_NOT_RESOLVED,
-        ),
+        pytest.param("zero/label/marker-svg.qml", True, id="svg"),
+        pytest.param("zero/label/marker-symbol-svg.qml", True, id="symbol_svg"),
         pytest.param("zero/label/marker-symbol-embedded.qml", False, id="symbol_embedded"),
     ],
 )
