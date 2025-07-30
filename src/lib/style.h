@@ -31,6 +31,7 @@
 #include "types.h"
 
 class QDomDocument;
+class QgsAbstractVectorLayerLabeling;
 class QgsVectorLayer;
 class QgsRasterLayer;
 class QgsSymbol;
@@ -166,8 +167,17 @@ namespace HeadlessRender
       bool validateGeometryType( LayerGeometryType layerGeometryType ) const;
       bool validateStyle( QString &errorMessage ) const;
       void removeLayerGeometryTypeElement( QDomDocument & ) const;
+
+      static bool isSvgPathResolvable( const QString &path );
+      static QString resolveSvgPath(
+        const QString &path, const SvgResolverCallback &svgResolverCallback
+      );
       void resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback ) const;
+      void resolveLabelingSvgPaths(
+        QgsAbstractVectorLayerLabeling *labeling, const SvgResolverCallback &svgResolverCallback
+      ) const;
       QDomDocument resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const;
+
       QgsVectorLayerPtr createTemporaryVectorLayerWithStyle( QString &errorMessage ) const;
       QgsRasterLayerPtr createTemporaryRasterLayerWithStyle( QString &errorMessage ) const;
       QgsMapLayerPtr createTemporaryLayerWithStyleByType( DataType type, QString &errorMessage ) const;

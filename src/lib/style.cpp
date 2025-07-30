@@ -40,6 +40,7 @@
 #include <qgsmaplayerstylemanager.h>
 #include <qgsrulebasedlabeling.h>
 #include <QFile>
+#include <QUrl>
 
 #if VERSION_INT >= 33000
 #include <qgsdiagramrenderer.h>
@@ -553,42 +554,80 @@ bool Style::hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const
   return enabled;
 }
 
+bool Style::isSvgPathResolvable( const QString &path )
+{
+  return QUrl( path ).isLocalFile() || QUrl( path ).isRelative();
+}
+
+QString Style::resolveSvgPath( const QString &path, const SvgResolverCallback &svgResolverCallback )
+{
+  if ( svgResolverCallback )
+  {
+    return QString::fromStdString( svgResolverCallback( path.toStdString() ) );
+  }
+  else
+  {
+    return path;
+  }
+}
+
 void Style::resolveSymbol( QgsSymbol *symbol, const SvgResolverCallback &svgResolverCallback ) const
 {
   for ( QgsSymbolLayer *symbolLayer : symbol->symbolLayers() )
   {
     if ( symbolLayer->layerType() == SymbolLayerType::SvgMarker )
     {
-      QgsSvgMarkerSymbolLayer *svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>(
-        symbolLayer
-      );
-      std::string path = svgMarkerSymbolLayer->path().toStdString();
-      if ( svgResolverCallback )
-        path = svgResolverCallback( path );
+      auto svgMarkerSymbolLayer = dynamic_cast<QgsSvgMarkerSymbolLayer *>( symbolLayer );
+      if ( isSvgPathResolvable( svgMarkerSymbolLayer->path() ) )
+      {
+        const QColor fillColor = svgMarkerSymbolLayer->fillColor();
+        const QColor strokeColor = svgMarkerSymbolLayer->strokeColor();
+        const double strokeWidth = svgMarkerSymbolLayer->strokeWidth();
 
-      const QColor fillColor = svgMarkerSymbolLayer->fillColor();
-      const QColor strokeColor = svgMarkerSymbolLayer->strokeColor();
-      const double strokeWidth = svgMarkerSymbolLayer->strokeWidth();
+        svgMarkerSymbolLayer->setPath(
+          resolveSvgPath( svgMarkerSymbolLayer->path(), svgResolverCallback )
+        );
 
-      svgMarkerSymbolLayer->setPath( QString::fromStdString( path ) );
-
-      svgMarkerSymbolLayer->setFillColor( fillColor );
-      svgMarkerSymbolLayer->setStrokeColor( strokeColor );
-      svgMarkerSymbolLayer->setStrokeWidth( strokeWidth );
+        svgMarkerSymbolLayer->setFillColor( fillColor );
+        svgMarkerSymbolLayer->setStrokeColor( strokeColor );
+        svgMarkerSymbolLayer->setStrokeWidth( strokeWidth );
+      }
     }
     else if ( symbolLayer->layerType() == SymbolLayerType::SVGFill )
     {
-      QgsSVGFillSymbolLayer *svgFillSymbolLayer = dynamic_cast<QgsSVGFillSymbolLayer *>( symbolLayer
-      );
-      std::string path = svgFillSymbolLayer->svgFilePath().toStdString();
-      if ( svgResolverCallback )
-        path = svgResolverCallback( path );
-      svgFillSymbolLayer->setSvgFilePath( QString::fromStdString( path ) );
+      auto svgFillSymbolLayer = dynamic_cast<QgsSVGFillSymbolLayer *>( symbolLayer );
+
+      auto path = svgFillSymbolLayer->svgFilePath();
+      if ( isSvgPathResolvable( path ) )
+      {
+        svgFillSymbolLayer->setSvgFilePath( resolveSvgPath( path, svgResolverCallback ) );
+      }
     }
 
     if ( symbolLayer->subSymbol() )
+    {
       resolveSymbol( symbolLayer->subSymbol(), svgResolverCallback );
+    }
   }
+}
+
+void Style::resolveLabelingSvgPaths(
+  QgsAbstractVectorLayerLabeling *labeling, const SvgResolverCallback &svgResolverCallback
+) const
+{
+  auto settings = std::make_unique<QgsPalLayerSettings>( labeling->settings() );
+  auto format = settings->format();
+  auto &&backgound = format.background();
+  if ( backgound.type() == QgsTextBackgroundSettings::ShapeMarkerSymbol )
+  {
+    resolveSymbol( backgound.markerSymbol(), svgResolverCallback );
+  }
+  else if ( backgound.type() == QgsTextBackgroundSettings::ShapeSVG )
+  {
+    backgound.setSvgFile( resolveSvgPath( backgound.svgFile(), svgResolverCallback ) );
+  }
+  settings->setFormat( format );
+  labeling->setSettings( settings.release() );
 }
 
 QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const
@@ -602,7 +641,14 @@ QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallb
 
   QgsRenderContext renderContext;
   for ( QgsSymbol *symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
+  {
     resolveSymbol( symbol, svgResolverCallback );
+  }
+
+  if ( auto &&labeling = qgsVectorLayer->labeling() )
+  {
+    resolveLabelingSvgPaths( labeling, svgResolverCallback );
+  }
 
   qgsVectorLayer->exportNamedStyle( exportedStyle, errorMessage );
   if ( !errorMessage.isEmpty() )
