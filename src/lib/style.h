@@ -137,14 +137,6 @@ namespace HeadlessRender
        */
       QString exportToString( StyleFormat format = StyleFormat::QML ) const;
 
-      /**
-       * Applies style for given layer.
-       * \param layer layer to which the style is applied.
-       * \param errorMessage reference, where the error message is written.
-       * \returns true, if style was applied correctly, overwise returns false.
-       */
-      bool importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const;
-
     private:
       struct CreateParams
       {

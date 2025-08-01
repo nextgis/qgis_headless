@@ -408,32 +408,6 @@ bool Style::validateStyle( QString &errorMessage ) const
   return createTemporaryLayerWithStyleByType( type(), errorMessage ) ? true : false;
 }
 
-bool Style::importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const
-{
-  if ( mCachedTemporaryLayer && mCachedTemporaryLayer->type() == layer->type()
-       && !mCachedTemporaryLayer->styleManager()->styles().empty() )
-  {
-    const QString currentStyleName = mCachedTemporaryLayer->styleManager()->currentStyle();
-    const QgsMapLayerStyle currentStyle = mCachedTemporaryLayer->styleManager()->style(
-      currentStyleName
-    );
-    const QString styleName = "StyleName_"
-                              + QString::number( layer->styleManager()->styles().size() );
-
-    layer->styleManager()->addStyle( styleName, currentStyle );
-    bool result = layer->styleManager()->setCurrentStyle( styleName );
-    if ( !result )
-    {
-      errorMessage = ErrorString::AddStyleFailed;
-    }
-    return result;
-  }
-  else
-  {
-    return importToLayer( layer, mData, errorMessage );
-  }
-}
-
 bool Style::importToLayer( QgsMapLayerPtr &layer, QDomDocument styleData, QString &errorMessage ) const
 {
   return layer

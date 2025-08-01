@@ -19,16 +19,20 @@
 ******************************************************************************/
 
 #include "layer.h"
-#include "crs.h"
-#include "utils.h"
-#include "exceptions.h"
-#include "style.h"
-#include <qgsvectorlayer.h>
-#include <qgsrasterlayer.h>
+
+#include <QByteArray>
+
 #include <qgsmemoryproviderutils.h>
+#include <qgsrasterlayer.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
-#include <QByteArray>
+#include <qgsvectorlayer.h>
+
+#include "crs.h"
+#include "exceptions.h"
+#include "style.h"
+#include "style_applier.h"
+#include "utils.h"
 
 void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
 {
@@ -123,53 +127,8 @@ HeadlessRender::DataType HeadlessRender::Layer::type() const
   return mType;
 }
 
-void HeadlessRender::Layer::setRendererSymbolColor( const QColor &color )
+void HeadlessRender::Layer::addStyle( const HeadlessRender::Style &style )
 {
-  if ( type() != HeadlessRender::DataType::Vector )
-    return;
-
-  auto &&layer = std::dynamic_pointer_cast< QgsVectorLayer >( mLayer );
-  if ( !layer )
-    return;
-
-  QgsSingleSymbolRenderer *singleRenderer = dynamic_cast< QgsSingleSymbolRenderer * >(
-    layer->renderer()
-  );
-  std::unique_ptr<QgsSymbol> newSymbol;
-
-  if ( singleRenderer && singleRenderer->symbol() )
-    newSymbol.reset( singleRenderer->symbol()->clone() );
-
-  const QgsSingleSymbolRenderer *embeddedRenderer = nullptr;
-  if ( !newSymbol && layer->renderer()->embeddedRenderer() )
-  {
-    embeddedRenderer = dynamic_cast< const QgsSingleSymbolRenderer * >(
-      layer->renderer()->embeddedRenderer()
-    );
-    if ( embeddedRenderer && embeddedRenderer->symbol() )
-      newSymbol.reset( embeddedRenderer->symbol()->clone() );
-  }
-
-  if ( newSymbol )
-  {
-    newSymbol->setColor( color );
-    if ( singleRenderer )
-    {
-      singleRenderer->setSymbol( newSymbol.release() );
-    }
-    else if ( embeddedRenderer )
-    {
-      std::unique_ptr<QgsSingleSymbolRenderer> newRenderer( embeddedRenderer->clone() );
-      newRenderer->setSymbol( newSymbol.release() );
-      layer->renderer()->setEmbeddedRenderer( newRenderer.release() );
-    }
-  }
-}
-
-bool HeadlessRender::Layer::addStyle( HeadlessRender::Style &style, QString &error )
-{
-  if ( type() != style.type() )
-    throw StyleTypeMismatch( "Layer type and style type do not match" );
-
-  return style.importToLayer( mLayer, error );
+  StyleApplier applier( style );
+  applier.applyStyle( mLayer );
 }

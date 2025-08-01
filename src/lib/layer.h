@@ -33,7 +33,6 @@ class QgsMapLayer;
 namespace HeadlessRender
 {
   class Style;
-  typedef std::shared_ptr<QgsMapLayer> QgsMapLayerPtr;
 
   /**
    * Represents a map layer (supports both vector and raster layer types).
@@ -90,18 +89,10 @@ namespace HeadlessRender
       DataType type() const;
 
       /**
-       * Sets the color of layer's symbol in legend.
-       * \param color the color that will be set for the layer designation in the legend.
-       */
-      void setRendererSymbolColor( const QColor &color );
-
-      /**
        * Applies style to layer.
        * \param style the style that will be applied.
-       * \param error the message with the reason for the error, if such occurs.
-       * \returns true, if style was successfully applied, overwise returns false.
        */
-      bool addStyle( Style &style, QString &error );
+      void addStyle( const Style &style );
 
     private:
       explicit Layer( const QgsMapLayerPtr &qgsMapLayer );

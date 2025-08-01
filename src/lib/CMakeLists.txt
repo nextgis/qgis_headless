@@ -24,6 +24,7 @@ set(LIB_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/layer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/style.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/style_applier.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_symbol.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/random_color_generator.cpp
@@ -42,6 +43,7 @@ set(LIB_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/layer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/style.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/style_applier.h
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_symbol.h
   ${CMAKE_CURRENT_SOURCE_DIR}/exceptions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/types.h
