@@ -442,7 +442,6 @@ def test_histogram(save_img, shared_datadir):
     assert stat.green.max == 255, "Second histogram value is missing"
 
 
-@Issues.GRADIENT
 def test_gradient(save_img, shared_datadir):
     style = Style.from_file(shared_datadir / "gradient.qml")
     layer = Layer.from_ogr(shared_datadir / "landuse/landuse.geojson")

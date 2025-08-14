@@ -1,3 +1,4 @@
 #!/bin/sh
+. env/bin/activate
 python3 -c "import qgis_headless as qh; print('Running tests on ' + qh.get_qgis_version() + '...')"
 python3 -m pytest --benchmark-columns=mean,stddev,ops qgis_headless/test --junitxml=/mnt/rspec.xml -s

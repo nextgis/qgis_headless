@@ -19,8 +19,6 @@ from qgis_headless import (
     get_qgis_version,
 )
 
-from .known_issues import Issues
-
 QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 QGIS_312 = QGIS_VERSION >= version.parse("3.12")
 
@@ -108,7 +106,6 @@ def test_default(layer_type, params):
                 "total",
             ],
             id="diagram",
-            marks=Issues.DIAGRAM_ATTRIBUTES,
         ),
         param("rendering-order/asc-single.qml", ["order"]),
         param("rendering-order/desc-single.qml", ["order"]),

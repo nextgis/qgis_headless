@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 ENV LC_ALL=C.UTF-8
 ARG KEYRING=/etc/apt/keyrings/qgis-archive-keyring.gpg
 
@@ -7,7 +7,7 @@ RUN set -ex; export DEBIAN_FRONTEND=noninteractive; \
     apt-get --yes -qq install --no-install-recommends  \
         curl ca-certificates gnupg software-properties-common; \
         curl -sSL https://download.qgis.org/downloads/qgis-archive-keyring.gpg > $KEYRING; \
-    echo "deb [signed-by=$KEYRING] https://qgis.org/ubuntu $(lsb_release -cs) main" \
+    echo "deb [signed-by=$KEYRING] https://qgis.org/ubuntu-ltr $(lsb_release -cs) main" \
         | tee /etc/apt/sources.list.d/qgis.list > /dev/null; \
     apt-get update; \
     apt-get --yes -qq install --no-install-recommends  \

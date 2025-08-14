@@ -34,11 +34,6 @@ pre_commit_check:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
-test_focal:
-  extends: .run_tests_job
-  variables:
-    DISTRO: focal
-
 test_jammy:
   extends: .run_tests_job
   variables:
@@ -48,3 +43,13 @@ test_jammy_latest:
   extends: .run_tests_job
   variables:
     DISTRO: jammy-latest
+
+test_noble:
+  extends: .run_tests_job
+  variables:
+    DISTRO: noble
+
+test_noble_latest:
+  extends: .run_tests_job
+  variables:
+    DISTRO: noble-latest
