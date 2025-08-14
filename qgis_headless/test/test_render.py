@@ -430,6 +430,18 @@ def test_diagram(layer, save_img, shared_datadir):
     # img.save('share/from_ogr.png')
 
 
+def test_histogram(save_img, shared_datadir):
+    layer = Layer.from_ogr(shared_datadir / "diagram/histogram.geojson")
+    style = Style.from_file(shared_datadir / "diagram/histogram.qml")
+
+    img = save_img(render_vector(layer, style, (-1403194, 8779009, 998762, 10924138)))
+    stat = image_stat(img)
+
+    assert stat.blue.max == 255, "Polygon is missing"
+    assert stat.red.max == 255, "First histogram value is missing"
+    assert stat.green.max == 255, "Second histogram value is missing"
+
+
 @Issues.GRADIENT
 def test_gradient(save_img, shared_datadir):
     style = Style.from_file(shared_datadir / "gradient.qml")
