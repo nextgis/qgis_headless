@@ -6,6 +6,7 @@ Headless rendering library using QGIS
 
 1. Install dependecies:
 
+   * `QGIS` (suppored versions for penultimate Ubuntu LTR from standard QGIS repository or above)
    * `libqgis-dev`
    * `qt5-image-formats-plugins` (usually installed via dependencies)
    * `build-essential`

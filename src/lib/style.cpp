@@ -191,22 +191,13 @@ Style Style::fromString(
       const QDomElement namedLayerElem = myRoot.firstChildElement( TAGS::NAMED_LAYER );
 
       QgsVectorLayer::LayerOptions layerOptions;
-#if _QGIS_VERSION_INT < 33000
-      if ( namedLayerElem.elementsByTagName( TAGS::POLYGON_SYMBOLIZER ).size() != 0 )
-        layerOptions.fallbackWkbType = QgsWkbTypes::Polygon;
-      else if ( namedLayerElem.elementsByTagName( TAGS::LINE_SYMBOLIZER ).size() != 0 )
-        layerOptions.fallbackWkbType = QgsWkbTypes::LineString;
-      else
-        layerOptions.fallbackWkbType = QgsWkbTypes::Point;
-
-#else
       if ( namedLayerElem.elementsByTagName( TAGS::POLYGON_SYMBOLIZER ).size() != 0 )
         layerOptions.fallbackWkbType = Qgis::WkbType::Polygon;
       else if ( namedLayerElem.elementsByTagName( TAGS::LINE_SYMBOLIZER ).size() != 0 )
         layerOptions.fallbackWkbType = Qgis::WkbType::LineString;
       else
         layerOptions.fallbackWkbType = Qgis::WkbType::Point;
-#endif
+
       QgsMapLayerPtr layer = createTemporaryLayerByType( layerType, layerOptions );
       QString errorMessage;
       if ( !layer->readSld( namedLayerElem, errorMessage ) )
@@ -258,27 +249,6 @@ QgsVectorLayerPtr Style::createTemporaryVectorLayerWithStyle( QString &errorMess
     QDomElement myRoot = styleData.firstChildElement( TAGS::QGIS );
     if ( !myRoot.isNull() )
     {
-#if _QGIS_VERSION_INT < 33000
-      switch ( static_cast<QgsWkbTypes::GeometryType>(
-        myRoot.firstChildElement( TAGS::LAYER_GEOMETRY_TYPE ).text().toInt()
-      ) )
-      {
-        case QgsWkbTypes::GeometryType::PointGeometry:
-          layerOptions.fallbackWkbType = QgsWkbTypes::Point;
-          break;
-        case QgsWkbTypes::GeometryType::LineGeometry:
-          layerOptions.fallbackWkbType = QgsWkbTypes::LineString;
-          break;
-        case QgsWkbTypes::GeometryType::PolygonGeometry:
-          layerOptions.fallbackWkbType = QgsWkbTypes::Polygon;
-          break;
-        case QgsWkbTypes::GeometryType::UnknownGeometry:
-          layerOptions.fallbackWkbType = QgsWkbTypes::Unknown;
-          break;
-        case QgsWkbTypes::GeometryType::NullGeometry:
-          layerOptions.fallbackWkbType = QgsWkbTypes::NoGeometry;
-          break;
-#else
       switch ( static_cast<Qgis::GeometryType>(
         myRoot.firstChildElement( TAGS::LAYER_GEOMETRY_TYPE ).text().toInt()
       ) )
@@ -298,16 +268,11 @@ QgsVectorLayerPtr Style::createTemporaryVectorLayerWithStyle( QString &errorMess
         case Qgis::GeometryType::Null:
           layerOptions.fallbackWkbType = Qgis::WkbType::NoGeometry;
           break;
-#endif
       }
     }
     else
     {
-#if _QGIS_VERSION_INT < 33000
-      layerOptions.fallbackWkbType = QgsWkbTypes::Point;
-#else
       layerOptions.fallbackWkbType = Qgis::WkbType::Point;
-#endif
     }
 
     QgsMapLayerPtr qgsVectorLayer = createTemporaryVectorLayer( layerOptions );
@@ -462,15 +427,9 @@ bool Style::validateGeometryType( LayerGeometryType layerGeometryType ) const
   QgsVectorLayerPtr qgsVectorLayer = std::dynamic_pointer_cast<QgsVectorLayer>(
     createTemporaryVectorLayer( layerOptions )
   );
-#if _QGIS_VERSION_INT < 33000
-  QgsWkbTypes::GeometryType importLayerGeometryType = static_cast<QgsWkbTypes::GeometryType>(
-    geometryTypeElement.text().toInt()
-  );
-#else
   Qgis::GeometryType importLayerGeometryType = static_cast<Qgis::GeometryType>(
     geometryTypeElement.text().toInt()
   );
-#endif
   return ( qgsVectorLayer->geometryType() == importLayerGeometryType ? true : false );
 }
 

@@ -21,44 +21,10 @@
 #include "utils.h"
 #include <qgsrasterlayer.h>
 
-#if _QGIS_VERSION_INT < 33000
-QgsWkbTypes::Type HeadlessRender::layerGeometryTypeToQgsWkbType(
-  HeadlessRender::LayerGeometryType geometryType
-)
-#else
 Qgis::WkbType HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
-#endif
 {
   switch ( geometryType )
   {
-#if _QGIS_VERSION_INT < 33000
-    case HeadlessRender::LayerGeometryType::Point:
-      return QgsWkbTypes::Type::Point;
-    case HeadlessRender::LayerGeometryType::LineString:
-      return QgsWkbTypes::Type::LineString;
-    case HeadlessRender::LayerGeometryType::Polygon:
-      return QgsWkbTypes::Type::Polygon;
-    case HeadlessRender::LayerGeometryType::MultiPoint:
-      return QgsWkbTypes::Type::MultiPoint;
-    case HeadlessRender::LayerGeometryType::MultiLineString:
-      return QgsWkbTypes::Type::MultiLineString;
-    case HeadlessRender::LayerGeometryType::MultiPolygon:
-      return QgsWkbTypes::Type::MultiPolygon;
-    case HeadlessRender::LayerGeometryType::PointZ:
-      return QgsWkbTypes::Type::PointZ;
-    case HeadlessRender::LayerGeometryType::LineStringZ:
-      return QgsWkbTypes::Type::LineStringZ;
-    case HeadlessRender::LayerGeometryType::PolygonZ:
-      return QgsWkbTypes::Type::PolygonZ;
-    case HeadlessRender::LayerGeometryType::MultiPointZ:
-      return QgsWkbTypes::Type::MultiPointZ;
-    case HeadlessRender::LayerGeometryType::MultiLineStringZ:
-      return QgsWkbTypes::Type::MultiLineStringZ;
-    case HeadlessRender::LayerGeometryType::MultiPolygonZ:
-      return QgsWkbTypes::Type::MultiPolygonZ;
-    case HeadlessRender::LayerGeometryType::Unknown:
-      return QgsWkbTypes::Type::Unknown;
-#else
     case HeadlessRender::LayerGeometryType::Point:
       return Qgis::WkbType::Point;
     case HeadlessRender::LayerGeometryType::LineString:
@@ -85,13 +51,8 @@ Qgis::WkbType HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::Lay
       return Qgis::WkbType::MultiPolygonZ;
     case HeadlessRender::LayerGeometryType::Unknown:
       return Qgis::WkbType::Unknown;
-#endif
   }
-#if _QGIS_VERSION_INT < 33000
-  return QgsWkbTypes::Type::Unknown;
-#else
   return Qgis::WkbType::Unknown;
-#endif
 }
 
 QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType(
