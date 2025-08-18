@@ -78,23 +78,23 @@ def test_default(layer_type, params):
     "file, expected",
     (
         # fmt: off
-        param("contour/simple.qml", [], id="contour/simple"),
-        param("contour/rgb.qml", ["level"], id="contour/rgb"),
-        param("contour/rbl.qml", ["level"] if QGIS_312 else None, id="contour/rbl"),
-        param("boston/highway.qml", ["HIGHWAY"], id="boston/highway-qml"),
-        param("boston/highway.sld", ["HIGHWAY"], id="boston/highway-sld"),
-        param("attributes/default.qml", [], id="default"),
-        param("attributes/osm-highway.qml", ["HIGHWAY", "NAME_EN", "NAME"], id="osm-highway"),
-        param("attributes/data-defined.qml", ["size"], id="data-defined"),
+        param("contour/simple.qml", set(), id="contour/simple"),
+        param("contour/rgb.qml", {"level"}, id="contour/rgb"),
+        param("contour/rbl.qml", {"level"} if QGIS_312 else None, id="contour/rbl"),
+        param("boston/highway.qml", {"HIGHWAY"}, id="boston/highway-qml"),
+        param("boston/highway.sld", {"HIGHWAY"}, id="boston/highway-sld"),
+        param("attributes/default.qml", set(), id="default"),
+        param("attributes/osm-highway.qml", {"HIGHWAY", "NAME_EN", "NAME"}, id="osm-highway"),
+        param("attributes/data-defined.qml", {"size"}, id="data-defined"),
         param("attributes/25d-expression.qml", None, id="25D-expression"),
         param(
             "attributes/rule-based-labeling.qml",
-            ["a", "b", "c"] if QGIS_312 else None,
+            {"a", "b", "c"} if QGIS_312 else None,
             id="rule-based-labeling",
         ),
         param(
             "diagram/industries.qml",
-            [
+            {
                 "zern",
                 "ovosch",
                 "sad",
@@ -104,13 +104,21 @@ def test_default(layer_type, params):
                 "svinovod",
                 "ptitcevod",
                 "total",
-            ],
+            },
             id="diagram",
         ),
-        param("rendering-order/asc-single.qml", ["order"]),
-        param("rendering-order/desc-single.qml", ["order"]),
-        param("rendering-order/asc-categorized.qml", ["order"]),
-        param("rendering-order/desc-categorized.qml", ["order"]),
+        param(
+            "diagram/histogram-expr.qml",
+            {"value_1", "value_2", "value_3"},
+            id="diagram-expression",
+            marks=pytest.mark.xfail(
+                reason="Used attributes not returned from diagram expressions", strict=True
+            ),
+        ),
+        param("rendering-order/asc-single.qml", {"order"}),
+        param("rendering-order/desc-single.qml", {"order"}),
+        param("rendering-order/asc-categorized.qml", {"order"}),
+        param("rendering-order/desc-categorized.qml", {"order"}),
         # fmt: on
     ),
 )
@@ -123,7 +131,7 @@ def test_attributes(file, expected, shared_datadir):
         raise ValueError
 
     style = Style.from_file(shared_datadir / file, format=format)
-    assert style.used_attributes() == (set(expected) if expected is not None else None)
+    assert style.used_attributes() == expected
 
 
 def test_attributes_default():
