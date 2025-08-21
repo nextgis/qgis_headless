@@ -6,6 +6,7 @@ Headless rendering library using QGIS
 
 1. Install dependecies:
 
+   * `QGIS` >= 3.40
    * `libqgis-dev`
    * `qt5-image-formats-plugins` (usually installed via dependencies)
    * `build-essential`
