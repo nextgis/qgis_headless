@@ -111,9 +111,6 @@ def test_default(layer_type, params):
             "diagram/histogram-expr.qml",
             {"value_1", "value_2", "value_3"},
             id="diagram-expression",
-            marks=pytest.mark.xfail(
-                reason="Used attributes not returned from diagram expressions", strict=True
-            ),
         ),
         param("rendering-order/asc-single.qml", {"order"}),
         param("rendering-order/desc-single.qml", {"order"}),

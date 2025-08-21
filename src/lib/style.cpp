@@ -23,22 +23,25 @@
 #include "exceptions.h"
 #include "utils.h"
 
-#include <qgsrenderer.h>
-#include <qgsrendercontext.h>
-#include <qgsmarkersymbollayer.h>
-#include "qgsfeaturerequest.h"
-#include <qgsfillsymbollayer.h>
-#include <qgsrasterlayer.h>
-#include <qgsvectorlayerlabeling.h>
-#include <qgspallabeling.h>
 #include <qgscallout.h>
-#include <qgslinesymbol.h>
+#include <qgsexpressioncontext.h>
+#include <qgsfeaturerequest.h>
 #include <qgsfillsymbol.h>
-#include <qgsmarkersymbol.h>
+#include <qgsfillsymbollayer.h>
+#include <qgslinesymbol.h>
 #include <qgslinesymbollayer.h>
-#include <qgssinglesymbolrenderer.h>
 #include <qgsmaplayerstylemanager.h>
+#include <qgsmarkersymbol.h>
+#include <qgsmarkersymbollayer.h>
+#include <qgspallabeling.h>
+#include <qgspropertycollection.h>
+#include <qgsrasterlayer.h>
+#include <qgsrendercontext.h>
+#include <qgsrenderer.h>
 #include <qgsrulebasedlabeling.h>
+#include <qgssinglesymbolrenderer.h>
+#include <qgsvectorlayerlabeling.h>
+
 #include <QFile>
 #include <QUrl>
 
@@ -527,21 +530,36 @@ UsedAttributes Style::readUsedAttributes() const
     throw QgisHeadlessError( errorMessage );
   }
 
+  if ( qgsVectorLayer->diagramsEnabled() )
+  {
 #if VERSION_INT >= 33000
-  const QgsDiagramRenderer *diagramRenderer = qgsVectorLayer->diagramRenderer();
-  if ( diagramRenderer )
-  {
-    for ( auto &&attribute : diagramRenderer->referencedFields() )
+    const QgsDiagramRenderer *diagramRenderer = qgsVectorLayer->diagramRenderer();
+    if ( diagramRenderer )
     {
-      usedAttributes.insert( attribute.toStdString() );
+      for ( auto &&attribute : diagramRenderer->referencedFields() )
+      {
+        usedAttributes.insert( attribute.toStdString() );
+      }
     }
-  }
+
+    const QgsDiagramLayerSettings *diagramSettings = qgsVectorLayer->diagramLayerSettings();
+    if ( diagramSettings )
+    {
+      for ( auto &&attribute : diagramSettings->referencedFields() )
+      {
+        usedAttributes.insert( attribute.toStdString() );
+      }
+
+      const QgsPropertyCollection &dataProperties = diagramSettings->dataDefinedProperties();
+      for ( const QString &field : dataProperties.referencedFields( QgsExpressionContext(), true ) )
+      {
+        usedAttributes.insert( field.toStdString() );
+      }
+    }
 #else
-  if ( hasEnabledDiagrams( qgsVectorLayer ) )
-  {
     return std::make_pair( false, usedAttributes );
-  }
 #endif
+  }
 
   QgsRenderContext renderContext;
 
@@ -593,38 +611,6 @@ UsedAttributes Style::readUsedAttributes() const
 
   return std::make_pair( true, std::move( usedAttributes ) );
 }
-
-bool Style::hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const
-{
-  bool enabled = false;
-
-#if VERSION_INT >= 33000
-  const QgsDiagramRenderer *diagramRenderer = layer->diagramRenderer();
-  if ( diagramRenderer )
-    for ( const auto &item : diagramRenderer->diagramSettings() )
-    {
-      enabled = item.enabled;
-      if ( enabled )
-        break;
-    }
-#else
-  Q_UNUSED( layer )
-
-  const QDomNodeList nodes = mData.elementsByTagName( TAGS::DIAGRAM_CATEGORY );
-  for ( int i = 0; i < nodes.size(); ++i )
-  {
-    const QDomElement element = nodes.item( i ).toElement();
-    const QString enabledStr = element.attribute( TAGS::ENABLED, "0" );
-
-    enabled = enabledStr.toInt();
-    if ( enabled )
-      break;
-  }
-#endif
-
-  return enabled;
-}
-
 
 QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallback ) const
 {

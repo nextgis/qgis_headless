@@ -177,7 +177,6 @@ namespace HeadlessRender
         const QgsVectorLayerPtr &layer, const QgsRenderContext &context, const QString &providerId
       ) const;
       UsedAttributes readUsedAttributes() const;
-      bool hasEnabledDiagrams( const QgsVectorLayerPtr &layer ) const;
 
       QDomDocument mData;
 
