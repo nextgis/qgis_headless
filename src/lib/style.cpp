@@ -24,6 +24,7 @@
 #include "utils.h"
 
 #include <qgscallout.h>
+#include <qgsdiagramrenderer.h>
 #include <qgsexpressioncontext.h>
 #include <qgsfeaturerequest.h>
 #include <qgsfillsymbol.h>
@@ -44,10 +45,6 @@
 
 #include <QFile>
 #include <QUrl>
-
-#if VERSION_INT >= 33000
-#include <qgsdiagramrenderer.h>
-#endif
 
 namespace HeadlessRender
 {
@@ -491,7 +488,6 @@ UsedAttributes Style::readUsedAttributes() const
 
   if ( qgsVectorLayer->diagramsEnabled() )
   {
-#if VERSION_INT >= 33000
     const QgsDiagramRenderer *diagramRenderer = qgsVectorLayer->diagramRenderer();
     if ( diagramRenderer )
     {
@@ -515,9 +511,6 @@ UsedAttributes Style::readUsedAttributes() const
         usedAttributes.insert( field.toStdString() );
       }
     }
-#else
-    return std::make_pair( false, usedAttributes );
-#endif
   }
 
   QgsRenderContext renderContext;

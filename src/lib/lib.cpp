@@ -468,7 +468,11 @@ static void processLegendGroup(
                      r->shader()->rasterShaderFunction()
                    ) )
               {
+#if _QGIS_VERSION_INT < 33800
+                if ( rampShader->colorRampType() == QgsColorRampShader::Type::Interpolated )
+#else
                 if ( rampShader->colorRampType() == Qgis::ShaderInterpolationMethod::Linear )
+#endif
                 {
                   auto addColorRampItem = [&]( const auto &item ) {
                     image.fill( item.color );

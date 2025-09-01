@@ -33,9 +33,13 @@
 void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
 {
   QgsVectorSimplifyMethod simplifyMethod = qgsVectorLayer->simplifyMethod();
+#if _QGIS_VERSION_INT < 33800
+  simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
+#else
   simplifyMethod.setSimplifyHints(
     Qgis::VectorRenderingSimplificationFlags( Qgis::VectorRenderingSimplificationFlag::NoSimplification )
   );
+#endif
   qgsVectorLayer->setSimplifyMethod( simplifyMethod );
 }
 
