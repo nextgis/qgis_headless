@@ -37,7 +37,7 @@ def application(env, start_response):
         log("[qgis] render: begin")
         from qgis_headless.util import render_vector
 
-        render_vector(layer, style, extent, svg_resolver=lambda x: x)
+        render_vector(layer, style, extent)
         log("[qgis] render: done")
     else:
         log("[qgis] render: skipping")

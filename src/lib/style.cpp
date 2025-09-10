@@ -94,15 +94,9 @@ const StyleCategory Style::DefaultImportCategories = QgsMapLayer::Symbology
 
 namespace
 {
-  bool isSvgPathResolvable( const QString &path )
-  {
-    const QUrl url( path );
-    return url.isLocalFile() || url.isRelative();
-  }
-
   QString resolveSvgPath( const QString &path, const SvgResolverCallback &svgResolverCallback )
   {
-    if ( !svgResolverCallback || !isSvgPathResolvable( path ) )
+    if ( !svgResolverCallback )
     {
       return path;
     }

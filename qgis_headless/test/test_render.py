@@ -43,7 +43,7 @@ def test_contour(save_img, shared_datadir, reset_svg_paths):
 
     extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
 
-    img = save_img(render_vector(data, style, extent, 1024, svg_resolver=lambda x: x))
+    img = save_img(render_vector(data, style, extent, 1024))
     stat = image_stat(img)
 
     assert stat.alpha.min == 0, "There are no transparent pixels found"
@@ -69,7 +69,6 @@ def test_format(format, save_img, shared_datadir, reset_svg_paths):
             style,
             extent,
             1024,
-            svg_resolver=lambda value: value,
             style_format=getattr(StyleFormat, format.upper()),
         )
     )
@@ -359,7 +358,6 @@ def test_attribute_color(save_img, shared_datadir):
             layer,
             style,
             (4189314.0, 7505071.0, 4190452.0, 7506101.0),
-            svg_resolver=lambda x: x,
         )
     )
 
@@ -609,25 +607,29 @@ def test_fid_variable(save_img, shared_datadir):
 @pytest.mark.parametrize(
     "qml, resolve",
     [
-        pytest.param("zero/label/marker-svg.qml", True, id="svg"),
-        pytest.param("zero/label/marker-symbol-svg.qml", True, id="symbol_svg"),
-        pytest.param("zero/label/marker-symbol-embedded.qml", False, id="symbol_embedded"),
+        pytest.param("zero/label/marker-svg.qml", ["marker.svg"], id="svg"),
+        pytest.param("zero/label/marker-symbol-svg.qml", ["marker.svg"], id="symbol_svg"),
+        pytest.param("zero/label/marker-symbol-embedded.qml", None, id="symbol_embedded"),
+        pytest.param(
+            "zero/label/marker-absolute.qml", ["/abs/marker.svg", "/abs/marker.svg"], id="absolute"
+        ),
     ],
 )
 def test_label_marker(qml, resolve, save_img, shared_datadir):
     layer = shared_datadir / "zero/data.geojson"
     style = (shared_datadir / qml).read_text()
+    marker_green = str((shared_datadir / "marker-green/marker.svg").resolve())
 
     resolved = list()
 
     def _resolver(source):
-        target = str((shared_datadir / "marker-green" / source).resolve())
         resolved.append(source)
-        return target
+        return marker_green
 
     img = save_img(render_vector(layer, style, EXTENT_ONE, svg_resolver=_resolver))
 
-    assert not resolve or resolved == ["marker.svg"], "Marker isn't resolved"
+    if resolve is not None:
+        assert resolve == resolved, "Marker isn't resolved"
 
     stat = image_stat(img)
 
