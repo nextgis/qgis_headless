@@ -92,11 +92,14 @@ def render_vector(
     extent: Tuple[float, float, float, float],
     size: Union[int, Tuple[int, int]] = (256, 256),
     dpi: int = 96,
-    crs: CRS = CRS.from_epsg(3857),
+    crs: Optional[CRS] = None,
     svg_resolver: Optional[Callable[[str], str]] = None,
     style_format: Optional[StyleFormat] = None,
 ):
     """Renders a vector image for a given map layer and style."""
+    if crs is None:
+        crs = CRS.from_epsg(3857)
+
     req = MapRequest()
     req.set_dpi(dpi)
     req.set_crs(crs)
@@ -127,9 +130,12 @@ def render_raster(
     style: Union[Style, str],
     extent: Tuple[float, float, float, float],
     size: Union[int, Tuple[int, int]] = (256, 256),
-    crs: CRS = CRS.from_epsg(3857),
+    crs: Optional[CRS] = None,
 ):
     """Renders a raster image for a given map layer and style."""
+    if crs is None:
+        crs = CRS.from_epsg(3857)
+
     req = MapRequest()
     req.set_dpi(96)
     req.set_crs(crs)
@@ -154,11 +160,14 @@ def render_legend(
     layerName: str = "",
     size: Tuple[int, int] = (256, 256),
     dpi: int = 96,
-    crs: CRS = CRS.from_epsg(3857),
+    crs: Optional[CRS] = None,
     svg_resolver: Optional[Callable[[str], str]] = None,
     style_format: Optional[StyleFormat] = None,
 ):
     """Renders a legend image for a given map layer and style."""
+    if crs is None:
+        crs = CRS.from_epsg(3857)
+
     request = MapRequest()
     request.set_dpi(dpi)
     request.set_crs(crs)
