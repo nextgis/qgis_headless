@@ -1,5 +1,6 @@
 from binascii import a2b_hex
 from collections import namedtuple
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Optional, Tuple, Union
 
@@ -86,6 +87,11 @@ def is_same_color(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) ->
     return color_channels_delta <= 3 and alpha_channel_delta < 0.05
 
 
+@cache
+def _crs_from_epsg_3857():
+    return CRS.from_epsg(3857)
+
+
 def render_vector(
     layer: Union[Layer, Path, str],
     style: Union[Style, str],
@@ -98,7 +104,7 @@ def render_vector(
 ):
     """Renders a vector image for a given map layer and style."""
     if crs is None:
-        crs = CRS.from_epsg(3857)
+        crs = _crs_from_epsg_3857()
 
     req = MapRequest()
     req.set_dpi(dpi)
@@ -134,7 +140,7 @@ def render_raster(
 ):
     """Renders a raster image for a given map layer and style."""
     if crs is None:
-        crs = CRS.from_epsg(3857)
+        crs = _crs_from_epsg_3857()
 
     req = MapRequest()
     req.set_dpi(96)
@@ -166,7 +172,7 @@ def render_legend(
 ):
     """Renders a legend image for a given map layer and style."""
     if crs is None:
-        crs = CRS.from_epsg(3857)
+        crs = _crs_from_epsg_3857()
 
     request = MapRequest()
     request.set_dpi(dpi)
