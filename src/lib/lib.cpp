@@ -371,9 +371,13 @@ static void processLegendGroup(
         return;
     }
     else if ( featureRenderer->legendSymbolItemsCheckable() )
-      symbolRender = node->data( Qt::CheckStateRole ).toBool()
-                       ? HeadlessRender::SymbolRender::Checked
-                       : HeadlessRender::SymbolRender::Unchecked;
+    {
+      auto nodeIndex = model.legendNode2index( node );
+      if ( model.flags( nodeIndex ) & Qt::ItemIsUserCheckable )
+        symbolRender = node->data( Qt::CheckStateRole ).toBool()
+                         ? HeadlessRender::SymbolRender::Checked
+                         : HeadlessRender::SymbolRender::Unchecked;
+    }
 
     image.fill( Qt::transparent );
     node->draw( settings, &context );

@@ -291,3 +291,25 @@ def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
 
     stat = image_stat(save_img(render_legend(data_path, style_path, "Marker")))
     assert stat.blue.max == 255, "Blue marker is missing"
+
+
+def test_legend_symbols_diagram(shared_datadir):
+    render_expected = (False, True, None, None)
+
+    style_path = shared_datadir / "diagram/histogram-legend.qml"
+
+    crs = CRS.from_epsg(3857)
+
+    style = Style.from_file(style_path)
+    layer = Layer.from_data(Layer.GT_POLYGON, crs, (), ())
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    req.set_crs(crs)
+
+    symbols = req.legend_symbols(0)
+    assert len(symbols) == len(render_expected)
+
+    for i, symbol in enumerate(symbols):
+        assert symbol.render() == render_expected[i], f"Symbol #{i} render mismatch"
