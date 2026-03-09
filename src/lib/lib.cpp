@@ -376,7 +376,11 @@ static void processLegendGroup(
                        : HeadlessRender::SymbolRender::Unchecked;
 
     image.fill( Qt::transparent );
+#if _QGIS_VERSION_INT < 34405
     node->draw( settings, &context );
+#else
+    node->draw( settings, context );
+#endif
 
     auto legendSymbol = HeadlessRender::LegendSymbol::
       create( std::make_shared<HeadlessRender::Image>( image ), title, symbolRender, index++, rasterBand, hasTitle );
