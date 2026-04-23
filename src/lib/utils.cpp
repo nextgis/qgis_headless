@@ -75,6 +75,8 @@ QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType(
       return QVariant::DateTime;
     case HeadlessRender::LayerAttributeType::Integer64:
       return QVariant::LongLong;
+    case HeadlessRender::LayerAttributeType::Boolean:
+      return QVariant::Bool;
   }
   return QVariant::Int;
 }

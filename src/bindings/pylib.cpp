@@ -84,6 +84,7 @@ PYBIND11_MODULE( _qgis_headless, m )
     .value( "FT_TIME", HeadlessRender::LayerAttributeType::Time )
     .value( "FT_DATETIME", HeadlessRender::LayerAttributeType::DateTime )
     .value( "FT_INTEGER64", HeadlessRender::LayerAttributeType::Integer64 )
+    .value( "FT_BOOLEAN", HeadlessRender::LayerAttributeType::Boolean )
     .export_values();
 
   py::enum_<HeadlessRender::DataType>( m, "LayerType" )
@@ -189,6 +190,9 @@ PYBIND11_MODULE( _qgis_headless, m )
               }
               case HeadlessRender::LayerAttributeType::Integer64:
                 feature.attributes.append( attr.cast<qint64>() );
+                break;
+              case HeadlessRender::LayerAttributeType::Boolean:
+                feature.attributes.append( attr.cast<bool>() );
                 break;
             }
           }
