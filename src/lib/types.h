@@ -70,7 +70,8 @@ namespace HeadlessRender
     Date,
     Time,
     DateTime,
-    Integer64
+    Integer64,
+    Boolean
   };
 
   enum class StyleFormat
