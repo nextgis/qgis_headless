@@ -20,7 +20,7 @@ WSGI_APP = Path(__file__).parent / "wsgi_app.py"
     "mode",
     [
         "dry_run",
-        pytest.param("no_request", marks=Issues.UWSGI_SEGFAULT),
+        pytest.param("no_request", marks=Issues.UWSGI_SEGFAULT_NO_STRICT),
         pytest.param("do_request", marks=Issues.UWSGI_SEGFAULT),
     ],
 )

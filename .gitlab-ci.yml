@@ -53,3 +53,8 @@ test_noble_latest:
   extends: .run_tests_job
   variables:
     DISTRO: noble-latest
+
+test_resolute:
+  extends: .run_tests_job
+  variables:
+    DISTRO: resolute
