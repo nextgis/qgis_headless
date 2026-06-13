@@ -20,6 +20,7 @@ dev = [
 tests = [
     "lxml",
     "pillow",
+    "psutil",
     "pytest-benchmark",
     "pytest-datadir",
     "pytest-timeout",

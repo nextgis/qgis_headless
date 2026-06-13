@@ -137,6 +137,11 @@ void HeadlessRender::init( int argc, char **argv )
   QByteArray platform( "offscreen" );
   qputenv( "QT_QPA_PLATFORM", platform );
 
+  // This prevents loading of any external providers (WFS, PostGIS, etc.) and
+  // reduces initialization time and memory usage.
+  if ( !qEnvironmentVariableIsSet( "QGIS_PROVIDER_FILE" ) )
+    qputenv( "QGIS_PROVIDER_FILE", QByteArray( "$^" ) );
+
   app = new QgsApplication( argc, argv, false, "", platform );
   QgsApplication::initQgis();
 }
