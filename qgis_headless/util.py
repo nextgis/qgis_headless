@@ -63,7 +63,7 @@ def image_stat(image: "PilImage") -> ImageStat:
     stat = Stat(image)
 
     nonzero = [0, 0, 0, 0]
-    for r, g, b, a in image.getdata():
+    for r, g, b, a in image.get_flattened_data():
         if r != 0:
             nonzero[0] += 1
         if g != 0:
