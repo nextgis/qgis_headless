@@ -320,17 +320,17 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def( "index", &HeadlessRender::LegendSymbol::index )
     .def(
       "render",
-      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> std::optional<py::bool_> {
+      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> std::optional<bool> {
         switch ( legendSymbol.render() )
         {
           case HeadlessRender::SymbolRender::Checked:
-            return py::cast( true );
+            return true;
           case HeadlessRender::SymbolRender::Unchecked:
-            return py::cast( false );
+            return false;
           default:
             break;
         }
-        return py::none();
+        return {};
       }
     )
     .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );

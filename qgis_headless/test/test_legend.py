@@ -68,7 +68,7 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
 LEGEND_DEFAULT_SIZES = [20, 40]
 
 legend_symbols_params = []
-for id, geometry_type, style, sizes, expected in [
+for id, geometry_type, style, sizes, expected, render in [
     (
         "zero_red_circle",
         Layer.GT_POINT,
@@ -77,6 +77,7 @@ for id, geometry_type, style, sizes, expected in [
         [
             (None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=RED)),
         ],
+        (None,),
     ),
     (
         "default_point",
@@ -84,6 +85,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(color=GRAY_128),
         LEGEND_DEFAULT_SIZES,
         ((None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=GRAY_128)),),
+        (None,),
     ),
     (
         "default_linestring",
@@ -91,6 +93,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(color=GRAY_128),
         LEGEND_DEFAULT_SIZES,
         ((None, dict(ct=TRANSPARENT, cb=TRANSPARENT)),),
+        (None,),
     ),
     (
         "default_polygon",
@@ -98,6 +101,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(color=GRAY_128),
         LEGEND_DEFAULT_SIZES,
         ((None, GRAY_128),),
+        (None,),
     ),
     (
         "contour_rgb",
@@ -108,6 +112,7 @@ for id, geometry_type, style, sizes, expected in [
             ("primary horizontals", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
             ("secondary horizontals", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
+        (True, True),
     ),
     (
         "thick_outline",
@@ -115,6 +120,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(file="thick-outline.qml"),
         LEGEND_DEFAULT_SIZES,
         ((None, dict()),),
+        (None,),
     ),
     (
         "big_symbol",
@@ -122,6 +128,7 @@ for id, geometry_type, style, sizes, expected in [
         dict(file="big-symbol.qml"),
         LEGEND_DEFAULT_SIZES,
         ((None, dict()),),
+        (None,),
     ),
     (
         "bar_chart",
@@ -134,6 +141,7 @@ for id, geometry_type, style, sizes, expected in [
             ("green", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
             ("blue", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
+        (None, None, None, None),
     ),
     (
         "pie_chart",
@@ -146,6 +154,7 @@ for id, geometry_type, style, sizes, expected in [
             ("green", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
             ("blue", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
         ),
+        (None, None, None, None),
     ),
 ]:
     for size in sizes:
@@ -153,12 +162,16 @@ for id, geometry_type, style, sizes, expected in [
             size = (size, size)
         param_id = f"{id}-{size[0]}x{size[1]}"
         legend_symbols_params.append(
-            pytest.param(geometry_type, style, size, expected, id=param_id)
+            pytest.param(geometry_type, style, size, expected, render, id=param_id)
         )
 
 
-@pytest.mark.parametrize("geometry_type, style_params, size, expected", legend_symbols_params)
-def test_legend_symbols(geometry_type, style_params, size, expected, save_img, shared_datadir):
+@pytest.mark.parametrize(
+    "geometry_type, style_params, size, expected, render", legend_symbols_params
+)
+def test_legend_symbols(
+    geometry_type, style_params, size, expected, render, save_img, shared_datadir
+):
     if "file" in style_params:
         style = Style.from_file(shared_datadir / style_params["file"])
     else:
@@ -213,6 +226,9 @@ def test_legend_symbols(geometry_type, style_params, size, expected, save_img, s
             ), f"{position}{pixel_coord} color mismatch: {expected_color} != {pixels_color[0]} "
 
         assert im_size == size, f"size mismatch: {im_size} != {size}"
+
+    for i, (symbol, expected_render) in enumerate(zip(symbols, render)):
+        assert symbol.render() == expected_render, f"Symbol #{i} render mismatch"
 
 
 @pytest.mark.parametrize(
@@ -408,3 +424,25 @@ def test_legend_color_ramp(layer_file, style_file, expected, save_img, shared_da
         assert is_same_color(
             (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max), expected_color
         ), "color mismatch"
+
+
+def test_legend_symbols_diagram(shared_datadir):
+    render_expected = (False, True, None, None)
+
+    style_path = shared_datadir / "diagram/histogram-legend.qml"
+
+    crs = CRS.from_epsg(3857)
+
+    style = Style.from_file(style_path)
+    layer = Layer.from_data(Layer.GT_POLYGON, crs, (), ())
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    req.set_crs(crs)
+
+    symbols = req.legend_symbols(0)
+    assert len(symbols) == len(render_expected)
+
+    for i, symbol in enumerate(symbols):
+        assert symbol.render() == render_expected[i], f"Symbol #{i} render mismatch"

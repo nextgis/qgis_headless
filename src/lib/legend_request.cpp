@@ -245,7 +245,9 @@ LegendSymbol LegendRequest::renderVectorLayerSymbol(
 )
 {
   auto symbolRender = HeadlessRender::SymbolRender::Uncheckable;
-  if ( renderer->legendSymbolItemsCheckable() )
+
+  if ( !dynamic_cast<const QgsSimpleLegendNode *>( node ) // not a diagram symbol
+       && renderer->legendSymbolItemsCheckable() )
   {
     symbolRender = node->data( Qt::CheckStateRole ).toBool()
                      ? HeadlessRender::SymbolRender::Checked
