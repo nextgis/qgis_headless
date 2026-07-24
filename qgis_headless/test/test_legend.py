@@ -408,3 +408,35 @@ def test_legend_color_ramp(layer_file, style_file, expected, save_img, shared_da
         assert is_same_color(
             (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max), expected_color
         ), "color mismatch"
+
+
+@pytest.mark.parametrize(
+    "style_fn, expected",
+    (
+        pytest.param("scale/100_10.qml", (100000, 10000), id="100-10"),
+        pytest.param("scale/min_50.qml", (50000, None), id="min-50"),
+        pytest.param("scale/max_50.qml", (None, 50000), id="max-50"),
+        pytest.param(None, (None, None), id="default"),
+    ),
+)
+def test_scale_range(style_fn, expected, shared_datadir):
+    if style_fn is None:
+        style = Style.from_defaults()
+    else:
+        style = Style.from_file(shared_datadir / style_fn)
+
+    assert style.scale_range() == expected
+
+    crs = CRS.from_epsg(3857)
+
+    layer = Layer.from_data(Layer.GT_POINT, crs, (), ())
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    req.set_crs(crs)
+
+    symbols = req.legend_symbols(0)
+    for symbol in symbols:
+        scale_range = symbol.scale_range()
+        assert scale_range[0] == expected[0] and scale_range[1] == expected[1]

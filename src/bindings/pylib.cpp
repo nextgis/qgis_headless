@@ -290,6 +290,14 @@ PYBIND11_MODULE( _qgis_headless, m )
   py::class_<HeadlessRender::LegendSymbol>( m, "LegendSymbol" )
     .def( "icon", &HeadlessRender::LegendSymbol::icon )
     .def(
+      "scale_range",
+      []( const HeadlessRender::LegendSymbol &symbol ) -> py::tuple {
+        const auto &result = symbol.scaleRange();
+        return py::
+          make_tuple( ( result[0] > 0 ) ? py::cast( result[0] ) : py::none(), ( result[1] > 0 ) ? py::cast( result[1] ) : py::none() );
+      }
+    )
+    .def(
       "title",
       []( const HeadlessRender::LegendSymbol &legendSymbol ) -> std::optional<py::str> {
         const QString title = legendSymbol.title();

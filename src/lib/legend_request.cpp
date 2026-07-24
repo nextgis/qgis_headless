@@ -38,6 +38,8 @@
 #include <qgssinglebandpseudocolorrenderer.h>
 #include <qgsvectorlayer.h>
 
+#include <iostream>
+
 using namespace HeadlessRender;
 
 namespace RendererType
@@ -166,7 +168,17 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderLegendSymbols(
 {
   LegendRenderContext context( mOutputDpi, size );
   layerIndex = 0;
-  return renderLayerSymbols( layer, context );
+  auto symbols = renderLayerSymbols( layer, context );
+
+  auto qgsLayer = layer.qgsMapLayer();
+  if ( qgsLayer && qgsLayer->hasScaleBasedVisibility() )
+  {
+    for ( auto &&symbol : symbols )
+    {
+      symbol.setScaleRange( { qgsLayer->minimumScale(), qgsLayer->maximumScale() } );
+    }
+  }
+  return symbols;
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderLayerSymbols(

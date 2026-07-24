@@ -52,6 +52,10 @@ namespace HeadlessRender
         int rasterBand, bool hasTitle = true
       );
 
+      void setScaleRange( const ScaleRange &scaleRange ) noexcept;
+
+      const ScaleRange &scaleRange() const noexcept;
+
       /**
        * Returns icon of symbol.
        */
@@ -106,6 +110,7 @@ namespace HeadlessRender
       SymbolRender mRender = SymbolRender::Uncheckable;
       Index mIndex = 0;
       int mRasterBand;
+      ScaleRange mScaleRange = { -2, 0 }; // "-2" has no scale range
   };
 } //namespace HeadlessRender
 
