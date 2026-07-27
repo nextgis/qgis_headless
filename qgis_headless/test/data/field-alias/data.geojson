@@ -1,0 +1,19 @@
+{
+    "type": "FeatureCollection",
+    "name": "field-alias",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "value": 1
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    0.0,
+                    0.0
+                ]
+            }
+        }
+    ]
+}

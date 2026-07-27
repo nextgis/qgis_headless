@@ -716,3 +716,13 @@ def test_random_colors(style, save_img, shared_datadir):
 
     for i in range(8):
         assert img1.getpixel((i, 0)) == img2.getpixel((i, 0))
+
+
+def test_field_alias(save_img, shared_datadir):
+    layer = Layer.from_ogr(shared_datadir / "field-alias/data.geojson")
+    style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml")
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE))
+    stat = image_stat(img)
+
+    assert stat.green.max == 255, "Wrong point colour"
