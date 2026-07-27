@@ -689,3 +689,13 @@ def test_rendering_order(layer_name, style_name, extent, save_img, shared_datadi
         render_vector(layer, inverted_style, extent, crs=crs), suffix="-inverted"
     )
     assert not left_overlaps_right(inverted_image)
+
+
+def test_field_alias(save_img, shared_datadir):
+    layer = Layer.from_ogr(shared_datadir / "field-alias/data.geojson")
+    style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml")
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE))
+    stat = image_stat(img)
+
+    assert stat.green.max == 255, "Wrong point colour"
