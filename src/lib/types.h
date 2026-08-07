@@ -71,7 +71,8 @@ namespace HeadlessRender
     Time,
     DateTime,
     Integer64,
-    Boolean
+    Boolean,
+    JSON
   };
 
   enum class StyleFormat

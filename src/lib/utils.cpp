@@ -77,6 +77,8 @@ QVariant::Type HeadlessRender::layerAttributeTypetoQVariantType(
       return QVariant::LongLong;
     case HeadlessRender::LayerAttributeType::Boolean:
       return QVariant::Bool;
+    case HeadlessRender::LayerAttributeType::JSON:
+      return QVariant::Map;
   }
   return QVariant::Int;
 }

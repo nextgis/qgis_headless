@@ -27,6 +27,10 @@
 #include <exceptions.h>
 #include <utils.h>
 
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
 // Undefining Qt macro slots for preventing collision with pybind11 declarations:
 #ifdef slots
 #undef slots
@@ -85,6 +89,7 @@ PYBIND11_MODULE( _qgis_headless, m )
     .value( "FT_DATETIME", HeadlessRender::LayerAttributeType::DateTime )
     .value( "FT_INTEGER64", HeadlessRender::LayerAttributeType::Integer64 )
     .value( "FT_BOOLEAN", HeadlessRender::LayerAttributeType::Boolean )
+    .value( "FT_JSON", HeadlessRender::LayerAttributeType::JSON )
     .export_values();
 
   py::enum_<HeadlessRender::DataType>( m, "LayerType" )
@@ -194,6 +199,19 @@ PYBIND11_MODULE( _qgis_headless, m )
               case HeadlessRender::LayerAttributeType::Boolean:
                 feature.attributes.append( attr.cast<bool>() );
                 break;
+              case HeadlessRender::LayerAttributeType::JSON:
+              {
+                const QString jsonStr = QString::fromStdString( attr.cast<std::string>() );
+                const QJsonDocument doc = QJsonDocument::fromJson( jsonStr.toUtf8() );
+                if ( doc.isObject() )
+                  feature.attributes.append( doc.object().toVariantMap() );
+                else
+                  // Only JSON objects are supported, append an empty QVariantMap for other types
+                  feature.attributes.append(
+                    QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
+                  );
+                break;
+              }
             }
           }
 

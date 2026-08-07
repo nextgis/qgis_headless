@@ -76,6 +76,8 @@ class Layer:
           FT_INTEGER64
 
           FT_BOOLEAN
+
+          FT_JSON
         """
 
         FT_BOOLEAN: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_BOOLEAN: 7>
@@ -85,12 +87,13 @@ class Layer:
         FT_INTEGER64: typing.ClassVar[
             Layer.AttributeType
         ]  # value = <AttributeType.FT_INTEGER64: 6>
+        FT_JSON: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_JSON: 8>
         FT_REAL: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_REAL: 1>
         FT_STRING: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_STRING: 2>
         FT_TIME: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_TIME: 4>
         __members__: typing.ClassVar[
             dict[str, Layer.AttributeType]
-        ]  # value = {'FT_INTEGER': <AttributeType.FT_INTEGER: 0>, 'FT_REAL': <AttributeType.FT_REAL: 1>, 'FT_STRING': <AttributeType.FT_STRING: 2>, 'FT_DATE': <AttributeType.FT_DATE: 3>, 'FT_TIME': <AttributeType.FT_TIME: 4>, 'FT_DATETIME': <AttributeType.FT_DATETIME: 5>, 'FT_INTEGER64': <AttributeType.FT_INTEGER64: 6>, 'FT_BOOLEAN': <AttributeType.FT_BOOLEAN: 7>}
+        ]  # value = {'FT_INTEGER': <AttributeType.FT_INTEGER: 0>, 'FT_REAL': <AttributeType.FT_REAL: 1>, 'FT_STRING': <AttributeType.FT_STRING: 2>, 'FT_DATE': <AttributeType.FT_DATE: 3>, 'FT_TIME': <AttributeType.FT_TIME: 4>, 'FT_DATETIME': <AttributeType.FT_DATETIME: 5>, 'FT_INTEGER64': <AttributeType.FT_INTEGER64: 6>, 'FT_BOOLEAN': <AttributeType.FT_BOOLEAN: 7>, 'FT_JSON': <AttributeType.FT_JSON: 8>}
         def __eq__(self, other: typing.Any) -> bool: ...
         def __getstate__(self) -> int: ...
         def __hash__(self) -> int: ...
@@ -189,6 +192,7 @@ class Layer:
     FT_DATETIME: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_DATETIME: 5>
     FT_INTEGER: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_INTEGER: 0>
     FT_INTEGER64: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_INTEGER64: 6>
+    FT_JSON: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_JSON: 8>
     FT_REAL: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_REAL: 1>
     FT_STRING: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_STRING: 2>
     FT_TIME: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_TIME: 4>
