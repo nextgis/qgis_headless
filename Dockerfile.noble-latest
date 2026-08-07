@@ -22,5 +22,4 @@ WORKDIR /src
 RUN set -ex; \
     mkdir /work; \
     virtualenv -p python3 --activators bash ./env; \
-    ./env/bin/pip install --upgrade pip; \
     ./env/bin/pip install --no-cache-dir .[tests]
