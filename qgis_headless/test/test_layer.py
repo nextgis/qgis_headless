@@ -6,6 +6,7 @@ from xml.sax.saxutils import quoteattr
 import pytest
 
 from qgis_headless import CRS, InvalidLayerSource, Layer
+from qgis_headless.test.known_issues import Issues
 from qgis_headless.util import (
     EXTENT_ONE,
     WKB_LINESTRING,
@@ -67,7 +68,6 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
 @pytest.mark.parametrize(
     "ftype, fvalue, cond",
     (
-        # fmt: off
         pytest.param(Layer.FT_INTEGER, None, "field IS NULL", id="integer-null"),
         pytest.param(Layer.FT_INTEGER, 42, "field = 42", id="integer-42"),
         pytest.param(Layer.FT_REAL, 0.25, "field = 0.25", id="real"),
@@ -82,11 +82,38 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
             id="datetime",
         ),
         pytest.param(
-            Layer.FT_INTEGER64, 2**63 - 1, "field = 9223372036854775807", id="integer64-2**63-1"
+            Layer.FT_INTEGER64,
+            2**63 - 1,
+            "field = 9223372036854775807",
+            id="integer64-max",
         ),
         pytest.param(Layer.FT_BOOLEAN, True, "field", id="boolean-true"),
         pytest.param(Layer.FT_BOOLEAN, False, "NOT field", id="boolean-false"),
-        # fmt: on
+        pytest.param(
+            Layer.FT_JSON,
+            '{"foo": "bar"}',
+            "map_get(field, 'foo') = 'bar'",
+            id="json-object-map_get",
+        ),
+        pytest.param(
+            Layer.FT_JSON,
+            '{"foo": "bar"}',
+            "field['foo'] = 'bar'",
+            id="json-object-subscript",
+        ),
+        pytest.param(
+            Layer.FT_JSON,
+            '{"foo": {"bar": "qux"}}',
+            "field['foo']['bar'] = 'qux'",
+            id="json-object-nested",
+        ),
+        pytest.param(
+            Layer.FT_JSON,
+            '["foo", "bar"]',
+            "field[1] = 'bar'",
+            id="json-array-index",
+            marks=Issues.JSON_OBJECTS_ONLY,
+        ),
     ),
 )
 def test_field_type(ftype, fvalue, cond, shared_datadir, reset_svg_paths):
