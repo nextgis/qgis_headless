@@ -106,7 +106,11 @@ PYBIND11_MODULE( _qgis_headless, m )
     )
     .def_static(
       "from_gdal",
-      []( const py::object &uri ) { return HeadlessRender::Layer::fromGdal( py::str( uri ) ); },
+      []( const py::object &uri ) {
+        const std::string layerUri = py::str( uri );
+        py::gil_scoped_release release;
+        return HeadlessRender::Layer::fromGdal( layerUri );
+      },
       py::arg( "uri" )
     )
     .def_static(
