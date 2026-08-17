@@ -2,13 +2,13 @@
 
 using namespace HeadlessRender;
 
-RandomColorGenerator::RandomColorGenerator( const RandomDevice &device, size_t colorsCount )
-  : mDeviceSeed( device.seed() ), mColorsCount( colorsCount )
+RandomColorGenerator::RandomColorGenerator( SeedType seed, size_t colorsCount )
+  : mSeed( seed ), mColorsCount( colorsCount )
 {}
 
 RandomColorGenerator::Iterator RandomColorGenerator::begin()
 {
-  return Iterator( mDeviceSeed, 0 );
+  return Iterator( mSeed, 0 );
 }
 
 RandomColorGenerator::Iterator RandomColorGenerator::end()
@@ -16,7 +16,7 @@ RandomColorGenerator::Iterator RandomColorGenerator::end()
   return Iterator( 0, mColorsCount );
 }
 
-RandomColorGenerator::Iterator::Iterator( RandomDevice::SeedType seed, size_t index )
+RandomColorGenerator::Iterator::Iterator( SeedType seed, size_t index )
   : mGenerator( seed ), mIndex( index )
 {
   generateColor();

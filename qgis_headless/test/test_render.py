@@ -13,7 +13,6 @@ from qgis_headless import (
     CRS,
     Layer,
     MapRequest,
-    RandomDevice,
     Style,
     StyleFormat,
     StyleTypeMismatch,
@@ -695,7 +694,7 @@ def test_rendering_order(layer_name, style_name, extent, save_img, shared_datadi
 
 @pytest.mark.parametrize(
     "style",
-    (Style.from_defaults(), Style.from_defaults(random_device=RandomDevice(int(time.time())))),
+    (Style.from_defaults(), Style.from_defaults(random_seed=int(time.time()))),
 )
 def test_random_colors(style, save_img, shared_datadir):
     data = shared_datadir / "raster" / "paletted.tif"

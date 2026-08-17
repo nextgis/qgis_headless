@@ -225,11 +225,11 @@ Style Style::fromFile(
 
 Style Style::fromDefaults(
   const QColor &color, LayerGeometryType layerGeometryType /* = LayerGeometryType::Undefined */,
-  DataType layerType /* = DataType::Unknown */, const RandomDevice &randomDevice /* = RandomDevice() */
+  DataType layerType /* = DataType::Unknown */, RandomColorGenerator::SeedType randomSeed /* = 0 */
 )
 {
   Style style;
-  style.init( { color, layerGeometryType, layerType, randomDevice } );
+  style.init( { color, layerGeometryType, layerType, randomSeed } );
   return style;
 }
 
@@ -735,7 +735,7 @@ QColor Style::defaultStyleColor() const
   return mDefaultStyleParams.color;
 }
 
-const RandomDevice &Style::getRandomDevice() const
+RandomColorGenerator::SeedType Style::getRandomSeed()
 {
-  return mDefaultStyleParams.randomDevice;
+  return mDefaultStyleParams.randomSeed;
 }

@@ -26,7 +26,6 @@
 #include <lib.h>
 #include <exceptions.h>
 #include <utils.h>
-#include <random_device.h>
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -237,10 +236,6 @@ PYBIND11_MODULE( _qgis_headless, m )
   m.attr( "SF_QML" ) = HeadlessRender::StyleFormat::QML;
   m.attr( "SF_SLD" ) = HeadlessRender::StyleFormat::SLD;
 
-  py::class_<HeadlessRender::RandomDevice>( m, "RandomDevice" )
-    .def( py::init<HeadlessRender::RandomDevice::SeedType>(), py::arg( "seed" ) )
-    .def( "seed", &HeadlessRender::RandomDevice::seed );
-
   py::class_<HeadlessRender::Style>( m, "Style" )
     .def_static(
       "from_string", &HeadlessRender::Style::fromString, py::arg( "string" ),
@@ -285,8 +280,9 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def_static(
       "from_defaults",
       [](
-        const std::optional<py::tuple> &color, HeadlessRender::LayerGeometryType layer_geometry_type,
-        HeadlessRender::DataType layer_type, const HeadlessRender::RandomDevice &randomDevice
+        const std::optional<py::tuple> &color,
+        HeadlessRender::LayerGeometryType layer_geometry_type, HeadlessRender::DataType layer_type,
+        HeadlessRender::RandomColorGenerator::SeedType random_seed
       ) {
         QColor qcolor;
         if ( color.has_value() )
@@ -299,12 +295,11 @@ PYBIND11_MODULE( _qgis_headless, m )
 
           qcolor = { r, g, b, a };
         }
-        return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type, randomDevice );
+        return HeadlessRender::Style::fromDefaults( qcolor, layer_geometry_type, layer_type, random_seed );
       },
       py::arg( "color" ) = py::none(),
       py::arg( "layer_geometry_type" ) = HeadlessRender::LayerGeometryType::Unknown,
-      py::arg( "layer_type" ) = HeadlessRender::DataType::Unknown,
-      py::arg( "random_device" ) = HeadlessRender::RandomDevice()
+      py::arg( "layer_type" ) = HeadlessRender::DataType::Unknown, py::arg( "random_seed" ) = 0
     )
     .def(
       "to_string",

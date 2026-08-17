@@ -203,7 +203,7 @@ HeadlessRender::LayerIndex HeadlessRender::MapRequest::
              ) )
         {
           auto classes = palettedRendered->multiValueClasses();
-          auto randomColors = RandomColorGenerator( style.getRandomDevice(), classes.length() );
+          auto randomColors = RandomColorGenerator( style.getRandomSeed(), classes.length() );
 
           auto classesIt = classes.begin();
           for ( auto &&randomColor : randomColors )

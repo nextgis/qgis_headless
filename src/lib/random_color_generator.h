@@ -27,8 +27,6 @@
 
 #include <QColor>
 
-#include "random_device.h"
-
 namespace HeadlessRender
 {
   /**
@@ -41,6 +39,7 @@ namespace HeadlessRender
        * Random numbers generator, using for colors generating.
        */
       using RandomGeneratorType = std::mt19937;
+      using SeedType = long long;
 
       class Iterator
       {
@@ -52,7 +51,7 @@ namespace HeadlessRender
           using iterator_category = std::forward_iterator_tag;
 
         public:
-          Iterator( RandomDevice::SeedType seed, size_t index );
+          Iterator( SeedType seed, size_t index );
 
           const QColor &operator*() const noexcept;
           void operator++();
@@ -70,17 +69,17 @@ namespace HeadlessRender
 
     public:
       /**
-       * Creates a new RandomColorGenerator, which generates colorsCount colors using the given RandomDevice.
-       * \param device RandomDevice providing a seed.
+       * Creates a new RandomColorGenerator, which generates colorsCount colors using the given seed.
+       * \param seed random seed.
        * \param colorsCount numbers of colors to generate.
        */
-      explicit RandomColorGenerator( const RandomDevice &device, size_t colorsCount );
+      explicit RandomColorGenerator( SeedType seed, size_t colorsCount );
 
       Iterator begin();
       Iterator end();
 
     private:
-      RandomDevice::SeedType mDeviceSeed;
+      SeedType mSeed;
       size_t mColorsCount;
   };
 } //namespace HeadlessRender
