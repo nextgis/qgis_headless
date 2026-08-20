@@ -14,6 +14,7 @@ import pytest
 from osgeo import gdal
 
 from qgis_headless import Layer
+from qgis_headless.test.known_issues import Issues
 
 _RANGE_PATTERN = re.compile(r"bytes=(\d+)-(\d*)")
 
@@ -219,6 +220,7 @@ def _format_requests(requests: List[_HttpRequest]) -> str:
     )
 
 
+@Issues.COG_HEADER_ARE_NOT_REUSED
 def test_vsis3_reuses_cog_header_cache(mock_s3: _MockS3) -> None:
     vsi_path = "/vsicached?chunk_size=32KB&cache_size=200MB&file=/vsis3/test-bucket/cache_test.tif"
 

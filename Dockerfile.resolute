@@ -24,4 +24,5 @@ WORKDIR /src
 RUN set -ex; \
     mkdir /work; \
     virtualenv -p python3 --activators bash ./env; \
+    ./env/bin/pip install gdal==3.12.2; \
     ./env/bin/pip install --no-cache-dir .[tests]
