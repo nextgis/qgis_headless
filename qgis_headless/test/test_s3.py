@@ -220,7 +220,7 @@ def _format_requests(requests: List[_HttpRequest]) -> str:
 
 
 def test_vsis3_reuses_cog_header_cache(mock_s3: _MockS3) -> None:
-    vsi_path = "/vsis3/test-bucket/cache_test.tif"
+    vsi_path = "/vsicached?chunk_size=32KB&cache_size=200MB&file=/vsis3/test-bucket/cache_test.tif"
 
     options = {
         "AWS_S3_ENDPOINT": mock_s3.endpoint,
@@ -233,8 +233,6 @@ def test_vsis3_reuses_cog_header_cache(mock_s3: _MockS3) -> None:
         "GDAL_INGESTED_BYTES_AT_OPEN": "32768",
         "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif,.TIF,.tiff",
         "CPL_VSIL_CURL_CACHE_SIZE": "200000000",
-        # Disable the per-handle cache to isolate the global curl cache.
-        "VSI_CACHE": "FALSE",
     }
 
     with _gdal_config(options):
