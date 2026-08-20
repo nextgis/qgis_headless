@@ -154,6 +154,31 @@ def test_from_data_provider_rejection():
         Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), ((1, WKB_LINESTRING, ()),))
 
 
+@pytest.mark.parametrize("fid", [0, 8, 2**63 - 1])
+def test_from_data_duplicate_fid(fid):
+    rows = ((fid, WKB_POINT_00, ()) for _ in range(2))
+    with pytest.raises(ValueError, match=f"Feature with ID {fid} already exists"):
+        Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), rows)
+
+
+@pytest.mark.parametrize(
+    "fid, expected", [(0, 0), (8, 8), (2**63 - 1, 2**63 - 1), (-1, 1), (-(2**63), 1)]
+)
+def test_from_data_fid_assignment(fid, expected, shared_datadir, reset_svg_paths):
+    style = (shared_datadir / "zero/placeholder.qml").read_text()
+    style = style.replace('"/* {{{ */ FALSE /* }}} */"', quoteattr(f"@id = {expected}"))
+    rows = iter(((fid, WKB_POINT_00, ()),))
+    layer = Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), rows)
+    image = render_vector(layer, style, EXTENT_ONE, 256)
+    assert image_stat(image).red.max == 255, f"Wrong @id for input FID {fid}"
+
+
+def test_from_data_fid_exhaustion():
+    rows = iter(((2**63 - 1, WKB_POINT_00, ()), (-1, WKB_POINT_00, ())))
+    with pytest.raises(ValueError, match="maximum ID has been reached"):
+        Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), rows)
+
+
 def test_from_data_linestring(shared_datadir, reset_svg_paths):
     crs = CRS.from_epsg(3857)
     empty_tuple = ()

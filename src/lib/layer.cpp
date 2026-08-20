@@ -24,10 +24,10 @@
 #include "crs.h"
 #include "utils.h"
 #include "exceptions.h"
+#include "memory_provider/memory_provider_utils.h"
 #include "style/style.h"
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
-#include <qgsmemoryproviderutils.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
 #include <QByteArray>

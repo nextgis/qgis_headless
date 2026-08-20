@@ -1,0 +1,5 @@
+add_executable(test_memory_provider test_memory_provider.cpp)
+set_target_properties(test_memory_provider PROPERTIES AUTOMOC ON)
+target_include_directories(test_memory_provider PRIVATE ${QGIS_CORE_INCLUDE_DIRS})
+target_link_libraries(test_memory_provider PRIVATE ${LIB_NAME} Qt5::Test)
+add_test(NAME memory_provider COMMAND test_memory_provider)

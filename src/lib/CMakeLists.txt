@@ -33,12 +33,20 @@ set(LIB_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/raw_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/project.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_request.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.cpp
 )
 
 set(LIB_PRIVATE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/application_lifetime.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/layer_feature_p.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/style/field_dependency_resolver.h
   ${CMAKE_CURRENT_SOURCE_DIR}/style/schema_raster_provider.h
 )
@@ -63,6 +71,7 @@ set(STYLE_PUBLIC_HEADERS
 )
 
 add_library(${LIB_NAME} ${LIB_SOURCES} ${LIB_PUBLIC_HEADERS} ${STYLE_PUBLIC_HEADERS} ${LIB_PRIVATE_HEADERS})
+set_target_properties(${LIB_NAME} PROPERTIES AUTOMOC ON)
 
 target_include_directories(${LIB_NAME} PUBLIC ${QGIS_CORE_INCLUDE_DIRS})
 

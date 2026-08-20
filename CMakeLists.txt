@@ -74,6 +74,12 @@ add_definitions(-D_USE_MATH_DEFINES)
 
 add_subdirectory(src)
 
+option(BUILD_TESTING "Build native regression tests" OFF)
+if(BUILD_TESTING)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 # Export package ===============================================================
