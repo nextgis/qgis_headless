@@ -46,17 +46,69 @@ namespace HeadlessRender
   class QGIS_HEADLESS_EXPORT MapRequest
   {
     public:
+      /**
+       * Initializes the MapRequest object with default settings.
+       */
       explicit MapRequest();
 
+      /**
+       * Sets the DPI for rendering.
+       * \param dpi the dots per inch to set for rendering.
+       */
       void setDpi( int dpi );
+
+      /**
+       * Sets the coordinate reference system (CRS) for rendering.
+       * \param crs the CRS to set for rendering.
+       */
       void setCrs( const CRS &crs );
+
+      /**
+       * Adds a layer with a given style and label.
+       * \param layer the layer to add.
+       * \param style the style to apply to the layer.
+       * \param label the label for the layer (optional).
+       * \returns the index of the added layer.
+       */
       LayerIndex addLayer( Layer &layer, Style &style, const std::string &label = "" );
+
+      /**
+       * Adds a project with multiple layers.
+       * \param project the project containing layers to add.
+       */
       void addProject( const Project &project );
 
+      /**
+       * Renders an image based on the given extent and size.
+       * \param extent the geographic extent for rendering.
+       * \param size the size of the output image.
+       * \param symbols optional render symbols to apply.
+       * \returns a shared pointer to the rendered image.
+       */
       ImagePtr renderImage( const Extent &extent, const Size &size, const RenderSymbols &symbols = {} );
+
+      /**
+       * Renders a legend based on the given size.
+       * \param size the size of the output legend image (optional).
+       * \returns a shared pointer to the rendered legend image.
+       */
       ImagePtr renderLegend( const Size &size = Size() );
+
+      /**
+       * Exports the map to a PDF file with the given extent and size.
+       * \param filepath the path to save the exported PDF file.
+       * \param extent the geographic extent for rendering.
+       * \param size the size of the output PDF.
+       */
       void exportPdf( const std::string &filepath, const Extent &extent, const Size &size );
 
+      /**
+       * Retrieves legend symbols for a specific layer index.
+       * \param index the index of the layer to retrieve legend symbols for.
+       * \param size the size of the legend symbol images (optional).
+       * \param count the number of legend symbols to generate (optional).
+       * \returns a vector of legend symbols.
+       */
       std::vector<LegendSymbol> legendSymbols(
         LayerIndex index, const Size &size = Size(), int count = DefaultRasterRenderSymbolCount
       );
@@ -78,20 +130,52 @@ namespace HeadlessRender
       RenderSymbols mDefaultRenderSymbols;
   };
 
+  /**
+   * Initializes the QGIS headless environment with command line arguments.
+   * \param argc the number of command line arguments.
+   * \param argv an array of command line argument strings.
+   */
   QGIS_HEADLESS_EXPORT void init( int argc, char **argv );
 
+  /**
+   * Deinitializes the QGIS headless environment.
+   */
   QGIS_HEADLESS_EXPORT void deinit();
 
+  /**
+   * Sets the paths to search for SVG files.
+   * \param paths a vector of paths where SVG files can be located.
+   */
   QGIS_HEADLESS_EXPORT void setSvgPaths( const std::vector<std::string> &paths );
 
+  /**
+   * Retrieves the current list of SVG file paths.
+   * \returns a vector containing the paths where SVG files are searched for.
+   */
   QGIS_HEADLESS_EXPORT std::vector<std::string> getSvgPaths();
 
+  /**
+   * Gets the version of the headless library as a string.
+   * \returns a C-style string representing the version of the headless library.
+   */
   QGIS_HEADLESS_EXPORT const char *getVersion();
 
+  /**
+   * Retrieves the version of QGIS used in the headless environment as a string.
+   * \returns a C-style string representing the QGIS version.
+   */
   QGIS_HEADLESS_EXPORT const char *getQGISVersion();
 
+  /**
+   * Gets the version of QGIS as an integer value.
+   * \returns an integer representing the QGIS version.
+   */
   QGIS_HEADLESS_EXPORT int getQGISVersionInt();
 
+  /**
+   * Sets the logging level for the headless environment.
+   * \param level the desired log level to set.
+   */
   QGIS_HEADLESS_EXPORT void setLoggingLevel( HeadlessRender::LogLevel level );
 } //namespace HeadlessRender
 

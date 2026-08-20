@@ -143,8 +143,9 @@ def test_geometry_crash():
             total += 1
             # fmt: off
             check_call([executable, "-c", dedent("""
-                from qgis_headless import Layer, CRS, init
+                from qgis_headless import Layer, CRS, init, deinit
                 from binascii import a2b_hex
+                import gc
 
                 FEATURE = (
                     0,
@@ -173,6 +174,9 @@ def test_geometry_crash():
                 init([])
 
                 layer = Layer.from_data(Layer.GT_MULTILINESTRING, CRS.from_epsg(3857), (), (FEATURE, ))
+                del layer
+                gc.collect()
+                deinit()
             """)])
             # fmt: on
         except CalledProcessError:
@@ -188,7 +192,6 @@ def test_wrong_source(shared_datadir):
         Layer.from_gdal(shared_datadir / "poly.geojson")
 
 
-@Issues.WRONG_FIDS
 def test_fid_collision():
     with pytest.raises(MemoryLayerError):
         Layer.from_data(

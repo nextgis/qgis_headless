@@ -28,13 +28,13 @@
 
 namespace HeadlessRender
 {
-  Qgis::WkbType layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType );
-  QVariant::Type layerAttributeTypetoQVariantType( HeadlessRender::LayerAttributeType attributeType );
+  Qgis::WkbType layerGeometryTypeToQgsWkbType( LayerGeometryType geometryType );
+  QVariant::Type layerAttributeTypeToQVariantType( LayerAttributeType attributeType );
 
   QgsMapLayerPtr createTemporaryVectorLayer( const QgsVectorLayer::LayerOptions &layerOptions );
   QgsMapLayerPtr createTemporaryRasterLayer();
   QgsMapLayerPtr createTemporaryLayerByType(
-    HeadlessRender::DataType type, const QgsVectorLayer::LayerOptions &layerOptions
+    DataType type, const QgsVectorLayer::LayerOptions &layerOptions
   );
 } //namespace HeadlessRender
 

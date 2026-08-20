@@ -142,7 +142,7 @@ PYBIND11_MODULE( _qgis_headless, m )
             if ( attr.is_none() )
             {
               feature.attributes.append(
-                QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
+                QVariant( HeadlessRender::layerAttributeTypeToQVariantType( attrType ) )
               );
               continue;
             }
@@ -209,7 +209,7 @@ PYBIND11_MODULE( _qgis_headless, m )
                 else
                   // Only JSON objects are supported, append an empty QVariantMap for other types
                   feature.attributes.append(
-                    QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
+                    QVariant( HeadlessRender::layerAttributeTypeToQVariantType( attrType ) )
                   );
                 break;
               }

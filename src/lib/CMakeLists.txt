@@ -29,10 +29,18 @@ set(LIB_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/raw_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/project.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_request.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.cpp
 )
 
 set(LIB_PRIVATE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.h
 )
 
 set(LIB_PUBLIC_HEADERS
@@ -62,6 +70,8 @@ target_link_libraries(${LIB_NAME}
   Qt5::PrintSupport
   ${QGIS_CORE_LIBRARIES}
 )
+
+set_target_properties(${LIB_NAME} PROPERTIES AUTOMOC ON)
 
 target_compile_definitions (${LIB_NAME} PRIVATE "QGIS_HEADLESS_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "QGIS_HEADLESS_EXPORT=${DLLIMPORT}")

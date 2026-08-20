@@ -19,16 +19,19 @@
 ******************************************************************************/
 
 #include "layer.h"
-#include "crs.h"
-#include "utils.h"
-#include "exceptions.h"
-#include "style.h"
-#include <qgsvectorlayer.h>
+
+#include <QByteArray>
+
 #include <qgsrasterlayer.h>
-#include <qgsmemoryproviderutils.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
-#include <QByteArray>
+#include <qgsvectorlayer.h>
+
+#include "crs.h"
+#include "exceptions.h"
+#include "memory_provider/memory_provider_utils.h"
+#include "style.h"
+#include "utils.h"
 
 void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
 {
@@ -81,12 +84,12 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
 {
   QgsFields fields;
   for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
-    fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
+  {
+    fields.append( QgsField( attrType.first, layerAttributeTypeToQVariantType( attrType.second ) ) );
+  }
 
-  std::shared_ptr<QgsVectorLayer> qgsLayer(
-    QgsMemoryProviderUtils::
-      createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() )
-  );
+  auto qgsLayer = MemoryProviderUtils::
+    createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
   disableVectorSimplify( qgsLayer );
 
   for ( const auto &data : featureDataList )

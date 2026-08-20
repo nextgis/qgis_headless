@@ -27,8 +27,6 @@ from qgis_headless.util import (
     to_pil,
 )
 
-from .known_issues import Issues
-
 QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 
 WKB_MSC = a2b_hex("01010000005070B1A206CF42409CDCEF5014E04B40")  # POINT (37.61739 55.75062)
@@ -590,7 +588,6 @@ def test_label_variables(save_img, shared_datadir):
     assert stat.green.max == 255, "Map scale or unit is wrong"
 
 
-@Issues.WRONG_FIDS
 def test_fid_variable(save_img, shared_datadir):
     style = Style.from_file(shared_datadir / "fid-points.qml")
     crs = CRS.from_epsg(3857)

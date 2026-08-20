@@ -29,6 +29,7 @@
 class QgsLayerTree;
 class QgsMapLayer;
 class QgsMapSettings;
+class QgsVectorLayer;
 
 namespace HeadlessRender
 {
@@ -95,6 +96,7 @@ namespace HeadlessRender
   using ScaleRange = std::array<double, 2>;
 
   using QgsMapLayerPtr = std::shared_ptr<QgsMapLayer>;
+  using QgsVectorLayerPtr = std::shared_ptr<QgsVectorLayer>;
 
   using StyleCategory = long;
 

@@ -20,7 +20,13 @@
 
 #include "lib.h"
 
-#include "version.h"
+#include <cstdlib>
+
+#include <QApplication>
+#include <QSizeF>
+#include <QPrinter>
+#include <QJsonArray>
+
 #include <qgsnetworkaccessmanager.h>
 #include <qgslegendrenderer.h>
 #include <qgslegendsettings.h>
@@ -43,12 +49,8 @@
 #include <qgscolorrampshader.h>
 
 #include "exceptions.h"
-
-#include <QApplication>
-#include <QSizeF>
-#include <QPrinter>
-#include <QJsonArray>
-#include <cstdlib>
+#include "version.h"
+#include "memory_provider/memory_provider_utils.h"
 
 namespace
 {
@@ -123,8 +125,12 @@ void HeadlessRender::init( int argc, char **argv )
   if ( !qEnvironmentVariableIsSet( "QGIS_PROVIDER_FILE" ) )
     qputenv( "QGIS_PROVIDER_FILE", QByteArray( "$^" ) );
 
-  app = new QgsApplication( argc, argv, false, "", platform );
+  auto &&qgsApp = std::make_unique<QgsApplication>( argc, argv, false, "", platform );
   QgsApplication::initQgis();
+
+  MemoryProviderUtils::registerMemoryProvider();
+
+  app = qgsApp.release();
 }
 
 void HeadlessRender::deinit()
