@@ -16,8 +16,14 @@ namespace HeadlessRender::detail
     geometry.fromWkb( wkb );
     feature.setGeometry( geometry );
     feature.setAttributes( attributes );
-    if ( !layer.dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert ) )
-      throw std::invalid_argument( "Cannot insert feature into the memory provider" );
+    auto *provider = layer.dataProvider();
+    if ( !provider->addFeature( feature, QgsFeatureSink::FastInsert ) )
+      throw std::invalid_argument(
+        QStringLiteral( "Cannot insert feature %1 into the memory provider: %2" )
+          .arg( id )
+          .arg( provider->errors().join( QStringLiteral( "; " ) ) )
+          .toStdString()
+      );
   }
 } //namespace HeadlessRender::detail
 

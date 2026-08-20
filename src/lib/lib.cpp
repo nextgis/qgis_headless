@@ -42,6 +42,7 @@
 #include <qgscolorrampshader.h>
 
 #include "exceptions.h"
+#include "memory_provider/memory_provider_utils.h"
 #include "random_color_generator.h"
 
 #include <QApplication>
@@ -183,13 +184,15 @@ void HeadlessRender::init( int argc, char **argv )
   if ( !qEnvironmentVariableIsSet( "QGIS_PROVIDER_FILE" ) )
     qputenv( "QGIS_PROVIDER_FILE", QByteArray( "$^" ) );
 
-  app = new QgsApplication( argc, argv, false, "", platform );
+  auto qgsApp = std::make_unique<QgsApplication>( argc, argv, false, "", platform );
 
   // By default, QGIS uses as many threads as there are CPU cores, but we limit
   // it to 4 threads here. This should be sufficient for the library's needs.
   QgsApplication::setMaxThreads( 4 );
 
   QgsApplication::initQgis();
+  MemoryProviderUtils::registerMemoryProvider();
+  app = qgsApp.release();
 }
 
 void HeadlessRender::deinit()

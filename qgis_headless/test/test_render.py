@@ -29,7 +29,6 @@ from qgis_headless.util import (
     to_pil,
 )
 
-from .known_issues import Issues
 from .raster_styles import large_palette_style_xml, raster_style_xml
 
 WKB_MSC = a2b_hex("01010000005070B1A206CF42409CDCEF5014E04B40")  # POINT (37.61739 55.75062)
@@ -794,7 +793,6 @@ def test_label_variables(save_img, shared_datadir):
     assert stat.green.max == 255, "Map scale or unit is wrong"
 
 
-@Issues.WRONG_FIDS
 def test_fid_variable(save_img, shared_datadir):
     style = Style.from_file(shared_datadir / "zero/fid-is-5.qml")
     crs = CRS.from_epsg(3857)
@@ -805,6 +803,20 @@ def test_fid_variable(save_img, shared_datadir):
     stat = image_stat(img)
 
     assert stat.green.max == 255, "Wrong colour from @id"
+
+
+@pytest.mark.parametrize(
+    "ids, expected",
+    [((42, 5), (0, 255, 0, 255)), ((5, 42), (255, 0, 0, 255))],
+)
+def test_fid_does_not_change_default_paint_order(ids, expected, shared_datadir):
+    style = Style.from_file(shared_datadir / "zero/fid-is-5.qml")
+    crs = CRS.from_epsg(3857)
+    rows = ((fid, WKB_POINT_00, ()) for fid in ids)
+    layer = Layer.from_data(Layer.GT_POINT, crs, (), rows)
+
+    image = render_vector(layer, style, EXTENT_ONE, 256)
+    assert image.getpixel((128, 128)) == expected
 
 
 @pytest.mark.parametrize(

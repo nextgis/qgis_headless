@@ -23,10 +23,10 @@
 #include "crs.h"
 #include "utils.h"
 #include "exceptions.h"
+#include "memory_provider/memory_provider_utils.h"
 #include "style/style.h"
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
-#include <qgsmemoryproviderutils.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
 #include <QByteArray>
@@ -80,10 +80,8 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
   for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
     fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
 
-  std::shared_ptr<QgsVectorLayer> qgsLayer(
-    QgsMemoryProviderUtils::
-      createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() )
-  );
+  auto qgsLayer = MemoryProviderUtils::
+    createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() );
   disableVectorSimplify( qgsLayer );
 
   for ( const auto &data : featureDataList )
