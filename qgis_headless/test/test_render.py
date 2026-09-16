@@ -699,3 +699,25 @@ def test_field_alias(save_img, shared_datadir):
     stat = image_stat(img)
 
     assert stat.green.max == 255, "Wrong point colour"
+
+
+def test_field_alias_cached(save_img, shared_datadir):
+    """Field aliases must work even when Style::importToLayer takes the
+    cached-temporary-layer branch (QgsMapLayerStyle does not carry <aliases>,
+    so applyFieldAliases has to re-apply them manually)."""
+    layer = Layer.from_ogr(shared_datadir / "field-alias/data.geojson")
+    style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml")
+
+    # Force Style::mCachedTemporaryLayer to be populated. Without this call
+    # Style::importToLayer goes through importNamedStyle(mData) and never
+    # executes applyFieldAliases.
+    #
+    # Any public method that internally touches createTemporaryVectorLayerWithStyle
+    # works here: used_attributes(), scale_range(), to_string().
+    assert "value_alias" not in style.used_attributes()
+    assert "value" in style.used_attributes()
+
+    img = save_img(render_vector(layer, style, EXTENT_ONE))
+    stat = image_stat(img)
+
+    assert stat.green.max == 255, "Wrong point colour (cached branch)"
