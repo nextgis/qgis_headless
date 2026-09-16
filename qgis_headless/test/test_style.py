@@ -116,6 +116,7 @@ def test_default(layer_type, params):
         param("rendering-order/desc-single.qml", {"order"}),
         param("rendering-order/asc-categorized.qml", {"order"}),
         param("rendering-order/desc-categorized.qml", {"order"}),
+        param("field-alias/alias-rule.qml", {"value"}, id="field-alias"),
         # fmt: on
     ),
 )

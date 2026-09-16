@@ -718,9 +718,20 @@ def test_random_colors(style, save_img, shared_datadir):
         assert img1.getpixel((i, 0)) == img2.getpixel((i, 0))
 
 
-def test_field_alias(save_img, shared_datadir):
+@pytest.mark.parametrize(
+    "force_cached",
+    [
+        pytest.param(False, id="direct"),
+        pytest.param(True, id="cached"),
+    ],
+)
+def test_field_alias(force_cached, save_img, shared_datadir):
     layer = Layer.from_ogr(shared_datadir / "field-alias/data.geojson")
     style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml")
+
+    if force_cached:
+        # Warm Style::mCachedTemporaryLayer so importToLayer reuses it via QgsMapLayerStyle.
+        style.used_attributes()
 
     img = save_img(render_vector(layer, style, EXTENT_ONE))
     stat = image_stat(img)

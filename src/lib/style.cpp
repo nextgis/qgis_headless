@@ -82,6 +82,16 @@ namespace HeadlessRender
     const QString LayerStyleMismatch = "Layer type and style type do not match";
     const QString AddStyleFailed = "AddStyle failed";
   } //namespace ErrorString
+
+  const QStringList FIELDS_TAGS = {
+    QStringLiteral( "fieldConfiguration" ),
+    QStringLiteral( "aliases" ),
+    QStringLiteral( "defaults" ),
+    QStringLiteral( "constraints" ),
+    QStringLiteral( "constraintExpressions" ),
+    QStringLiteral( "splitPolicies" ),
+    QStringLiteral( "expressionfields" )
+  };
 } //namespace HeadlessRender
 
 using namespace HeadlessRender;
@@ -90,7 +100,7 @@ const StyleCategory Style::DefaultImportCategories = QgsMapLayer::Symbology
                                                      | QgsMapLayer::Symbology3D
                                                      | QgsMapLayer::Labeling | QgsMapLayer::Rendering
                                                      | QgsMapLayer::CustomProperties
-                                                     | QgsMapLayer::Diagrams;
+                                                     | QgsMapLayer::Diagrams | QgsMapLayer::Fields;
 
 namespace
 {
@@ -317,7 +327,9 @@ void Style::init( const CreateParams &params )
 
   if ( params.callback || type() == DataType::Vector )
   {
+    const QDomDocument originalData = mData;
     mData = resolveSvgPaths( params.callback );
+    mergeFieldSections( mData, originalData );
     mCachedTemporaryLayer.reset();
   }
 }
@@ -446,10 +458,18 @@ bool Style::importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const
 
     layer->styleManager()->addStyle( styleName, currentStyle );
     bool result = layer->styleManager()->setCurrentStyle( styleName );
-    if ( !result )
+    if ( result )
+    {
+      if ( auto vectorLayer = std::dynamic_pointer_cast<QgsVectorLayer>( layer ) )
+      {
+        applyFieldAliases( vectorLayer );
+      }
+    }
+    else
     {
       errorMessage = ErrorString::AddStyleFailed;
     }
+
     return result;
   }
   else
@@ -464,6 +484,52 @@ bool Style::importToLayer( QgsMapLayerPtr &layer, QDomDocument styleData, QStrin
     ->importNamedStyle( styleData, errorMessage, static_cast<QgsMapLayer::StyleCategory>( Style::DefaultImportCategories ) );
 }
 
+void Style::applyFieldAliases( const QgsVectorLayerPtr &layer ) const
+{
+  const QDomElement aliases = mData.firstChildElement( TAGS::QGIS )
+                                .firstChildElement( QStringLiteral( "aliases" ) );
+  if ( aliases.isNull() )
+  {
+    return;
+  }
+
+  const QDomNodeList nodes = aliases.elementsByTagName( QStringLiteral( "alias" ) );
+  for ( int i = 0; i < nodes.size(); ++i )
+  {
+    const QDomElement a = nodes.at( i ).toElement();
+    const int idx = layer->fields().indexOf( a.attribute( QStringLiteral( "field" ) ) );
+    if ( idx >= 0 )
+    {
+      layer->setFieldAlias( idx, a.attribute( QStringLiteral( "name" ) ) );
+    }
+  }
+}
+
+void Style::mergeFieldSections( QDomDocument &target, const QDomDocument &source ) const
+{
+  QDomElement targetRoot = target.firstChildElement( TAGS::QGIS );
+  QDomElement sourceRoot = source.firstChildElement( TAGS::QGIS );
+  if ( targetRoot.isNull() || sourceRoot.isNull() )
+  {
+    return;
+  }
+
+  for ( const QString &tag : FIELDS_TAGS )
+  {
+    QDomElement existing = targetRoot.firstChildElement( tag );
+    if ( !existing.isNull() )
+    {
+      targetRoot.removeChild( existing );
+    }
+
+    const QDomElement sourceElem = sourceRoot.firstChildElement( tag );
+    if ( !sourceElem.isNull() )
+    {
+      targetRoot.appendChild( sourceElem.cloneNode( true ).toElement() );
+    }
+  }
+}
+
 UsedAttributes Style::readUsedAttributes() const
 {
   std::set<std::string> usedAttributes;
@@ -472,6 +538,50 @@ UsedAttributes Style::readUsedAttributes() const
   {
     return std::make_pair( true, usedAttributes );
   }
+
+  QHash<QString, QString> aliasToField;
+  QSet<QString> realFieldNames;
+
+  {
+    const QDomElement root = mData.firstChildElement( TAGS::QGIS );
+
+    const QDomElement aliasesElem = root.firstChildElement( QStringLiteral( "aliases" ) );
+    if ( !aliasesElem.isNull() )
+    {
+      const QDomNodeList nodes = aliasesElem.elementsByTagName( QStringLiteral( "alias" ) );
+      for ( int i = 0; i < nodes.size(); ++i )
+      {
+        const QDomElement a = nodes.at( i ).toElement();
+        const QString fieldName = a.attribute( QStringLiteral( "field" ) );
+        const QString aliasName = a.attribute( QStringLiteral( "name" ) );
+        if ( !fieldName.isEmpty() && !aliasName.isEmpty() )
+          aliasToField.insert( aliasName, fieldName );
+      }
+    }
+
+    const QDomElement fieldsElem = root.firstChildElement( QStringLiteral( "fieldConfiguration" ) );
+    if ( !fieldsElem.isNull() )
+    {
+      const QDomNodeList nodes = fieldsElem.elementsByTagName( QStringLiteral( "field" ) );
+      for ( int i = 0; i < nodes.size(); ++i )
+      {
+        const QString name = nodes.at( i ).toElement().attribute( QStringLiteral( "name" ) );
+        if ( !name.isEmpty() )
+          realFieldNames.insert( name );
+      }
+    }
+  }
+
+  auto normalize = [&aliasToField, &realFieldNames]( const QString &name ) -> QString {
+    if ( realFieldNames.contains( name ) )
+    {
+      return name;
+    }
+    else
+    {
+      return aliasToField.value( name, name );
+    }
+  };
 
   QString errorMessage;
   QgsVectorLayerPtr qgsVectorLayer = createTemporaryVectorLayerWithStyle( errorMessage );
@@ -487,7 +597,7 @@ UsedAttributes Style::readUsedAttributes() const
     {
       for ( auto &&attribute : diagramRenderer->referencedFields() )
       {
-        usedAttributes.insert( attribute.toStdString() );
+        usedAttributes.insert( normalize( attribute ).toStdString() );
       }
     }
 
@@ -496,13 +606,13 @@ UsedAttributes Style::readUsedAttributes() const
     {
       for ( auto &&attribute : diagramSettings->referencedFields() )
       {
-        usedAttributes.insert( attribute.toStdString() );
+        usedAttributes.insert( normalize( attribute ).toStdString() );
       }
 
       const QgsPropertyCollection &dataProperties = diagramSettings->dataDefinedProperties();
       for ( const QString &field : dataProperties.referencedFields( QgsExpressionContext(), true ) )
       {
-        usedAttributes.insert( field.toStdString() );
+        usedAttributes.insert( normalize( field ).toStdString() );
       }
     }
   }
@@ -533,7 +643,7 @@ UsedAttributes Style::readUsedAttributes() const
 
     for ( const QString &field : fields )
     {
-      usedAttributes.insert( field.toStdString() );
+      usedAttributes.insert( normalize( field ).toStdString() );
     }
   }
 
@@ -544,14 +654,14 @@ UsedAttributes Style::readUsedAttributes() const
     {
       return std::make_pair( false, usedAttributes );
     }
-    usedAttributes.insert( attribute.toStdString() );
+    usedAttributes.insert( normalize( attribute ).toStdString() );
   }
 
   if ( renderer->orderByEnabled() )
   {
     for ( auto &&attribute : renderer->orderBy().usedAttributes() )
     {
-      usedAttributes.insert( attribute.toStdString() );
+      usedAttributes.insert( normalize( attribute ).toStdString() );
     }
   }
 
@@ -579,6 +689,7 @@ QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallb
   }
 
   qgsVectorLayer->exportNamedStyle( exportedStyle, errorMessage );
+
   if ( !errorMessage.isEmpty() )
     throw QgisHeadlessError( errorMessage );
 
