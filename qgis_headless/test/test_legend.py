@@ -446,3 +446,79 @@ def test_legend_symbols_diagram(shared_datadir):
 
     for i, symbol in enumerate(symbols):
         assert symbol.render() == render_expected[i], f"Symbol #{i} render mismatch"
+
+
+@pytest.mark.parametrize(
+    "style_file, layer_file, groups, parents",
+    (
+        (
+            "contour/simple.qml",
+            "contour/data.geojson",
+            (False,),
+            (None,),
+        ),
+        (
+            "landuse/landuse.qml",
+            "landuse/landuse.geojson",
+            (False, False),
+            (
+                None,
+                None,
+            ),
+        ),
+        (
+            "multi-level-legend/multi-level-legend.qml",
+            "multi-level-legend/multi-level-legend.geojson",
+            (
+                True,
+                True,
+                False,
+                False,
+                True,
+                False,
+                False,
+                True,
+                True,
+                False,
+                False,
+                True,
+                False,
+                False,
+            ),
+            (
+                None,  # index = 0
+                0,  # index = 1
+                1,  # index = 2
+                1,  # index = 3
+                0,  # index = 4
+                4,  # index = 5
+                4,  # index = 6
+                None,  # index = 7
+                7,  # index = 8
+                8,  # index = 9
+                8,  # index = 10
+                7,  # index = 11
+                11,  # index = 12
+                11,  # index = 13
+            ),
+        ),
+    ),
+)
+def test_legend_symbols_group(style_file, layer_file, groups, parents, shared_datadir):
+    style = Style.from_file(shared_datadir / style_file)
+    if layer_file.endswith(".tif"):
+        layer = Layer.from_gdal(shared_datadir / layer_file)
+    else:
+        layer = Layer.from_ogr(shared_datadir / layer_file)
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    symbols = req.legend_symbols(0, LEGEND_DEFAULT_SIZES)
+
+    assert len(symbols) == len(groups) == len(parents)
+    for symbol, is_group, parent in zip(symbols, groups, parents):
+        assert symbol.is_group() == is_group, (
+            f"Symbol with index {symbol.index()} has group mismatch"
+        )
+        assert symbol.parent() == parent
