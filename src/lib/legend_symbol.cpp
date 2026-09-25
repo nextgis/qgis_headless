@@ -67,6 +67,16 @@ void LegendSymbol::setHasCategory( const bool hasCategory )
   mHasCategory = hasCategory;
 }
 
+void LegendSymbol::setIsGroup( bool isGroup )
+{
+  mIsGroup = isGroup;
+}
+
+void LegendSymbol::setParentIndex( Index index )
+{
+  mParentIndex = index;
+}
+
 LegendSymbol::Index LegendSymbol::index() const
 {
   return mIndex;
@@ -80,4 +90,14 @@ SymbolRender LegendSymbol::render() const
 int LegendSymbol::rasterBand() const
 {
   return mRasterBand;
+}
+
+bool LegendSymbol::isGroup() const noexcept
+{
+  return mIsGroup;
+}
+
+std::optional<LegendSymbol::Index> LegendSymbol::parent() const noexcept
+{
+  return mParentIndex;
 }
