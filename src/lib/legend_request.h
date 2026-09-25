@@ -22,8 +22,8 @@
 #define QGIS_HEADLESS_LEGEND_REQUEST_H
 
 
+#include <optional>
 #include <vector>
-
 
 #include "layer.h"
 #include "legend_symbol.h"
@@ -93,6 +93,12 @@ namespace HeadlessRender
 
       class LegendRenderContext;
 
+      struct LegendHierarchyInfo
+      {
+          bool isGroup = false;
+          std::optional<int> parentPosition;
+      };
+
     private:
       LegendSymbolsContainer renderLayerSymbols( const Layer &layer, LegendRenderContext &context );
 
@@ -152,10 +158,13 @@ namespace HeadlessRender
       );
 
       LegendSymbol renderRasterLayerSymbol( const QImage &image, const QString &title, int rasterBand );
+
       LegendSymbol renderRasterLayerSymbol(
         QgsLayerTreeModelLegendNode *node, LegendRenderContext &context,
         const QgsRasterRenderer *renderer, int rasterBand
       );
+
+      std::vector<LegendHierarchyInfo> buildLegendHierarchy( const LayerTreeModelNodeList &layerNodes );
 
     private:
       int mOutputDpi = 96;

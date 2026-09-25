@@ -20,6 +20,8 @@
 
 #include "legend_request.h"
 
+#include <unordered_map>
+
 #include <qgscolorramp.h>
 #include <qgsheatmaprenderer.h>
 #include <qgslayertree.h>
@@ -227,14 +229,39 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderDefaultVectorLayerSym
 {
   LegendSymbolsContainer symbols;
   symbols.reserve( layerNodes.length() );
-  for ( auto &&node : layerNodes )
-  {
-    symbols.push_back( renderVectorLayerSymbol( node, context, renderer ) );
-  }
 
-  if ( symbols.size() == 1 )
+  if ( layerNodes.length() == 1 )
   {
+    symbols.push_back( renderVectorLayerSymbol( layerNodes[0], context, renderer ) );
     symbols[0].setHasCategory( false );
+  }
+  else
+  {
+    auto &&hierarchy = buildLegendHierarchy( layerNodes );
+
+    const LegendSymbol::Index startIndex = layerIndex;
+
+    for ( int i = 0; i < layerNodes.length(); ++i )
+    {
+      LegendSymbol symbol = renderVectorLayerSymbol( layerNodes[i], context, renderer );
+
+      if ( i < static_cast<int>( hierarchy.size() ) )
+      {
+        const LegendHierarchyInfo &info = hierarchy[i];
+
+        if ( info.isGroup )
+        {
+          symbol.setIsGroup( true );
+        }
+
+        if ( info.parentPosition.has_value() )
+        {
+          symbol.setParentIndex( startIndex + *info.parentPosition );
+        }
+      }
+
+      symbols.push_back( std::move( symbol ) );
+    }
   }
 
   return symbols;
@@ -244,14 +271,13 @@ LegendSymbol LegendRequest::renderVectorLayerSymbol(
   QgsLayerTreeModelLegendNode *node, LegendRenderContext &context, const QgsFeatureRenderer *renderer
 )
 {
-  auto symbolRender = HeadlessRender::SymbolRender::Uncheckable;
+  auto symbolRender = SymbolRender::Uncheckable;
 
   if ( !dynamic_cast<const QgsSimpleLegendNode *>( node ) // not a diagram symbol
        && renderer->legendSymbolItemsCheckable() )
   {
-    symbolRender = node->data( Qt::CheckStateRole ).toBool()
-                     ? HeadlessRender::SymbolRender::Checked
-                     : HeadlessRender::SymbolRender::Unchecked;
+    symbolRender = node->data( Qt::CheckStateRole ).toBool() ? SymbolRender::Checked
+                                                             : SymbolRender::Unchecked;
   }
 
   return HeadlessRender::LegendSymbol::create(
@@ -418,4 +444,52 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderDefaultRasterSymbols(
     symbols.push_back( renderRasterLayerSymbol( node, context, renderer, band ) );
   }
   return symbols;
+}
+
+std::vector<LegendRequest::LegendHierarchyInfo> LegendRequest::buildLegendHierarchy(
+  const LayerTreeModelNodeList &layerNodes
+)
+{
+  const int nodeCount = layerNodes.length();
+  std::vector<LegendHierarchyInfo> result( static_cast<size_t>( nodeCount ) );
+
+  if ( nodeCount == 0 )
+    return result;
+
+  std::vector<QString> ruleKeys( static_cast<size_t>( nodeCount ) );
+  std::vector<QString> parentRuleKeys( static_cast<size_t>( nodeCount ) );
+
+  for ( int i = 0; i < nodeCount; ++i )
+  {
+    auto *node = layerNodes.at( i );
+    if ( !node )
+      continue;
+
+    ruleKeys[i] = node->data( ( int ) QgsLayerTreeModelLegendNode::CustomRole::RuleKey ).toString();
+    parentRuleKeys[i]
+      = node->data( ( int ) QgsLayerTreeModelLegendNode::CustomRole::ParentRuleKey ).toString();
+  }
+
+  std::unordered_map<QString, int> ruleKeyToPosition;
+  ruleKeyToPosition.reserve( static_cast<size_t>( nodeCount ) );
+  for ( int i = 0; i < nodeCount; ++i )
+  {
+    if ( !ruleKeys[i].isEmpty() )
+      ruleKeyToPosition.emplace( ruleKeys[i], i );
+  }
+
+  for ( int i = 0; i < nodeCount; ++i )
+  {
+    if ( parentRuleKeys[i].isEmpty() )
+      continue;
+
+    auto it = ruleKeyToPosition.find( parentRuleKeys[i] );
+    if ( it == ruleKeyToPosition.end() )
+      continue;
+
+    result[i].parentPosition = it->second;
+    result[it->second].isGroup = true;
+  }
+
+  return result;
 }

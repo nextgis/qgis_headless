@@ -333,6 +333,8 @@ PYBIND11_MODULE( _qgis_headless, m )
         return {};
       }
     )
+    .def( "is_group", &HeadlessRender::LegendSymbol::isGroup )
+    .def( "parent", &HeadlessRender::LegendSymbol::parent )
     .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );
 
   py::class_<HeadlessRender::RawData, std::shared_ptr<HeadlessRender::RawData>>( m, "RawData" )
