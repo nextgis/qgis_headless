@@ -436,3 +436,56 @@ def test_legend_symbols_diagram(shared_datadir):
 
     for i, symbol in enumerate(symbols):
         assert symbol.render() == render_expected[i], f"Symbol #{i} render mismatch"
+
+
+@pytest.mark.parametrize(
+    "style_file, layer_file, group_parent",
+    (
+        (
+            "contour/simple.qml",
+            "contour/data.geojson",
+            ((False, None),),
+        ),
+        (
+            "landuse/landuse.qml",
+            "landuse/landuse.geojson",
+            (
+                (False, None),
+                (False, None),
+            ),
+        ),
+        (
+            "multi-level-legend/multi-level-legend.qml",
+            "multi-level-legend/multi-level-legend.geojsonl",
+            (
+                (True, None),
+                (True, 0),
+                (False, 1),
+                (False, 1),
+                (True, 0),
+                (False, 4),
+                (False, 4),
+                (True, None),
+                (True, 7),
+                (False, 8),
+                (False, 8),
+                (True, 7),
+                (False, 11),
+                (False, 11),
+            ),
+        ),
+    ),
+)
+def test_legend_symbols_group(style_file, layer_file, group_parent, shared_datadir):
+    style = Style.from_file(shared_datadir / style_file)
+    layer = Layer.from_ogr(shared_datadir / layer_file)
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    symbols = req.legend_symbols(0, LEGEND_DEFAULT_SIZES)
+
+    assert len(symbols) == len(group_parent)
+    for symbol, (is_group, parent) in zip(symbols, group_parent):
+        assert symbol.is_group() == is_group, f"Symbol #{symbol.index()} group mismatch"
+        assert symbol.parent() == parent, f"Symbol #{symbol.index()} parent mismatch"

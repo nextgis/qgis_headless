@@ -23,6 +23,7 @@
 
 #include "image.h"
 #include "types.h"
+#include <optional>
 #include <QString>
 
 namespace HeadlessRender
@@ -79,6 +80,18 @@ namespace HeadlessRender
       void setHasCategory( bool hasCategory );
 
       /**
+       * Sets whether the layer has a child symbols or not, depending on the value of the isGroup parameter.
+       * \sa isGroup()
+       */
+      void setIsGroup( bool isGroup );
+
+      /**
+       * Sets the index of parent symbol.
+       * \sa parent()
+       */
+      void setParentIndex( Index index );
+
+      /**
        * Returns index of layer.
        */
       Index index() const;
@@ -93,6 +106,16 @@ namespace HeadlessRender
        */
       int rasterBand() const;
 
+      /**
+       * Returns true if symbol has child symbols, otherwise returns false.
+       */
+      bool isGroup() const noexcept;
+
+      /**
+       * Returns index of parent symbol, if provided.
+       */
+      std::optional<Index> parent() const noexcept;
+
     private:
       LegendSymbol(
         const ImagePtr &icon, const QString &title, SymbolRender render, Index index,
@@ -106,6 +129,8 @@ namespace HeadlessRender
       SymbolRender mRender = SymbolRender::Uncheckable;
       Index mIndex = 0;
       int mRasterBand;
+      bool mIsGroup = false;
+      std::optional<Index> mParentIndex;
   };
 } //namespace HeadlessRender
 
