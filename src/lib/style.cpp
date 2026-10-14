@@ -458,12 +458,18 @@ bool Style::importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const
 
     layer->styleManager()->addStyle( styleName, currentStyle );
     bool result = layer->styleManager()->setCurrentStyle( styleName );
-    if ( !result )
+    if ( result )
+    {
+      if ( auto vectorLayer = std::dynamic_pointer_cast<QgsVectorLayer>( layer ) )
+      {
+        applyFieldAliases( vectorLayer );
+      }
+    }
+    else
     {
       errorMessage = ErrorString::AddStyleFailed;
     }
 
-    applyFieldAliases( layer );
     return result;
   }
   else
@@ -478,19 +484,8 @@ bool Style::importToLayer( QgsMapLayerPtr &layer, QDomDocument styleData, QStrin
     ->importNamedStyle( styleData, errorMessage, static_cast<QgsMapLayer::StyleCategory>( Style::DefaultImportCategories ) );
 }
 
-void Style::applyFieldAliases( const QgsMapLayerPtr &layer ) const
+void Style::applyFieldAliases( const QgsVectorLayerPtr &layer ) const
 {
-  if ( !layer )
-  {
-    return;
-  }
-
-  auto *vectorLayer = qobject_cast<QgsVectorLayer *>( layer.get() );
-  if ( !vectorLayer )
-  {
-    return;
-  }
-
   const QDomElement aliases = mData.firstChildElement( TAGS::QGIS )
                                 .firstChildElement( QStringLiteral( "aliases" ) );
   if ( aliases.isNull() )
@@ -502,10 +497,10 @@ void Style::applyFieldAliases( const QgsMapLayerPtr &layer ) const
   for ( int i = 0; i < nodes.size(); ++i )
   {
     const QDomElement a = nodes.at( i ).toElement();
-    const int idx = vectorLayer->fields().indexOf( a.attribute( QStringLiteral( "field" ) ) );
+    const int idx = layer->fields().indexOf( a.attribute( QStringLiteral( "field" ) ) );
     if ( idx >= 0 )
     {
-      vectorLayer->setFieldAlias( idx, a.attribute( QStringLiteral( "name" ) ) );
+      layer->setFieldAlias( idx, a.attribute( QStringLiteral( "name" ) ) );
     }
   }
 }
@@ -693,8 +688,7 @@ QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallb
     resolveLabelingSvgPaths( labeling, svgResolverCallback );
   }
 
-  qgsVectorLayer
-    ->exportNamedStyle( exportedStyle, errorMessage, QgsReadWriteContext(), QgsMapLayer::AllStyleCategories );
+  qgsVectorLayer->exportNamedStyle( exportedStyle, errorMessage );
 
   if ( !errorMessage.isEmpty() )
     throw QgisHeadlessError( errorMessage );

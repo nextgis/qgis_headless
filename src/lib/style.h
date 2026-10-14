@@ -178,7 +178,7 @@ namespace HeadlessRender
       ) const;
       UsedAttributes readUsedAttributes() const;
 
-      void applyFieldAliases( const QgsMapLayerPtr &layer ) const;
+      void applyFieldAliases( const QgsVectorLayerPtr &layer ) const;
 
       void mergeFieldSections( QDomDocument &target, const QDomDocument &source ) const;
 
