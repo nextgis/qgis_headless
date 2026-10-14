@@ -691,33 +691,22 @@ def test_rendering_order(layer_name, style_name, extent, save_img, shared_datadi
     assert not left_overlaps_right(inverted_image)
 
 
-def test_field_alias(save_img, shared_datadir):
+@pytest.mark.parametrize(
+    "force_cached",
+    [
+        pytest.param(False, id="direct"),
+        pytest.param(True, id="cached"),
+    ],
+)
+def test_field_alias(force_cached, save_img, shared_datadir):
     layer = Layer.from_ogr(shared_datadir / "field-alias/data.geojson")
     style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml")
+
+    if force_cached:
+        # Warm Style::mCachedTemporaryLayer so importToLayer reuses it via QgsMapLayerStyle.
+        style.used_attributes()
 
     img = save_img(render_vector(layer, style, EXTENT_ONE))
     stat = image_stat(img)
 
     assert stat.green.max == 255, "Wrong point colour"
-
-
-def test_field_alias_cached(save_img, shared_datadir):
-    """Field aliases must work even when Style::importToLayer takes the
-    cached-temporary-layer branch (QgsMapLayerStyle does not carry <aliases>,
-    so applyFieldAliases has to re-apply them manually)."""
-    layer = Layer.from_ogr(shared_datadir / "field-alias/data.geojson")
-    style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml")
-
-    # Force Style::mCachedTemporaryLayer to be populated. Without this call
-    # Style::importToLayer goes through importNamedStyle(mData) and never
-    # executes applyFieldAliases.
-    #
-    # Any public method that internally touches createTemporaryVectorLayerWithStyle
-    # works here: used_attributes(), scale_range(), to_string().
-    assert "value_alias" not in style.used_attributes()
-    assert "value" in style.used_attributes()
-
-    img = save_img(render_vector(layer, style, EXTENT_ONE))
-    stat = image_stat(img)
-
-    assert stat.green.max == 255, "Wrong point colour (cached branch)"
