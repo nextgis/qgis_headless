@@ -1,4 +1,3 @@
-import io
 from argparse import ArgumentParser
 
 from qgis_headless import CRS, Layer, MapRequest, Style, deinit, init
@@ -29,7 +28,7 @@ def main():
         image = req.render_image(tuple(args.extent), tuple(args.size))
 
     if args.output is not None:
-        with io.open(args.output, "wb") as fd:
+        with open(args.output, "wb") as fd:
             fd.write(image.to_bytes())
 
     deinit()

@@ -7,7 +7,7 @@ name = "qgis_headless"
 description = "QGIS headless rendering library"
 authors = [{ name = "NextGIS", email = "info@nextgis.com" }]
 license = { text = "GPL" }
-requires-python = ">3.8"
+requires-python = ">=3.12"
 dynamic = ["version"]
 
 [project.scripts]

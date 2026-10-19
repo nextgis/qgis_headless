@@ -1,6 +1,5 @@
 import gc
 from pathlib import Path
-from typing import Optional
 
 import _qgis_headless
 import pytest
@@ -35,7 +34,7 @@ def reset_svg_paths():
 
 @pytest.fixture()
 def save_img(request):
-    def _do(img, name: Optional[str] = None, *, suffix: Optional[str] = None):
+    def _do(img, name: str | None = None, *, suffix: str | None = None):
         return img
 
     if img_output_path := request.config.getoption("--img-output"):
@@ -44,7 +43,7 @@ def save_img(request):
         if subtest_name:
             base = base / str(subtest_name)
 
-        def _do(img, name: Optional[str] = None, *, suffix: Optional[str] = None):
+        def _do(img, name: str | None = None, *, suffix: str | None = None):
             if name:
                 directory = base
             else:
