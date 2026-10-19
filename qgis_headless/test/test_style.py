@@ -3,7 +3,6 @@ from io import StringIO
 
 import pytest
 from lxml import etree
-from packaging import version
 from pytest import param
 
 from qgis_headless import (
@@ -16,11 +15,7 @@ from qgis_headless import (
     Style,
     StyleTypeMismatch,
     StyleValidationError,
-    get_qgis_version,
 )
-
-QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
-QGIS_312 = QGIS_VERSION >= version.parse("3.12")
 
 
 def test_non_existent_file(shared_datadir):
@@ -80,7 +75,7 @@ def test_default(layer_type, params):
         # fmt: off
         param("contour/simple.qml", set(), id="contour/simple"),
         param("contour/rgb.qml", {"level"}, id="contour/rgb"),
-        param("contour/rbl.qml", {"level"} if QGIS_312 else None, id="contour/rbl"),
+        param("contour/rbl.qml", {"level"}, id="contour/rbl"),
         param("boston/highway.qml", {"HIGHWAY"}, id="boston/highway-qml"),
         param("boston/highway.sld", {"HIGHWAY"}, id="boston/highway-sld"),
         param("attributes/default.qml", set(), id="default"),
@@ -89,7 +84,7 @@ def test_default(layer_type, params):
         param("attributes/25d-expression.qml", None, id="25D-expression"),
         param(
             "attributes/rule-based-labeling.qml",
-            {"a", "b", "c"} if QGIS_312 else None,
+            {"a", "b", "c"},
             id="rule-based-labeling",
         ),
         param(

@@ -6,7 +6,6 @@ from itertools import product
 from tempfile import NamedTemporaryFile
 
 import pytest
-from packaging import version
 from pytest import approx
 
 from qgis_headless import (
@@ -16,7 +15,6 @@ from qgis_headless import (
     Style,
     StyleFormat,
     StyleTypeMismatch,
-    get_qgis_version,
     set_svg_paths,
 )
 from qgis_headless.util import (
@@ -30,8 +28,6 @@ from qgis_headless.util import (
 )
 
 from .known_issues import Issues
-
-QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 
 WKB_MSC = a2b_hex("01010000005070B1A206CF42409CDCEF5014E04B40")  # POINT (37.61739 55.75062)
 EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
@@ -230,10 +226,6 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
 
-@pytest.mark.skipif(
-    QGIS_VERSION < version.parse("3.14"),
-    reason="Fetching marker by URL may fail in QGIS < 3.14",
-)
 def test_marker_url(save_img, shared_datadir, reset_svg_paths, capfd):
     data = shared_datadir / "zero/data.geojson"
     style = (shared_datadir / "zero/marker-url.qml").read_text()

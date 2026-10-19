@@ -6,7 +6,7 @@ Headless rendering library using QGIS
 
 1. Install dependecies:
 
-   * `QGIS` >= 3.32
+   * `QGIS` >= 3.44
    * `libqgis-dev`
    * `qt5-image-formats-plugins` (usually installed via dependencies)
    * `build-essential`
@@ -31,8 +31,8 @@ Headless rendering library using QGIS
 Ubuntu Jammy (for example):
 
 ``` shell
-$ docker build -t qgis_headless:jammy -f Dockerfile.jammy .
-$ docker run --rm qgis_headless:jammy ./pytest-runner
+$ docker build -t qgis_headless:resolute -f Dockerfile.resolute .
+$ docker run --rm qgis_headless:resolute ./pytest-runner
 ```
 
 ## Developer Notes

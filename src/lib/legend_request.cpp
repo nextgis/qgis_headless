@@ -152,11 +152,7 @@ const QImage &LegendRequest::LegendRenderContext::drawImage( const QColor &color
 const QImage &LegendRequest::LegendRenderContext::drawImage( QgsLayerTreeModelLegendNode *node ) &
 {
   image.fill( Qt::transparent );
-#if _QGIS_VERSION_INT >= 34400
   node->draw( legendSettings, itemContext );
-#else
-  node->draw( legendSettings, &itemContext );
-#endif
   return image;
 }
 
@@ -346,11 +342,7 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderPseudoColorRasterSymb
   auto *rampShader = dynamic_cast<const QgsColorRampShader *>(
     renderer->shader()->rasterShaderFunction()
   );
-#if _QGIS_VERSION_INT >= 33800
   if ( rampShader && rampShader->colorRampType() == Qgis::ShaderInterpolationMethod::Linear )
-#else
-  if ( rampShader && rampShader->colorRampType() == QgsColorRampShader::Type::Interpolated )
-#endif
   {
     std::unique_ptr<QgsColorRamp> colorRamp( rampShader->createColorRamp() );
     return renderColorRampSymbols(

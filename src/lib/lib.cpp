@@ -192,7 +192,6 @@ HeadlessRender::LayerIndex HeadlessRender::MapRequest::
 
   if ( style.isDefaultStyle() )
   {
-#if _QGIS_VERSION_INT >= 33000
     // If the default style used for a paletted raster, we need to regenerate the colors with RandomColorGenerator.
     if ( layer.type() == DataType::Raster )
     {
@@ -219,9 +218,6 @@ HeadlessRender::LayerIndex HeadlessRender::MapRequest::
     {
       layer.setRendererSymbolColor( style.defaultStyleColor() );
     }
-#else
-    layer.setRendererSymbolColor( style.defaultStyleColor() );
-#endif
   }
   else
   {

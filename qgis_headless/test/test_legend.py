@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
 import pytest
-from packaging import version
 
 from qgis_headless import (
     CRS,
@@ -10,7 +9,6 @@ from qgis_headless import (
     MapRequest,
     QgisHeadlessError,
     Style,
-    get_qgis_version,
     set_svg_paths,
 )
 from qgis_headless.util import (
@@ -24,8 +22,6 @@ from qgis_headless.util import (
     render_legend,
     to_pil,
 )
-
-QGIS_VERSION = version.parse(get_qgis_version().split("-")[0])
 
 
 def test_legend(save_img, shared_datadir, reset_svg_paths):
@@ -267,10 +263,6 @@ def test_legend_symbols(
                 (None, dict(colors=(255, 0, 255, 255))),
                 ((0,), dict(colors=(255, 0, 0, 255))),
                 ((1,), dict(colors=(0, 0, 255, 255))),
-            ),
-            marks=pytest.mark.skipif(
-                QGIS_VERSION < version.parse("3.36"),
-                reason="QML category syntax changing",
             ),
         ),
     ),

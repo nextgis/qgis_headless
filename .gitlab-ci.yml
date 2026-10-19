@@ -5,7 +5,7 @@ stages:
 pre_commit_check:
   stage: lint
   tags: [nextgis-docker]
-  image: python:3.11
+  image: python:3.12
   before_script:
     - pip install pre-commit
   script:
@@ -34,16 +34,6 @@ pre_commit_check:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
-test_jammy:
-  extends: .run_tests_job
-  variables:
-    DISTRO: jammy
-
-test_jammy_latest:
-  extends: .run_tests_job
-  variables:
-    DISTRO: jammy-latest
-
 test_noble:
   extends: .run_tests_job
   variables:
@@ -58,3 +48,8 @@ test_resolute:
   extends: .run_tests_job
   variables:
     DISTRO: resolute
+
+test_resolute_latest:
+  extends: .run_tests_job
+  variables:
+    DISTRO: resolute-latest
