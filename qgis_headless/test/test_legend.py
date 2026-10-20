@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 import pytest
 
 from qgis_headless import (
@@ -277,7 +275,7 @@ def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_dat
     req.set_crs(CRS.from_epsg(3857))
 
     for symbols, expected in cases:
-        params: Dict[str, Any] = dict(extent=extent, size=(256, 256))
+        params = dict(extent=extent, size=(256, 256))
         if symbols is not None:
             params["symbols"] = ((0, symbols),)
         if exc := expected.get("exc"):

@@ -2,7 +2,7 @@ from binascii import a2b_hex
 from collections import namedtuple
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable
 
 from qgis_headless import CRS, Image, Layer, MapRequest, Style, StyleFormat
 
@@ -81,7 +81,7 @@ def image_stat(image: "PilImage") -> ImageStat:
     )
 
 
-def is_same_color(a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]) -> bool:
+def is_same_color(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> bool:
     color_channels_delta = sum(abs(ca - cb) for ca, cb in zip(a[:3], b[:3]))
     alpha_channel_delta = abs(a[3] - b[3]) / 255.0
     return color_channels_delta <= 3 and alpha_channel_delta < 0.05
@@ -93,14 +93,14 @@ def _crs_from_epsg_3857():
 
 
 def render_vector(
-    layer: Union[Layer, Path, str],
-    style: Union[Style, str],
-    extent: Tuple[float, float, float, float],
-    size: Union[int, Tuple[int, int]] = (256, 256),
+    layer: Layer | Path | str,
+    style: Style | str,
+    extent: tuple[float, float, float, float],
+    size: int | tuple[int, int] = (256, 256),
     dpi: int = 96,
-    crs: Optional[CRS] = None,
-    svg_resolver: Optional[Callable[[str], str]] = None,
-    style_format: Optional[StyleFormat] = None,
+    crs: CRS | None = None,
+    svg_resolver: Callable[[str], str] | None = None,
+    style_format: StyleFormat | None = None,
 ):
     """Renders a vector image for a given map layer and style."""
     if crs is None:
@@ -132,11 +132,11 @@ def render_vector(
 
 
 def render_raster(
-    layer: Union[Layer, Path, str],
-    style: Union[Style, str],
-    extent: Tuple[float, float, float, float],
-    size: Union[int, Tuple[int, int]] = (256, 256),
-    crs: Optional[CRS] = None,
+    layer: Layer | Path | str,
+    style: Style | str,
+    extent: tuple[float, float, float, float],
+    size: int | tuple[int, int] = (256, 256),
+    crs: CRS | None = None,
 ):
     """Renders a raster image for a given map layer and style."""
     if crs is None:
@@ -161,14 +161,14 @@ def render_raster(
 
 
 def render_legend(
-    layer: Union[Layer, Path, str],
-    style: Union[Style, Path, str],
+    layer: Layer | Path | str,
+    style: Style | Path | str,
     layerName: str = "",
-    size: Tuple[int, int] = (256, 256),
+    size: tuple[int, int] = (256, 256),
     dpi: int = 96,
-    crs: Optional[CRS] = None,
-    svg_resolver: Optional[Callable[[str], str]] = None,
-    style_format: Optional[StyleFormat] = None,
+    crs: CRS | None = None,
+    svg_resolver: Callable[[str], str] | None = None,
+    style_format: StyleFormat | None = None,
 ):
     """Renders a legend image for a given map layer and style."""
     if crs is None:
