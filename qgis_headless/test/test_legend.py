@@ -436,3 +436,60 @@ def test_legend_symbols_diagram(shared_datadir):
 
     for i, symbol in enumerate(symbols):
         assert symbol.render() == render_expected[i], f"Symbol #{i} render mismatch"
+
+
+@pytest.mark.parametrize(
+    "style_fn, expected_layer, expected_symbols",
+    (
+        pytest.param("scale/100_10.qml", (100000, 10000), [(100000, 10000)], id="100-10"),
+        pytest.param("scale/min_50.qml", (50000, None), [(50000, None)], id="min-50"),
+        pytest.param("scale/max_50.qml", (None, 50000), [(None, 50000)], id="max-50"),
+        pytest.param(None, (None, None), [(None, None)], id="default"),
+        pytest.param(
+            "scale/per_symbol.qml",
+            (None, None),
+            [
+                (None, None),
+                (100000, 5000),
+                (200000, 25000),
+            ],
+            id="per-symbol",
+        ),
+        pytest.param(
+            "scale/per_symbol_constrained.qml",
+            (100000, 10000),
+            [
+                (100000, 10000),  # 0: no bounds -> takes layer's scale
+                (100000, 10000),  # 1: (100000, 5000) -> max clamps to 10000 (layer's scale)
+                (100000, 25000),  # 2: (200000, 25000) -> min clamps to 100000 (layer's scale)
+            ],
+            id="per-symbol-constrained",
+        ),
+    ),
+)
+def test_scale_range(style_fn, expected_layer, expected_symbols, shared_datadir):
+    if style_fn is None:
+        style = Style.from_defaults()
+    else:
+        style = Style.from_file(shared_datadir / style_fn)
+
+    assert style.scale_range() == expected_layer
+
+    crs = CRS.from_epsg(3857)
+
+    layer = Layer.from_data(Layer.GT_POINT, crs, (), ())
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.add_layer(layer, style)
+    req.set_crs(crs)
+
+    symbols = req.legend_symbols(0)
+    if len(expected_symbols) == 1 and len(symbols) > 1:
+        expected_symbols = expected_symbols * len(symbols)
+
+    assert len(symbols) == len(expected_symbols), "Symbols count mismatch"
+
+    for symbol, expected_range in zip(symbols, expected_symbols):
+        scale_range = symbol.scale_range()
+        assert scale_range[0] == expected_range[0] and scale_range[1] == expected_range[1]

@@ -52,6 +52,10 @@ namespace HeadlessRender
         int rasterBand, bool hasTitle = true
       );
 
+      void setScaleRange( const ScaleRange &scaleRange ) noexcept;
+
+      const ScaleRange &scaleRange() const noexcept;
+
       /**
        * Returns icon of symbol.
        */
@@ -93,6 +97,10 @@ namespace HeadlessRender
        */
       int rasterBand() const;
 
+      void setRuleKey( const QString &ruleKey );
+
+      const QString &ruleKey() const noexcept;
+
     private:
       LegendSymbol(
         const ImagePtr &icon, const QString &title, SymbolRender render, Index index,
@@ -106,6 +114,9 @@ namespace HeadlessRender
       SymbolRender mRender = SymbolRender::Uncheckable;
       Index mIndex = 0;
       int mRasterBand;
+      ScaleRange mScaleRange = { -2, 0 }; // "-2" has no scale range
+
+      QString mRuleKey;
   };
 } //namespace HeadlessRender
 

@@ -94,7 +94,9 @@ namespace HeadlessRender
       class LegendRenderContext;
 
     private:
-      LegendSymbolsContainer renderLayerSymbols( const Layer &layer, LegendRenderContext &context );
+      LegendSymbolsContainer renderLayerSymbols(
+        const QgsMapLayerPtr &layer, LegendRenderContext &context
+      );
 
       LegendSymbolsContainer renderVectorLayerSymbols(
         const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
@@ -156,6 +158,8 @@ namespace HeadlessRender
         QgsLayerTreeModelLegendNode *node, LegendRenderContext &context,
         const QgsRasterRenderer *renderer, int rasterBand
       );
+
+      void applyScaleRange( LegendSymbolsContainer &symbols, const QgsMapLayerPtr &layer );
 
     private:
       int mOutputDpi = 96;
