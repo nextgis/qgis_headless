@@ -42,6 +42,16 @@ LegendSymbol LegendSymbol::create(
   return { icon, title, render, index, std::move( rasterBand ), hasTitle };
 }
 
+void LegendSymbol::setScaleRange( const ScaleRange &scaleRange ) noexcept
+{
+  mScaleRange = scaleRange;
+}
+
+const ScaleRange &LegendSymbol::scaleRange() const noexcept
+{
+  return mScaleRange;
+}
+
 ImagePtr LegendSymbol::icon() const
 {
   return mIcon;
@@ -100,4 +110,14 @@ bool LegendSymbol::isGroup() const noexcept
 std::optional<LegendSymbol::Index> LegendSymbol::parent() const noexcept
 {
   return mParentIndex;
+}
+
+void LegendSymbol::setRuleKey( const QString &ruleKey )
+{
+  mRuleKey = ruleKey;
+}
+
+const QString &LegendSymbol::ruleKey() const noexcept
+{
+  return mRuleKey;
 }

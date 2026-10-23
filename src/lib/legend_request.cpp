@@ -164,17 +164,20 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderLegendSymbols(
 {
   LegendRenderContext context( mOutputDpi, size );
   layerIndex = 0;
-  return renderLayerSymbols( layer, context );
+
+  auto qgisLayer = layer.qgsMapLayer();
+  auto symbols = renderLayerSymbols( qgisLayer, context );
+  applyScaleRange( symbols, qgisLayer );
+
+  return symbols;
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderLayerSymbols(
-  const Layer &layer, LegendRenderContext &context
+  const QgsMapLayerPtr &qgisLayer, LegendRenderContext &context
 )
 {
-  auto &&qgisLayer = layer.qgsMapLayer();
-
   QgsLayerTree tree;
-  auto &&nodeLayer = tree.addLayer( layer.qgsMapLayer().get() );
+  auto &&nodeLayer = tree.addLayer( qgisLayer.get() );
   QgsLayerTreeModel model( &tree );
 
   auto &&nodes = model.layerLegendNodes( nodeLayer );
@@ -276,10 +279,15 @@ LegendSymbol LegendRequest::renderVectorLayerSymbol(
                                                              : SymbolRender::Unchecked;
   }
 
-  return HeadlessRender::LegendSymbol::create(
+  auto symbol = LegendSymbol::create(
     std::make_shared<HeadlessRender::Image>( context.drawImage( node ) ),
     node->data( Qt::DisplayRole ).toString(), symbolRender, layerIndex++, 0
   );
+
+  symbol.setRuleKey(
+    node->data( static_cast<int>( QgsLayerTreeModelLegendNode::CustomRole::RuleKey ) ).toString()
+  );
+  return symbol;
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderRasterLayerSymbols(
@@ -484,4 +492,35 @@ std::vector<LegendRequest::LegendHierarchyInfo> LegendRequest::buildLegendHierar
   }
 
   return result;
+}
+
+void LegendRequest::applyScaleRange( LegendSymbolsContainer &symbols, const QgsMapLayerPtr &qgsLayer )
+{
+  if ( auto vectorLayer = qobject_cast<const QgsVectorLayer *>( qgsLayer.get() ) )
+  {
+    auto renderer = vectorLayer->renderer();
+    if ( renderer )
+    {
+      QHash<QString, QgsLegendSymbolItem> itemByRuleKey;
+      const auto legendItems = renderer->legendSymbolItems();
+      for ( const auto &item : legendItems )
+      {
+        if ( !item.ruleKey().isEmpty() )
+        {
+          itemByRuleKey.insert( item.ruleKey(), item );
+        }
+      }
+
+      for ( auto &symbol : symbols )
+      {
+        QString ruleKey = symbol.ruleKey();
+        auto it = itemByRuleKey.find( ruleKey );
+        if ( it != itemByRuleKey.end() )
+        {
+          const auto &item = it.value();
+          symbol.setScaleRange( { item.scaleMaxDenom(), item.scaleMinDenom() } );
+        }
+      }
+    }
+  }
 }
