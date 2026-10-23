@@ -186,10 +186,10 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     style_marker = (shared_datadir / "zero/marker.qml").read_text()
 
     color = None
-    resolved = list()
+    resolved = []
 
     def _resolver(source):
-        target = str((shared_datadir / "marker-{}".format(color) / source).resolve())
+        target = str((shared_datadir / f"marker-{color}" / source).resolve())
         resolved.append(source)
         return target
 
@@ -326,7 +326,7 @@ def test_legend_svg_resolver(save_img, shared_datadir, reset_svg_paths):
 )
 def test_render_crs(crs, extent, extent_empty, save_img, shared_datadir):
     source_crs = CRS.from_epsg(4326)
-    layer = Layer.from_data(Layer.GT_POINT, source_crs, tuple(), ((1, WKB_MSC, tuple()),))
+    layer = Layer.from_data(Layer.GT_POINT, source_crs, (), ((1, WKB_MSC, ()),))
 
     style = (shared_datadir / "zero/red-circle.qml").read_text()
 
@@ -613,7 +613,7 @@ def test_label_marker(qml, resolve, save_img, shared_datadir):
     style = (shared_datadir / qml).read_text()
     marker_green = str((shared_datadir / "marker-green/marker.svg").resolve())
 
-    resolved = list()
+    resolved = []
 
     def _resolver(source):
         resolved.append(source)

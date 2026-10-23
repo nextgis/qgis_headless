@@ -6,10 +6,9 @@ repos:
       - id: check-toml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.4
+    rev: v0.16.10
     hooks:
-      - id: ruff
-        args: [--fix]
+      - id: ruff-check
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-clang-format

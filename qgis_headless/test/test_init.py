@@ -79,11 +79,11 @@ def test_init(benchmark, providers):
 
         def _report(name: str, pid=proc.pid):
             proc_util = psutil.Process(pid)
-            reports[name] = dict(
-                rss=round(proc_util.memory_info().rss / (1 << 20), 1),
-                threads=proc_util.num_threads(),
-                cpu_time=round(1000 * sum(proc_util.cpu_times()), 1),
-            )
+            reports[name] = {
+                "rss": round(proc_util.memory_info().rss / (1 << 20), 1),
+                "threads": proc_util.num_threads(),
+                "cpu_time": round(1000 * sum(proc_util.cpu_times()), 1),
+            }
 
         _step("PYTHON", write=False)
 

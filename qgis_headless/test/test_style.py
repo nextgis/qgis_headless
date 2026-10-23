@@ -36,10 +36,10 @@ def test_empty_string(shared_datadir):
 @pytest.mark.parametrize(
     "layer_type, params",
     (
-        (LT_RASTER, dict()),
-        (LT_VECTOR, dict(layer_geometry_type=Layer.GT_POINT, color=(14, 15, 16, 250))),
-        (LT_VECTOR, dict(layer_geometry_type=Layer.GT_LINESTRING, color=(7, 6, 5, 4))),
-        (LT_VECTOR, dict(layer_geometry_type=Layer.GT_POLYGON, color=(7, 6, 5, 4))),
+        (LT_RASTER, {}),
+        (LT_VECTOR, {"layer_geometry_type": Layer.GT_POINT, "color": (14, 15, 16, 250)}),
+        (LT_VECTOR, {"layer_geometry_type": Layer.GT_LINESTRING, "color": (7, 6, 5, 4)}),
+        (LT_VECTOR, {"layer_geometry_type": Layer.GT_POLYGON, "color": (7, 6, 5, 4)}),
     ),
 )
 def test_default(layer_type, params):
@@ -164,7 +164,7 @@ def test_scale_range(style_fn, expected, shared_datadir):
 )
 def test_layer_type(style, layer_type, exc, shared_datadir):
     with pytest.raises(exc) if exc is not None else suppress():
-        params = dict()
+        params = {}
         if layer_type is not None:
             params["layer_type"] = layer_type
         Style.from_file(shared_datadir / style, **params)

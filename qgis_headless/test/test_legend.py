@@ -66,33 +66,33 @@ for id, geometry_type, style, sizes, expected, render in [
     (
         "zero_red_circle",
         Layer.GT_POINT,
-        dict(file="zero/red-circle.qml"),
+        {"file": "zero/red-circle.qml"},
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         [
-            (None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=RED)),
+            (None, dict(dict.fromkeys(("lt", "rt", "lb", "rb"), TRANSPARENT), c=RED)),
         ],
         (None,),
     ),
     (
         "default_point",
         Layer.GT_POINT,
-        dict(color=GRAY_128),
+        {"color": GRAY_128},
         LEGEND_DEFAULT_SIZES,
-        ((None, dict({k: TRANSPARENT for k in ("lt", "rt", "lb", "rb")}, c=GRAY_128)),),
+        ((None, dict(dict.fromkeys(("lt", "rt", "lb", "rb"), TRANSPARENT), c=GRAY_128)),),
         (None,),
     ),
     (
         "default_linestring",
         Layer.GT_LINESTRING,
-        dict(color=GRAY_128),
+        {"color": GRAY_128},
         LEGEND_DEFAULT_SIZES,
-        ((None, dict(ct=TRANSPARENT, cb=TRANSPARENT)),),
+        ((None, {"ct": TRANSPARENT, "cb": TRANSPARENT}),),
         (None,),
     ),
     (
         "default_polygon",
         Layer.GT_POLYGON,
-        dict(color=GRAY_128),
+        {"color": GRAY_128},
         LEGEND_DEFAULT_SIZES,
         ((None, GRAY_128),),
         (None,),
@@ -100,53 +100,53 @@ for id, geometry_type, style, sizes, expected, render in [
     (
         "contour_rgb",
         Layer.GT_LINESTRING,
-        dict(file="contour/rgb.qml"),
+        {"file": "contour/rgb.qml"},
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
-            ("primary horizontals", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("secondary horizontals", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
+            ("primary horizontals", {"c": GREEN, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("secondary horizontals", {"c": BLUE, "ct": TRANSPARENT, "cb": TRANSPARENT}),
         ),
         (True, True),
     ),
     (
         "thick_outline",
         Layer.GT_POLYGON,
-        dict(file="thick-outline.qml"),
+        {"file": "thick-outline.qml"},
         LEGEND_DEFAULT_SIZES,
-        ((None, dict()),),
+        ((None, {}),),
         (None,),
     ),
     (
         "big_symbol",
         Layer.GT_POINT,
-        dict(file="big-symbol.qml"),
+        {"file": "big-symbol.qml"},
         LEGEND_DEFAULT_SIZES,
-        ((None, dict()),),
+        ((None, {}),),
         (None,),
     ),
     (
         "bar_chart",
         Layer.GT_POLYGON,
-        dict(file="diagram/bar-chart.qml"),
+        {"file": "diagram/bar-chart.qml"},
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
-            ("", dict(c=TRANSPARENT, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("red", dict(c=RED, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("green", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("blue", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
+            ("", {"c": TRANSPARENT, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("red", {"c": RED, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("green", {"c": GREEN, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("blue", {"c": BLUE, "ct": TRANSPARENT, "cb": TRANSPARENT}),
         ),
         (None, None, None, None),
     ),
     (
         "pie_chart",
         Layer.GT_POLYGON,
-        dict(file="diagram/pie-chart.qml"),
+        {"file": "diagram/pie-chart.qml"},
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
-            ("", dict(c=TRANSPARENT, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("red", dict(c=RED, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("green", dict(c=GREEN, ct=TRANSPARENT, cb=TRANSPARENT)),
-            ("blue", dict(c=BLUE, ct=TRANSPARENT, cb=TRANSPARENT)),
+            ("", {"c": TRANSPARENT, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("red", {"c": RED, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("green", {"c": GREEN, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            ("blue", {"c": BLUE, "ct": TRANSPARENT, "cb": TRANSPARENT}),
         ),
         (None, None, None, None),
     ),
@@ -195,12 +195,12 @@ def test_legend_symbols(
         assert im_height != 0, "zero height"
 
         sides_coords = (
-            dict(l=0, r=im_width - 1, c=(im_width - 1) // 2),
-            dict(t=0, b=im_height - 1, c=(im_height - 1) // 2),
+            {"l": 0, "r": im_width - 1, "c": (im_width - 1) // 2},
+            {"t": 0, "b": im_height - 1, "c": (im_height - 1) // 2},
         )
 
         if isinstance(expected_colors, tuple):
-            expected_colors = dict(c=expected_colors)
+            expected_colors = {"c": expected_colors}
 
         for position, expected_color in expected_colors.items():
             if position == "c":
@@ -233,13 +233,13 @@ def test_legend_symbols(
             "landuse/landuse.geojson",
             (4189314.0, 7505071.0, 4190452.0, 7506101.0),
             (
-                ((-1,), dict(exc=QgisHeadlessError)),
-                ((2,), dict(exc=QgisHeadlessError)),
-                (None, dict(colors=(255, 255, 0, None))),
-                ((0, 1), dict(colors=(255, 255, 0, None))),
-                ((), dict(colors=(None, None, None, 0))),
-                ((0,), dict(colors=(255, 0, 0, 255))),
-                ((1,), dict(colors=(0, 255, 0, 255))),
+                ((-1,), {"exc": QgisHeadlessError}),
+                ((2,), {"exc": QgisHeadlessError}),
+                (None, {"colors": (255, 255, 0, None)}),
+                ((0, 1), {"colors": (255, 255, 0, None)}),
+                ((), {"colors": (None, None, None, 0)}),
+                ((0,), {"colors": (255, 0, 0, 255)}),
+                ((1,), {"colors": (0, 255, 0, 255)}),
             ),
         ),
         (
@@ -247,10 +247,10 @@ def test_legend_symbols(
             "categories/rgb.geojson",
             (-4400, -14000, 4400, 14000),
             (
-                (None, dict(colors=(255, 0, 255, 255))),
-                ((0,), dict(colors=(255, 0, 0, 255))),
-                ((1,), dict(colors=(0, 255, 0, 255))),
-                ((2,), dict(colors=(0, 0, 255, 255))),
+                (None, {"colors": (255, 0, 255, 255)}),
+                ((0,), {"colors": (255, 0, 0, 255)}),
+                ((1,), {"colors": (0, 255, 0, 255)}),
+                ((2,), {"colors": (0, 0, 255, 255)}),
             ),
         ),
         pytest.param(
@@ -258,9 +258,9 @@ def test_legend_symbols(
             "categories/null-attr.geojson",
             (-4400, -14000, 4400, 14000),
             (
-                (None, dict(colors=(255, 0, 255, 255))),
-                ((0,), dict(colors=(255, 0, 0, 255))),
-                ((1,), dict(colors=(0, 0, 255, 255))),
+                (None, {"colors": (255, 0, 255, 255)}),
+                ((0,), {"colors": (255, 0, 0, 255)}),
+                ((1,), {"colors": (0, 0, 255, 255)}),
             ),
         ),
     ),
@@ -275,7 +275,7 @@ def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_dat
     req.set_crs(CRS.from_epsg(3857))
 
     for symbols, expected in cases:
-        params = dict(extent=extent, size=(256, 256))
+        params = {"extent": extent, "size": (256, 256)}
         if symbols is not None:
             params["symbols"] = ((0, symbols),)
         if exc := expected.get("exc"):

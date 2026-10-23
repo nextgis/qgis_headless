@@ -1,8 +1,9 @@
 from binascii import a2b_hex
 from collections import namedtuple
+from collections.abc import Callable
 from functools import cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from qgis_headless import CRS, Image, Layer, MapRequest, Style, StyleFormat
 

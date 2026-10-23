@@ -1,8 +1,9 @@
 import gc
 from pathlib import Path
 
-import _qgis_headless
 import pytest
+
+import _qgis_headless
 
 
 def pytest_addoption(parser):

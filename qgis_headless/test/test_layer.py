@@ -53,7 +53,7 @@ def test_from_data_red_circle(gt, pt0, pt1, shared_datadir, reset_svg_paths):
 
 def test_from_data_linestring(shared_datadir, reset_svg_paths):
     crs = CRS.from_epsg(3857)
-    empty_tuple = tuple()
+    empty_tuple = ()
     Layer.from_data(
         Layer.GT_LINESTRING,
         crs,
@@ -178,7 +178,7 @@ def test_geometry_crash():
         except CalledProcessError:
             failed += 1
 
-    assert failed == 0, "Failed for {} times of {}".format(failed, total)
+    assert failed == 0, f"Failed for {failed} times of {total}"
 
 
 def test_wrong_source(shared_datadir):

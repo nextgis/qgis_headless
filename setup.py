@@ -55,5 +55,5 @@ class CMakeBuild(build_ext):
 
 setup(
     ext_modules=[CMakeExtension("_qgis_headless")],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass={"build_ext": CMakeBuild},
 )

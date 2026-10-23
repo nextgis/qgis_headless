@@ -14,9 +14,7 @@ dynamic = ["version"]
 qgis_headless = "qgis_headless.script:main"
 
 [project.optional-dependencies]
-dev = [
-    "pybind11-stubgen",
-]
+dev = ["pybind11-stubgen"]
 tests = [
     "lxml",
     "pillow",
@@ -36,15 +34,13 @@ zip-safe = false
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
 
-[tool.black]
-line-length = 99
-
 [tool.ruff]
 line-length = 99
+exclude = ["./src/bindings/pybind11"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "TID251"]
+select = ["E", "F", "W", "I", "UP", "C4", "RUF022"]
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F405"]
+"./_qgis_headless.pyi" = ["RUF022"]
