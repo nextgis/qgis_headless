@@ -677,10 +677,13 @@ QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallb
   if ( !qgsVectorLayer )
     throw QgisHeadlessError( errorMessage );
 
-  QgsRenderContext renderContext;
-  for ( QgsSymbol *symbol : qgsVectorLayer->renderer()->symbols( renderContext ) )
+  if ( const auto &&renderer = qgsVectorLayer->renderer() )
   {
-    resolveSymbol( symbol, svgResolverCallback );
+    QgsRenderContext renderContext;
+    for ( QgsSymbol *symbol : renderer->symbols( renderContext ) )
+    {
+      resolveSymbol( symbol, svgResolverCallback );
+    }
   }
 
   if ( auto &&labeling = qgsVectorLayer->labeling() )

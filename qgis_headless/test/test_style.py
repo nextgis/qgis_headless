@@ -218,3 +218,7 @@ def test_format(style, fmt, layer_type, exc, shared_datadir):
 )
 def test_sld(style, gt, save_img, shared_datadir):
     Style.from_file(shared_datadir / style, format=SF_SLD, layer_geometry_type=gt)
+
+
+def test_no_geom(shared_datadir):
+    Style.from_file(shared_datadir / "no-geom/no-geom.qml")
