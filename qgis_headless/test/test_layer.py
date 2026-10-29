@@ -186,3 +186,7 @@ def test_wrong_source(shared_datadir):
         Layer.from_ogr(shared_datadir / "raster" / "rounds.tif")
     with pytest.raises(InvalidLayerSource):
         Layer.from_gdal(shared_datadir / "poly.geojson")
+
+
+def test_no_geom(shared_datadir):
+    Layer.from_ogr(shared_datadir / "no-geom/no-geom.geojson")

@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "name": "no-geom",
+  "features": [
+    { 
+      "type": "Feature", 
+      "properties": {"value": 1, "value_2": "str"},
+      "geometry": null
+    }
+  ]
+}

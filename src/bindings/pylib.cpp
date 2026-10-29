@@ -77,6 +77,7 @@ PYBIND11_MODULE( _qgis_headless, m )
     .value( "GT_MULTIPOINTZ", HeadlessRender::LayerGeometryType::MultiPointZ )
     .value( "GT_MULTILINESTRINGZ", HeadlessRender::LayerGeometryType::MultiLineStringZ )
     .value( "GT_MULTIPOLYGONZ", HeadlessRender::LayerGeometryType::MultiPolygonZ )
+    .value( "GT_NULL", HeadlessRender::LayerGeometryType::Null )
     .value( "GT_UNKNOWN", HeadlessRender::LayerGeometryType::Unknown )
     .export_values();
 

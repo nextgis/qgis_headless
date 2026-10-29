@@ -222,3 +222,6 @@ def test_sld(style, gt, save_img, shared_datadir):
 
 def test_no_geom(shared_datadir):
     Style.from_file(shared_datadir / "no-geom/no-geom.qml")
+
+    with pytest.raises(StyleTypeMismatch):
+        Style.from_file(shared_datadir / "point-style.qml", layer_geometry_type=Layer.GT_NULL)

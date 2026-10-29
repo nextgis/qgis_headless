@@ -791,6 +791,7 @@ QString Style::exportToString( const StyleFormat format ) const
           qgsSymbol = std::make_unique<QgsFillSymbol>();
           qgsSymbolLayer.reset( QgsSimpleFillSymbolLayer::create( props ) );
           break;
+        case LayerGeometryType::Null:
         case LayerGeometryType::Unknown:
           // Both qgsSymbol and qgsSymbolLayer are nullptr
           break;

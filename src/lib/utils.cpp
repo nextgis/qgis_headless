@@ -49,6 +49,8 @@ Qgis::WkbType HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::Lay
       return Qgis::WkbType::MultiLineStringZ;
     case HeadlessRender::LayerGeometryType::MultiPolygonZ:
       return Qgis::WkbType::MultiPolygonZ;
+    case HeadlessRender::LayerGeometryType::Null:
+      return Qgis::WkbType::NoGeometry;
     case HeadlessRender::LayerGeometryType::Unknown:
       return Qgis::WkbType::Unknown;
   }

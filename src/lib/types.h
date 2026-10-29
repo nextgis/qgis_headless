@@ -61,6 +61,7 @@ namespace HeadlessRender
     MultiPointZ,
     MultiLineStringZ,
     MultiPolygonZ,
+    Null,
     Unknown
   };
 
