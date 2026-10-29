@@ -125,6 +125,11 @@ void HeadlessRender::init( int argc, char **argv )
     qputenv( "QGIS_PROVIDER_FILE", QByteArray( "$^" ) );
 
   app = new QgsApplication( argc, argv, false, "", platform );
+
+  // By default, QGIS uses as many threads as there are CPU cores, but we limit
+  // it to 4 threads here. This should be sufficient for the library's needs.
+  QgsApplication::setMaxThreads( 4 );
+
   QgsApplication::initQgis();
 }
 
