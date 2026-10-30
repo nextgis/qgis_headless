@@ -729,3 +729,49 @@ def test_field_alias(force_cached, save_img, shared_datadir):
     stat = image_stat(img)
 
     assert stat.green.max == 255, "Wrong point colour"
+
+
+def test_point_cloud_default_style(save_img, shared_datadir):
+    layer = Layer.from_pdal(shared_datadir / "point-cloud/point_cloud.copc.laz")
+    style = Style.from_defaults()
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+
+    req.add_layer(layer, style)
+
+    img = save_img(to_pil(req.render_image((-9755262, 5142126, -9754217, 5143175), (256, 256))))
+    stat = image_stat(img)
+
+    assert stat.alpha.min == 0 and stat.alpha.max == 255
+
+    assert img.getpixel((3, 1)) == (170, 170, 170, 255)
+    assert img.getpixel((10, 15)) == (0, 170, 0, 255)
+    assert img.getpixel((13, 13)) == (170, 85, 0, 255)
+    assert img.getpixel((16, 16)) == (0, 170, 0, 255)
+    assert img.getpixel((26, 21)) == (170, 85, 0, 255)
+    assert img.getpixel((46, 20)) == (0, 170, 0, 255)
+
+
+def test_point_qml_style(save_img, shared_datadir):
+    layer = Layer.from_pdal(shared_datadir / "point-cloud/point_cloud.copc.laz")
+    style = Style.from_file(shared_datadir / "point-cloud/point_cloud.qml")
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+
+    req.add_layer(layer, style)
+
+    img = save_img(to_pil(req.render_image((-9755262, 5142126, -9754217, 5143175), (256, 256))))
+    stat = image_stat(img)
+
+    assert stat.alpha.min == 0 and stat.alpha.max == 255
+
+    assert img.getpixel((3, 1)) == (0, 0, 0, 0)
+    assert img.getpixel((10, 15)) == (162, 88, 7, 255)
+    assert img.getpixel((13, 13)) == (170, 85, 0, 255)
+    assert img.getpixel((16, 16)) == (129, 105, 0, 255)
+    assert img.getpixel((26, 21)) == (242, 97, 97, 255)
+    assert img.getpixel((46, 20)) == (255, 85, 85, 255)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import collections.abc
 import typing
 
-__all__ = [
+__all__: list[str] = [
     "CRITICAL",
     "CRS",
     "DEBUG",
@@ -11,6 +11,7 @@ __all__ = [
     "Image",
     "InvalidCRSError",
     "InvalidLayerSource",
+    "LT_POINT_CLOUD",
     "LT_RASTER",
     "LT_UNKNOWN",
     "LT_VECTOR",
@@ -88,9 +89,9 @@ class Layer:
             Layer.AttributeType
         ]  # value = <AttributeType.FT_INTEGER64: 6>
         FT_JSON: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_JSON: 8>
-        FT_REAL: typing.ClassVar[Layer.AttributeType]
-        FT_STRING: typing.ClassVar[Layer.AttributeType]
-        FT_TIME: typing.ClassVar[Layer.AttributeType]
+        FT_REAL: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_REAL: 1>
+        FT_STRING: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_STRING: 2>
+        FT_TIME: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_TIME: 4>
         __members__: typing.ClassVar[
             dict[str, Layer.AttributeType]
         ]  # value = {'FT_INTEGER': <AttributeType.FT_INTEGER: 0>, 'FT_REAL': <AttributeType.FT_REAL: 1>, 'FT_STRING': <AttributeType.FT_STRING: 2>, 'FT_DATE': <AttributeType.FT_DATE: 3>, 'FT_TIME': <AttributeType.FT_TIME: 4>, 'FT_DATETIME': <AttributeType.FT_DATETIME: 5>, 'FT_INTEGER64': <AttributeType.FT_INTEGER64: 6>, 'FT_BOOLEAN': <AttributeType.FT_BOOLEAN: 7>, 'FT_JSON': <AttributeType.FT_JSON: 8>}
@@ -142,21 +143,39 @@ class Layer:
           GT_UNKNOWN
         """
 
-        GT_LINESTRING: typing.ClassVar[Layer.GeometryType]
-        GT_LINESTRINGZ: typing.ClassVar[Layer.GeometryType]
-        GT_MULTILINESTRING: typing.ClassVar[Layer.GeometryType]
-        GT_MULTILINESTRINGZ: typing.ClassVar[Layer.GeometryType]
-        GT_MULTIPOINT: typing.ClassVar[Layer.GeometryType]
-        GT_MULTIPOINTZ: typing.ClassVar[Layer.GeometryType]
-        GT_MULTIPOLYGON: typing.ClassVar[Layer.GeometryType]
-        GT_MULTIPOLYGONZ: typing.ClassVar[Layer.GeometryType]
-        GT_NULL: typing.ClassVar[Layer.GeometryType]
-        GT_POINT: typing.ClassVar[Layer.GeometryType]
-        GT_POINTZ: typing.ClassVar[Layer.GeometryType]
-        GT_POLYGON: typing.ClassVar[Layer.GeometryType]
-        GT_POLYGONZ: typing.ClassVar[Layer.GeometryType]
-        GT_UNKNOWN: typing.ClassVar[Layer.GeometryType]
-        __members__: typing.ClassVar[dict[str, Layer.GeometryType]]
+        GT_LINESTRING: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_LINESTRING: 1>
+        GT_LINESTRINGZ: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_LINESTRINGZ: 7>
+        GT_MULTILINESTRING: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_MULTILINESTRING: 4>
+        GT_MULTILINESTRINGZ: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_MULTILINESTRINGZ: 10>
+        GT_MULTIPOINT: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_MULTIPOINT: 3>
+        GT_MULTIPOINTZ: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_MULTIPOINTZ: 9>
+        GT_MULTIPOLYGON: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_MULTIPOLYGON: 5>
+        GT_MULTIPOLYGONZ: typing.ClassVar[
+            Layer.GeometryType
+        ]  # value = <GeometryType.GT_MULTIPOLYGONZ: 11>
+        GT_NULL: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_NULL: 12>
+        GT_POINT: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POINT: 0>
+        GT_POINTZ: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POINTZ: 6>
+        GT_POLYGON: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POLYGON: 2>
+        GT_POLYGONZ: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POLYGONZ: 8>
+        GT_UNKNOWN: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_UNKNOWN: 13>
+        __members__: typing.ClassVar[
+            dict[str, Layer.GeometryType]
+        ]  # value = {'GT_POINT': <GeometryType.GT_POINT: 0>, 'GT_LINESTRING': <GeometryType.GT_LINESTRING: 1>, 'GT_POLYGON': <GeometryType.GT_POLYGON: 2>, 'GT_MULTIPOINT': <GeometryType.GT_MULTIPOINT: 3>, 'GT_MULTILINESTRING': <GeometryType.GT_MULTILINESTRING: 4>, 'GT_MULTIPOLYGON': <GeometryType.GT_MULTIPOLYGON: 5>, 'GT_POINTZ': <GeometryType.GT_POINTZ: 6>, 'GT_LINESTRINGZ': <GeometryType.GT_LINESTRINGZ: 7>, 'GT_POLYGONZ': <GeometryType.GT_POLYGONZ: 8>, 'GT_MULTIPOINTZ': <GeometryType.GT_MULTIPOINTZ: 9>, 'GT_MULTILINESTRINGZ': <GeometryType.GT_MULTILINESTRINGZ: 10>, 'GT_MULTIPOLYGONZ': <GeometryType.GT_MULTIPOLYGONZ: 11>, 'GT_NULL': <GeometryType.GT_NULL: 12>, 'GT_UNKNOWN': <GeometryType.GT_UNKNOWN: 13>}
         def __eq__(self, other: typing.Any) -> bool: ...
         def __getstate__(self) -> int: ...
         def __hash__(self) -> int: ...
@@ -172,32 +191,37 @@ class Layer:
         @property
         def value(self) -> int: ...
 
-    FT_BOOLEAN: typing.ClassVar[Layer.AttributeType]
-    FT_DATE: typing.ClassVar[Layer.AttributeType]
-    FT_DATETIME: typing.ClassVar[Layer.AttributeType]
-    FT_INTEGER: typing.ClassVar[Layer.AttributeType]
-    FT_INTEGER64: typing.ClassVar[Layer.AttributeType]
-    FT_JSON: typing.ClassVar[Layer.AttributeType]
-    FT_REAL: typing.ClassVar[Layer.AttributeType]
-    FT_STRING: typing.ClassVar[Layer.AttributeType]
-    FT_TIME: typing.ClassVar[Layer.AttributeType]
-    GT_LINESTRING: typing.ClassVar[Layer.GeometryType]
-    GT_LINESTRINGZ: typing.ClassVar[Layer.GeometryType]
-    GT_MULTILINESTRING: typing.ClassVar[Layer.GeometryType]
-    GT_MULTILINESTRINGZ: typing.ClassVar[Layer.GeometryType]
-    GT_MULTIPOINT: typing.ClassVar[Layer.GeometryType]
-    GT_MULTIPOINTZ: typing.ClassVar[Layer.GeometryType]
-    GT_MULTIPOLYGON: typing.ClassVar[Layer.GeometryType]
+    FT_BOOLEAN: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_BOOLEAN: 7>
+    FT_DATE: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_DATE: 3>
+    FT_DATETIME: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_DATETIME: 5>
+    FT_INTEGER: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_INTEGER: 0>
+    FT_INTEGER64: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_INTEGER64: 6>
+    FT_JSON: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_JSON: 8>
+    FT_REAL: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_REAL: 1>
+    FT_STRING: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_STRING: 2>
+    FT_TIME: typing.ClassVar[Layer.AttributeType]  # value = <AttributeType.FT_TIME: 4>
+    GT_LINESTRING: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_LINESTRING: 1>
+    GT_LINESTRINGZ: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_LINESTRINGZ: 7>
+    GT_MULTILINESTRING: typing.ClassVar[
+        Layer.GeometryType
+    ]  # value = <GeometryType.GT_MULTILINESTRING: 4>
+    GT_MULTILINESTRINGZ: typing.ClassVar[
+        Layer.GeometryType
+    ]  # value = <GeometryType.GT_MULTILINESTRINGZ: 10>
+    GT_MULTIPOINT: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_MULTIPOINT: 3>
+    GT_MULTIPOINTZ: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_MULTIPOINTZ: 9>
+    GT_MULTIPOLYGON: typing.ClassVar[
+        Layer.GeometryType
+    ]  # value = <GeometryType.GT_MULTIPOLYGON: 5>
     GT_MULTIPOLYGONZ: typing.ClassVar[
         Layer.GeometryType
     ]  # value = <GeometryType.GT_MULTIPOLYGONZ: 11>
-    GT_NULL: typing.ClassVar[Layer.GeometryType]
+    GT_NULL: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_NULL: 12>
     GT_POINT: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POINT: 0>
-    GT_POINTZ: typing.ClassVar[Layer.GeometryType]
-    GT_POLYGON: typing.ClassVar[Layer.GeometryType]
-    GT_POLYGONZ: typing.ClassVar[Layer.GeometryType]
-    GT_UNKNOWN: typing.ClassVar[Layer.GeometryType]
-
+    GT_POINTZ: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POINTZ: 6>
+    GT_POLYGON: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POLYGON: 2>
+    GT_POLYGONZ: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_POLYGONZ: 8>
+    GT_UNKNOWN: typing.ClassVar[Layer.GeometryType]  # value = <GeometryType.GT_UNKNOWN: 13>
     @staticmethod
     def from_data(
         geometry_type: Layer.GeometryType, crs: CRS, attribute_types: tuple, features: tuple
@@ -206,6 +230,8 @@ class Layer:
     def from_gdal(uri: typing.Any) -> Layer: ...
     @staticmethod
     def from_ogr(uri: typing.Any) -> Layer: ...
+    @staticmethod
+    def from_pdal(uri: typing.Any) -> Layer: ...
 
 class LayerType:
     """
@@ -215,14 +241,18 @@ class LayerType:
 
       LT_RASTER
 
+      LT_POINT_CLOUD
+
       LT_UNKNOWN
     """
 
-    LT_RASTER: typing.ClassVar[LayerType]
-    LT_UNKNOWN: typing.ClassVar[LayerType]
-    LT_VECTOR: typing.ClassVar[LayerType]
-    __members__: typing.ClassVar[dict[str, LayerType]]
-
+    LT_POINT_CLOUD: typing.ClassVar[LayerType]  # value = <LayerType.LT_POINT_CLOUD: 2>
+    LT_RASTER: typing.ClassVar[LayerType]  # value = <LayerType.LT_RASTER: 0>
+    LT_UNKNOWN: typing.ClassVar[LayerType]  # value = <LayerType.LT_UNKNOWN: 3>
+    LT_VECTOR: typing.ClassVar[LayerType]  # value = <LayerType.LT_VECTOR: 1>
+    __members__: typing.ClassVar[
+        dict[str, LayerType]
+    ]  # value = {'LT_VECTOR': <LayerType.LT_VECTOR: 1>, 'LT_RASTER': <LayerType.LT_RASTER: 0>, 'LT_POINT_CLOUD': <LayerType.LT_POINT_CLOUD: 2>, 'LT_UNKNOWN': <LayerType.LT_UNKNOWN: 3>}
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
     def __hash__(self) -> int: ...
@@ -260,12 +290,13 @@ class LogLevel:
       CRITICAL
     """
 
-    CRITICAL: typing.ClassVar[LogLevel]
-    DEBUG: typing.ClassVar[LogLevel]
-    INFO: typing.ClassVar[LogLevel]
-    WARNING: typing.ClassVar[LogLevel]
-    __members__: typing.ClassVar[dict[str, LogLevel]]
-
+    CRITICAL: typing.ClassVar[LogLevel]  # value = <LogLevel.CRITICAL: 3>
+    DEBUG: typing.ClassVar[LogLevel]  # value = <LogLevel.DEBUG: 0>
+    INFO: typing.ClassVar[LogLevel]  # value = <LogLevel.INFO: 1>
+    WARNING: typing.ClassVar[LogLevel]  # value = <LogLevel.WARNING: 2>
+    __members__: typing.ClassVar[
+        dict[str, LogLevel]
+    ]  # value = {'DEBUG': <LogLevel.DEBUG: 0>, 'INFO': <LogLevel.INFO: 1>, 'WARNING': <LogLevel.WARNING: 2>, 'CRITICAL': <LogLevel.CRITICAL: 3>}
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
     def __hash__(self) -> int: ...
@@ -341,7 +372,7 @@ class Style:
         svg_resolver: collections.abc.Callable[[str], str] = None,
         layer_geometry_type: Layer.GeometryType = Layer.GeometryType.GT_UNKNOWN,
         layer_type: LayerType = LayerType.LT_UNKNOWN,
-        format: StyleFormat = StyleFormat.QML,
+        format: StyleFormat = ...,
     ) -> Style: ...
     @staticmethod
     def from_string(
@@ -349,10 +380,10 @@ class Style:
         svg_resolver: collections.abc.Callable[[str], str] = None,
         layer_geometry_type: Layer.GeometryType = Layer.GeometryType.GT_UNKNOWN,
         layer_type: LayerType = LayerType.LT_UNKNOWN,
-        format: StyleFormat = StyleFormat.QML,
+        format: StyleFormat = ...,
     ) -> Style: ...
     def scale_range(self) -> tuple: ...
-    def to_string(self, format: StyleFormat = StyleFormat.QML) -> str: ...
+    def to_string(self, format: StyleFormat = ...) -> str: ...
     def used_attributes(self) -> set[str] | None: ...
 
 class StyleFormat:
@@ -364,10 +395,11 @@ class StyleFormat:
       SLD
     """
 
-    QML: typing.ClassVar[StyleFormat]
-    SLD: typing.ClassVar[StyleFormat]
-    __members__: typing.ClassVar[dict[str, StyleFormat]]
-
+    QML: typing.ClassVar[StyleFormat]  # value = <StyleFormat.QML: 0>
+    SLD: typing.ClassVar[StyleFormat]  # value = <StyleFormat.SLD: 1>
+    __members__: typing.ClassVar[
+        dict[str, StyleFormat]
+    ]  # value = {'QML': <StyleFormat.QML: 0>, 'SLD': <StyleFormat.SLD: 1>}
     def __eq__(self, other: typing.Any) -> bool: ...
     def __getstate__(self) -> int: ...
     def __hash__(self) -> int: ...
@@ -429,12 +461,13 @@ def set_svg_paths(paths: collections.abc.Sequence[str]) -> None:
     Set SVG search paths
     """
 
-CRITICAL: LogLevel
-DEBUG: LogLevel
-INFO: LogLevel
-LT_RASTER: LayerType
-LT_UNKNOWN: LayerType
-LT_VECTOR: LayerType
-SF_QML: StyleFormat
-SF_SLD: StyleFormat
-WARNING: LogLevel
+CRITICAL: LogLevel  # value = <LogLevel.CRITICAL: 3>
+DEBUG: LogLevel  # value = <LogLevel.DEBUG: 0>
+INFO: LogLevel  # value = <LogLevel.INFO: 1>
+LT_POINT_CLOUD: LayerType  # value = <LayerType.LT_POINT_CLOUD: 2>
+LT_RASTER: LayerType  # value = <LayerType.LT_RASTER: 0>
+LT_UNKNOWN: LayerType  # value = <LayerType.LT_UNKNOWN: 3>
+LT_VECTOR: LayerType  # value = <LayerType.LT_VECTOR: 1>
+SF_QML: StyleFormat  # value = <StyleFormat.QML: 0>
+SF_SLD: StyleFormat  # value = <StyleFormat.SLD: 1>
+WARNING: LogLevel  # value = <LogLevel.WARNING: 2>

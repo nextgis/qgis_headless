@@ -219,9 +219,19 @@ HeadlessRender::LayerIndex HeadlessRender::MapRequest::
         }
       }
     }
-    else
+    else if ( layer.type() == DataType::Vector )
     {
       layer.setRendererSymbolColor( style.defaultStyleColor() );
+    }
+    else
+    {
+      QString readStyleError;
+      if ( !layer.addStyle( style, readStyleError ) )
+      {
+        throw QgisHeadlessError(
+          QStringLiteral( "Cannot add style, error message: " ) + readStyleError
+        );
+      }
     }
   }
   else
