@@ -35,6 +35,7 @@
 #include <qgsmarkersymbol.h>
 #include <qgsmarkersymbollayer.h>
 #include <qgspallabeling.h>
+#include <qgspointcloudclassifiedrenderer.h>
 #include <qgspropertycollection.h>
 #include <qgsrasterlayer.h>
 #include <qgsrendercontext.h>
@@ -318,6 +319,18 @@ void Style::init( const CreateParams &params )
   if ( !validateGeometryType( params.layerGeometry ) )
     throw StyleTypeMismatch( ErrorString::StyleMismatch );
 
+
+  const DataType actualType = type();
+  if ( actualType == DataType::PointCloud )
+  {
+    if ( params.layerType != DataType::Unknown && actualType != params.layerType )
+    {
+      throw StyleTypeMismatch( ErrorString::LayerStyleMismatch );
+    }
+
+    return;
+  }
+
   QString errorMessage;
   if ( !validateStyle( errorMessage ) )
     throw StyleValidationError( errorMessage );
@@ -338,6 +351,11 @@ void Style::init( const DefaultStyleParams &params )
 {
   mDefault = true;
   mDefaultStyleParams = params;
+  mType = params.layerType;
+  if ( mType == DataType::PointCloud )
+  {
+    mData = createPointCloudQmlDocument();
+  }
 }
 
 DataType Style::type() const
@@ -346,6 +364,12 @@ DataType Style::type() const
   {
     bool isRaster = false;
     QDomElement root = mData.firstChildElement( TAGS::QGIS );
+
+    if ( !root.isNull() && !root.firstChildElement( QStringLiteral( "renderer" ) ).isNull() )
+    {
+      mType = DataType::PointCloud;
+      return mType;
+    }
 
     QDomNode pipeNode = root.firstChildElement( TAGS::PIPE );
     if ( pipeNode.isNull() )
@@ -423,6 +447,10 @@ bool Style::isDefaultStyle() const
 
 bool Style::validateGeometryType( LayerGeometryType layerGeometryType ) const
 {
+  QDomElement root = mData.firstChildElement( TAGS::QGIS );
+  if ( !root.isNull() && !root.firstChildElement( QStringLiteral( "renderer" ) ).isNull() )
+    return true;
+
   QDomElement geometryTypeElement = mData.firstChildElement( TAGS::QGIS )
                                       .firstChildElement( TAGS::LAYER_GEOMETRY_TYPE );
   if ( layerGeometryType == LayerGeometryType::Unknown || geometryTypeElement.isNull() )
@@ -474,7 +502,12 @@ bool Style::importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const
   }
   else
   {
-    return importToLayer( layer, mData, errorMessage );
+    auto styleData = mData;
+    if ( layer->type() == Qgis::LayerType::PointCloud && mData.isNull() )
+    {
+      styleData = createPointCloudQmlDocument();
+    }
+    return importToLayer( layer, styleData, errorMessage );
   }
 }
 
@@ -752,7 +785,7 @@ QString Style::exportToString( const StyleFormat format ) const
 
   if ( isDefaultStyle() )
   {
-    if ( mDefaultStyleParams.layerType != DataType::Raster )
+    if ( mDefaultStyleParams.layerType == DataType::Vector )
     {
       QgsVectorLayer::LayerOptions layerOptions;
       layerOptions.fallbackWkbType = layerGeometryTypeToQgsWkbType(
@@ -806,11 +839,23 @@ QString Style::exportToString( const StyleFormat format ) const
         static_cast<QgsVectorLayer *>( qgsMapLayer.get() )->setRenderer( qgsSingleSymbolRenderer );
       }
     }
-    else
+    else if ( mDefaultStyleParams.layerType == DataType::Raster )
     {
       qgsMapLayer = createTemporaryRasterLayer();
       if ( !qgsMapLayer )
         throw QgisHeadlessError( errorMessage );
+    }
+    else if ( mDefaultStyleParams.layerType == DataType::PointCloud )
+    {
+      if ( format != StyleFormat::SLD )
+      {
+        QDomDocument doc = createPointCloudQmlDocument();
+        return doc.toString();
+      }
+      else
+      {
+        throw StyleTypeMismatch( "SLD export is not supported for point cloud layers" );
+      }
     }
   }
   else
@@ -853,4 +898,29 @@ QColor Style::defaultStyleColor() const
 RandomColorGenerator::SeedType Style::getRandomSeed()
 {
   return mDefaultStyleParams.randomSeed;
+}
+
+QDomDocument Style::createPointCloudQmlDocument() const
+{
+  QDomDocument doc;
+  QDomElement root = doc.createElement( QStringLiteral( "qgis" ) );
+  doc.appendChild( root );
+
+  if ( !mData.isNull() )
+  {
+    return mData;
+  }
+
+  auto renderer = std::make_unique<
+    QgsPointCloudClassifiedRenderer>( QStringLiteral( "Classification" ), QgsPointCloudClassifiedRenderer::defaultCategories() );
+  if ( !renderer )
+  {
+    throw QgisHeadlessError( QStringLiteral( "Point cloud renderer factory returned nullptr" ) );
+  }
+
+  QgsReadWriteContext context;
+  QDomElement rendererElem = renderer->save( doc, context );
+  root.appendChild( rendererElem );
+
+  return doc;
 }

@@ -36,6 +36,7 @@ namespace HeadlessRender
   {
     Raster,
     Vector,
+    PointCloud,
     Unknown
   };
 

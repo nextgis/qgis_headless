@@ -37,6 +37,7 @@ class QgsLayerTreeNode;
 class QgsLayerTreeModelLegendNode;
 class QgsMultiBandColorRenderer;
 class QgsPalettedRasterRenderer;
+class QgsPointCloudRenderer;
 class QgsRasterRenderer;
 class QgsSingleBandGrayRenderer;
 class QgsSingleBandPseudoColorRenderer;
@@ -162,6 +163,11 @@ namespace HeadlessRender
       LegendSymbol renderRasterLayerSymbol(
         QgsLayerTreeModelLegendNode *node, LegendRenderContext &context,
         const QgsRasterRenderer *renderer, int rasterBand
+      );
+
+      LegendSymbolsContainer renderPointCloudSymbols(
+        const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
+        const QgsPointCloudRenderer *renderer
       );
 
       std::vector<LegendHierarchyInfo> buildLegendHierarchy( const LayerTreeModelNodeList &layerNodes );

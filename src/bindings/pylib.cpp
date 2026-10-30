@@ -56,6 +56,7 @@ PYBIND11_MODULE( _qgis_headless, m )
   py::register_exception<
     HeadlessRender::InvalidLayerSource>( m, "InvalidLayerSource", qgisHeadlessErrorHandle );
   py::register_exception<HeadlessRender::InvalidCRSError>( m, "InvalidCRSError", qgisHeadlessErrorHandle );
+  py::register_exception<HeadlessRender::UnknownLayerType>( m, "UnknownLayerType", qgisHeadlessErrorHandle );
 
   py::class_<HeadlessRender::CRS>( m, "CRS" )
     .def( py::init<>() )
@@ -96,6 +97,7 @@ PYBIND11_MODULE( _qgis_headless, m )
   py::enum_<HeadlessRender::DataType>( m, "LayerType" )
     .value( "LT_VECTOR", HeadlessRender::DataType::Vector )
     .value( "LT_RASTER", HeadlessRender::DataType::Raster )
+    .value( "LT_POINT_CLOUD", HeadlessRender::DataType::PointCloud )
     .value( "LT_UNKNOWN", HeadlessRender::DataType::Unknown )
     .export_values();
 
@@ -108,6 +110,11 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def_static(
       "from_gdal",
       []( const py::object &uri ) { return HeadlessRender::Layer::fromGdal( py::str( uri ) ); },
+      py::arg( "uri" )
+    )
+    .def_static(
+      "from_pdal",
+      []( const py::object &uri ) { return HeadlessRender::Layer::fromPdal( py::str( uri ) ); },
       py::arg( "uri" )
     )
     .def_static(

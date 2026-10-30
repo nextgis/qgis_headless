@@ -66,6 +66,13 @@ namespace HeadlessRender
       static Layer fromGdal( const std::string &uri );
 
       /**
+       * Creates a point cloud layer from a data source.
+       * \param uri points to a data source (e.g., file, database) with point cloud layer.
+       * \returns point cloud layer, loaded from the specified data source.
+       */
+      static Layer fromPdal( const std::string &uri );
+
+      /**
        * Creates a vector layer of given geometry type, CRS with attributes of given types from QVector of FeatureList
        * \param geometryType type of geometry for vector layer.
        * \param crs CRS of layer.
@@ -85,7 +92,7 @@ namespace HeadlessRender
       QgsMapLayerPtr qgsMapLayer() const;
 
       /**
-       * Returns type of layer: raster or vector.
+       * Returns type of layer: vector, raster or point cloud.
        */
       DataType type() const;
 

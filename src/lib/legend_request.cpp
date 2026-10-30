@@ -31,6 +31,9 @@
 #include <qgslegendsettings.h>
 #include <qgsmultibandcolorrenderer.h>
 #include <qgspalettedrasterrenderer.h>
+#include <qgspointcloudlayer.h>
+#include <qgspointcloudrenderer.h>
+#include <qgspointcloudattributebyramprenderer.h>
 #include <qgsrasterlayer.h>
 #include <qgsrasterrenderer.h>
 #include <qgsrastershader.h>
@@ -39,6 +42,8 @@
 #include <qgssinglebandgrayrenderer.h>
 #include <qgssinglebandpseudocolorrenderer.h>
 #include <qgsvectorlayer.h>
+
+#include "exceptions.h"
 
 using namespace HeadlessRender;
 
@@ -183,10 +188,17 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderLayerSymbols(
   {
     return renderRasterLayerSymbols( nodes, context, rasterLayer->renderer() );
   }
+  else if ( auto &&vectorLayer = qobject_cast<const QgsVectorLayer *>( qgisLayer.get() ) )
+  {
+    return renderVectorLayerSymbols( nodes, context, vectorLayer->renderer() );
+  }
+  else if ( auto &&pointCloudLayer = qobject_cast<const QgsPointCloudLayer *>( qgisLayer.get() ) )
+  {
+    return renderPointCloudSymbols( nodes, context, pointCloudLayer->renderer() );
+  }
   else
   {
-    auto &&vectorLayer = qobject_cast<const QgsVectorLayer *>( qgisLayer.get() );
-    return renderVectorLayerSymbols( nodes, context, vectorLayer->renderer() );
+    throw UnknownLayerType( "Unknown layer type" );
   }
 }
 
@@ -434,6 +446,31 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderDefaultRasterSymbols(
       continue;
     }
     symbols.push_back( renderRasterLayerSymbol( node, context, renderer, band ) );
+  }
+  return symbols;
+}
+
+LegendRequest::LegendSymbolsContainer LegendRequest::renderPointCloudSymbols(
+  const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
+  const QgsPointCloudRenderer *renderer
+)
+{
+  auto rampRenderer = dynamic_cast<const QgsPointCloudAttributeByRampRenderer *>( renderer );
+  if ( rampRenderer )
+  {
+    auto rampShader = rampRenderer->colorRampShader();
+    if ( rampShader.colorRampType() == Qgis::ShaderInterpolationMethod::Linear )
+    {
+      std::unique_ptr<QgsColorRamp> colorRamp( rampShader.createColorRamp() );
+      return renderColorRampSymbols( context, *colorRamp, rampShader.minimumValue(), rampShader.maximumValue(), 0 );
+    }
+  }
+
+  LegendSymbolsContainer symbols;
+  symbols.reserve( layerNodes.length() );
+  for ( auto &&node : layerNodes )
+  {
+    symbols.push_back( renderRasterLayerSymbol( node, context, nullptr, 0 ) );
   }
   return symbols;
 }

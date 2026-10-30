@@ -64,6 +64,11 @@ namespace HeadlessRender
       using QgisHeadlessError::QgisHeadlessError;
   };
 
+  struct UnknownLayerType : QgisHeadlessError
+  {
+      using QgisHeadlessError::QgisHeadlessError;
+  };
+
 } //namespace HeadlessRender
 
 #endif // QGIS_HEADLESS_EXCEPTIONS_H
