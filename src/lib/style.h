@@ -186,6 +186,9 @@ namespace HeadlessRender
 
       void mergeFieldSections( QDomDocument &target, const QDomDocument &source ) const;
 
+      QDomDocument createPointCloudQmlDocument() const;
+
+    private:
       QDomDocument mData;
 
       bool mDefault = false;

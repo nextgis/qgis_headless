@@ -489,3 +489,71 @@ def test_legend_symbols_group(style_file, layer_file, group_parent, shared_datad
     for symbol, (is_group, parent) in zip(symbols, group_parent):
         assert symbol.is_group() == is_group, f"Symbol #{symbol.index()} group mismatch"
         assert symbol.parent() == parent, f"Symbol #{symbol.index()} parent mismatch"
+
+
+@pytest.mark.parametrize(
+    "layer_file, style_file, expected",
+    (
+        (
+            "point-cloud/point_cloud.copc.laz",
+            "point-cloud/point_cloud_classification.qml",
+            (
+                ("Unclassified", (170, 170, 170, 255)),
+                ("Ground", (170, 85, 0, 255)),
+                ("Low vegetation", (0, 170, 170, 255)),
+                ("Medium vegetation", (85, 255, 85, 255)),
+                ("High vegetation", (0, 170, 0, 255)),
+                ("Building", (255, 85, 85, 255)),
+                ("Low level (noise)", (170, 0, 0, 255)),
+                ("Bridge deck", (85, 85, 255, 255)),
+            ),
+        ),
+        (
+            "point-cloud/point_cloud.copc.laz",
+            "point-cloud/point_cloud_intensity.qml",
+            (
+                ("0", (48, 18, 59, 255)),
+                ("15565", (40, 188, 235, 255)),
+                ("31130", (164, 252, 60, 255)),
+                ("46695", (251, 126, 33, 255)),
+                ("62260", (122, 4, 3, 255)),
+            ),
+        ),
+        (
+            "point-cloud/point_cloud.copc.laz",
+            "point-cloud/point_cloud_rgb.qml",
+            (),
+        ),
+        (
+            "point-cloud/point_cloud.copc.laz",
+            "point-cloud/point_cloud_extent.qml",
+            (("", (237, 28, 36, 255)),),
+        ),
+    ),
+)
+def test_legend_point_cloud(layer_file, style_file, expected, shared_datadir, save_img):
+    layer = Layer.from_pdal(shared_datadir / layer_file)
+    style = Style.from_file(shared_datadir / style_file)
+
+    req = MapRequest()
+    req.set_dpi(96)
+    req.set_crs(CRS.from_epsg(3857))
+
+    req.add_layer(layer, style)
+    symbols = req.legend_symbols(0, LEGEND_DEFAULT_SIZES)
+
+    assert len(symbols) == len(expected), "count mismatch"
+
+    for symbol, (expected_title, expected_color) in zip(symbols, expected):
+        assert symbol.title() == expected_title, "title mismatch"
+
+        image = save_img(to_pil(symbol.icon()), symbol.title() or "symbol")
+        im_size = image.size
+
+        im_width, im_height = im_size
+        assert im_width != 0, "zero width"
+        assert im_height != 0, "zero height"
+        stat = image_stat(save_img(to_pil(symbol.icon()), symbol.title()))
+        assert is_same_color(
+            (stat.red.max, stat.green.max, stat.blue.max, stat.alpha.max), expected_color
+        ), "color mismatch"

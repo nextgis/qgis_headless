@@ -23,12 +23,14 @@
 #include "utils.h"
 #include "exceptions.h"
 #include "style.h"
+#include <qgspointcloudlayer.h>
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsmemoryproviderutils.h>
 #include <qgssinglesymbolrenderer.h>
 #include <qgssymbol.h>
 #include <QByteArray>
+#include <QFileInfo>
 
 void disableVectorSimplify( const std::shared_ptr<QgsVectorLayer> &qgsVectorLayer )
 {
@@ -51,7 +53,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
   auto &&qgsVectorLayer = std::make_shared<
     QgsVectorLayer>( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ), layerOptions );
   if ( !qgsVectorLayer->isValid() )
-    throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
+    throw InvalidLayerSource( "Layer source is invalid" );
 
   disableVectorSimplify( qgsVectorLayer );
   return Layer( qgsVectorLayer );
@@ -61,12 +63,60 @@ HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
   auto &&qgsRasterLayer = std::make_shared<QgsRasterLayer>( QString::fromStdString( uri ) );
   if ( !qgsRasterLayer->isValid() )
-    throw HeadlessRender::InvalidLayerSource(
+    throw InvalidLayerSource(
       "Layer source is invalid, error message: "
       + qgsRasterLayer->error().message( QgsErrorMessage::Text )
     );
 
   return Layer( qgsRasterLayer );
+}
+
+namespace
+{
+  QString selectPrefferedPointCloudProvider( const QString &uri )
+  {
+    QString preferredProvider;
+    if ( uri.endsWith( QLatin1String( ".copc.laz" ), Qt::CaseInsensitive ) )
+    {
+      preferredProvider = QStringLiteral( "copc" );
+    }
+    else if ( QFileInfo( uri ).fileName().compare( QLatin1String( "ept.json" ), Qt::CaseInsensitive )
+              == 0 )
+    {
+      preferredProvider = QStringLiteral( "ept" );
+    }
+    else
+    {
+      preferredProvider = QStringLiteral( "pdal" );
+    }
+    return preferredProvider;
+  }
+} //namespace
+
+HeadlessRender::Layer HeadlessRender::Layer::fromPdal( const std::string &uri )
+{
+  const QString qUri = QString::fromStdString( uri );
+
+  QString preferredProvider = selectPrefferedPointCloudProvider( qUri );
+
+  auto qgsPointCloudLayer
+    = std::make_shared< QgsPointCloudLayer >( qUri, QStringLiteral( "point_cloud" ), preferredProvider );
+
+  if ( !qgsPointCloudLayer->isValid() && preferredProvider != QLatin1String( "pdal" ) )
+  {
+    qgsPointCloudLayer = std::make_shared<
+      QgsPointCloudLayer >( qUri, QStringLiteral( "point_cloud" ), QStringLiteral( "pdal" ) );
+  }
+
+  if ( !qgsPointCloudLayer->isValid() )
+  {
+    auto errorMessage = qgsPointCloudLayer->error().message( QgsErrorMessage::Text );
+    throw InvalidLayerSource(
+      QStringLiteral( "Failed to load point cloud layer from '%1' with provider '%2'. Error: %3" )
+        .arg( qUri, preferredProvider, errorMessage )
+    );
+  }
+  return Layer( qgsPointCloudLayer );
 }
 
 HeadlessRender::Layer HeadlessRender::Layer::fromData(
@@ -76,7 +126,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
 )
 {
   QgsFields fields;
-  for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
+  for ( const QPair<QString, LayerAttributeType> &attrType : attributeTypes )
     fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
 
   std::shared_ptr<QgsVectorLayer> qgsLayer(
@@ -108,15 +158,31 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::Layer::qgsMapLayer() const
 
 HeadlessRender::DataType HeadlessRender::Layer::type() const
 {
-  if ( mLayer && mLayer->isValid() )
-    mType = mLayer->type() == Qgis::LayerType::Vector ? HeadlessRender::DataType::Vector
-                                                      : HeadlessRender::DataType::Raster;
+  if ( mLayer && mLayer->isValid() && mType == DataType::Unknown )
+    switch ( mLayer->type() )
+    {
+      case Qgis::LayerType::Vector:
+      {
+        mType = DataType::Vector;
+        break;
+      }
+      case Qgis::LayerType::Raster:
+      {
+        mType = DataType::Raster;
+        break;
+      }
+      case Qgis::LayerType::PointCloud:
+      {
+        mType = DataType::PointCloud;
+        break;
+      }
+    }
   return mType;
 }
 
 void HeadlessRender::Layer::setRendererSymbolColor( const QColor &color )
 {
-  if ( type() != HeadlessRender::DataType::Vector )
+  if ( type() != DataType::Vector )
     return;
 
   auto &&layer = std::dynamic_pointer_cast< QgsVectorLayer >( mLayer );
@@ -159,7 +225,7 @@ void HeadlessRender::Layer::setRendererSymbolColor( const QColor &color )
 
 bool HeadlessRender::Layer::addStyle( HeadlessRender::Style &style, QString &error )
 {
-  if ( type() != style.type() )
+  if ( style.type() != DataType::Unknown && type() != style.type() )
     throw StyleTypeMismatch( "Layer type and style type do not match" );
 
   return style.importToLayer( mLayer, error );
