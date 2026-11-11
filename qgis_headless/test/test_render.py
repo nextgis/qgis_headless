@@ -296,6 +296,30 @@ def test_legend_svg_resolver(save_img, shared_datadir, reset_svg_paths):
 
 
 @pytest.mark.parametrize(
+    "svg_path, layer_file, style_file",
+    (
+        pytest.param("marker-param", "zero/data.geojson", "zero/marker-param.qml", id="fill-path"),
+        pytest.param(None, "zero/data.geojson", "zero/marker-param-embed.qml", id="fill-embed"),
+        pytest.param("marker-param", "poly.geojson", "svg/stroke-file.qml", id="outline-path"),
+    ),
+)
+def test_svg_parametrized(
+    svg_path, layer_file, style_file, save_img, shared_datadir, reset_svg_paths
+):
+    data = shared_datadir / layer_file
+    style = (shared_datadir / style_file).read_text()
+
+    if svg_path is not None:
+        set_svg_paths([str(shared_datadir / svg_path)])
+    img = save_img(render_vector(data, style, EXTENT_ONE, 256))
+    stat = image_stat(img)
+
+    assert stat.red.max == 0
+    assert stat.green.max == 255
+    assert stat.blue.max == 0
+
+
+@pytest.mark.parametrize(
     "crs, extent, extent_empty",
     (
         pytest.param(

@@ -123,6 +123,7 @@ namespace
         const QColor fillColor = svgMarkerSymbolLayer->fillColor();
         const QColor strokeColor = svgMarkerSymbolLayer->strokeColor();
         const double strokeWidth = svgMarkerSymbolLayer->strokeWidth();
+        const auto parameters = svgMarkerSymbolLayer->parameters();
 
         svgMarkerSymbolLayer->setPath(
           resolveSvgPath( svgMarkerSymbolLayer->path(), svgResolverCallback )
@@ -131,13 +132,23 @@ namespace
         svgMarkerSymbolLayer->setFillColor( fillColor );
         svgMarkerSymbolLayer->setStrokeColor( strokeColor );
         svgMarkerSymbolLayer->setStrokeWidth( strokeWidth );
+        svgMarkerSymbolLayer->setParameters( parameters );
       }
       else if ( symbolLayer->layerType() == SymbolLayerType::SVGFill )
       {
         auto svgFillSymbolLayer = dynamic_cast<QgsSVGFillSymbolLayer *>( symbolLayer );
+        const QColor fillColor = svgFillSymbolLayer->svgFillColor();
+        const QColor strokeColor = svgFillSymbolLayer->svgStrokeColor();
+        const double strokeWidth = svgFillSymbolLayer->svgStrokeWidth();
+        const auto parameters = svgFillSymbolLayer->parameters();
 
         auto path = svgFillSymbolLayer->svgFilePath();
         svgFillSymbolLayer->setSvgFilePath( resolveSvgPath( path, svgResolverCallback ) );
+
+        svgFillSymbolLayer->setSvgFillColor( fillColor );
+        svgFillSymbolLayer->setSvgStrokeColor( strokeColor );
+        svgFillSymbolLayer->setSvgStrokeWidth( strokeWidth );
+        svgFillSymbolLayer->setParameters( parameters );
       }
 
       if ( symbolLayer->subSymbol() )
