@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include <qgscolorramp.h>
+#include <qgsdiagramrenderer.h>
 #include <qgsheatmaprenderer.h>
 #include <qgslayertree.h>
 #include <qgslayertreemodel.h>
@@ -39,6 +40,7 @@
 #include <qgssinglebandgrayrenderer.h>
 #include <qgssinglebandpseudocolorrenderer.h>
 #include <qgsvectorlayer.h>
+#include <qgssymbol.h>
 
 using namespace HeadlessRender;
 
@@ -113,6 +115,7 @@ class LegendRequest::LegendRenderContext final
 
     const QImage &drawImage( const QColor &color ) &;
     const QImage &drawImage( QgsLayerTreeModelLegendNode *node ) &;
+    QImage drawImage( QgsSymbol *symbol );
 
   private:
     QImage image;
@@ -141,6 +144,8 @@ LegendRequest::LegendRenderContext::LegendRenderContext( double dpi, const Size 
   qgsRenderContext.setFlag( Qgis::RenderContextFlag::Antialiasing, true );
   qgsRenderContext.painter()->scale( dpmm, dpmm );
 
+  qgsRenderContext.setDpiTarget( dpi );
+
   legendSettings.setSymbolSize( QSizeF( canvasFrac * width / dpmm, canvasFrac * height / dpmm ) );
   legendSettings.setMaximumSymbolSize( canvasFrac * height / dpmm );
 }
@@ -158,6 +163,28 @@ const QImage &LegendRequest::LegendRenderContext::drawImage( QgsLayerTreeModelLe
   return image;
 }
 
+QImage LegendRequest::LegendRenderContext::drawImage( QgsSymbol *symbol )
+{
+#if 0
+  auto context = *itemContext.context;
+  
+  QgsRenderContext symbolContext;
+  symbolContext.setDpiTarget( qgsRenderContext.dpiTarget() );
+#endif
+
+  if ( !symbol )
+    return QImage();
+
+  QgsRenderContext symbolContext;
+  symbolContext.setScaleFactor( qgsRenderContext.dpiTarget() / 25.4 );
+  symbolContext.setRendererScale( 1.0 );
+  symbolContext.setDpiTarget( qgsRenderContext.dpiTarget() );
+
+  auto r_image = symbol->asImage( image.size(), &symbolContext );
+
+  return r_image;
+}
+
 LegendRequest::LegendSymbolsContainer LegendRequest::renderLegendSymbols(
   const Layer &layer, const Size &size
 )
@@ -167,7 +194,6 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderLegendSymbols(
 
   auto qgisLayer = layer.qgsMapLayer();
   auto symbols = renderLayerSymbols( qgisLayer, context );
-  applyScaleRange( symbols, qgisLayer );
 
   return symbols;
 }
@@ -176,41 +202,67 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderLayerSymbols(
   const QgsMapLayerPtr &qgisLayer, LegendRenderContext &context
 )
 {
-  QgsLayerTree tree;
-  auto &&nodeLayer = tree.addLayer( qgisLayer.get() );
-  QgsLayerTreeModel model( &tree );
-
-  auto &&nodes = model.layerLegendNodes( nodeLayer );
-
-  if ( auto &&rasterLayer = qobject_cast<const QgsRasterLayer *>( qgisLayer.get() ) )
+  if ( auto vectorLayer = qobject_cast<QgsVectorLayer *>( qgisLayer.get() ) )
   {
+    auto renderer = vectorLayer->renderer();
+    if ( !renderer )
+    {
+      return {};
+    }
+
+    auto symbols = renderVectorLayerSymbols( renderer->legendSymbolItems(), context, renderer );
+    if ( auto diagramRenderer = vectorLayer->diagramRenderer() )
+    {
+      QgsLayerTree tree;
+      auto nodeLayer = tree.addLayer( vectorLayer );
+      QgsLayerTreeModel model( &tree );
+      const auto nodes = diagramRenderer->legendItems( nodeLayer );
+
+      for ( auto &&node : nodes )
+      {
+        auto title = node->data( Qt::DisplayRole ).toString();
+        symbols.push_back(
+          LegendSymbol::create(
+            std::make_shared<HeadlessRender::Image>( context.drawImage( node ) ), title,
+            SymbolRender::Uncheckable, layerIndex++, 0, !title.isEmpty()
+          )
+        );
+      }
+
+      qDeleteAll( nodes );
+    }
+
+    return symbols;
+  }
+  else if ( auto rasterLayer = qobject_cast<QgsRasterLayer *>( qgisLayer.get() ) )
+  {
+    QgsLayerTree tree;
+    auto nodeLayer = tree.addLayer( rasterLayer );
+    QgsLayerTreeModel model( &tree );
+    const auto nodes = model.layerLegendNodes( nodeLayer );
+
     return renderRasterLayerSymbols( nodes, context, rasterLayer->renderer() );
   }
-  else
-  {
-    auto &&vectorLayer = qobject_cast<const QgsVectorLayer *>( qgisLayer.get() );
-    return renderVectorLayerSymbols( nodes, context, vectorLayer->renderer() );
-  }
+
+  return {};
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderVectorLayerSymbols(
-  const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
-  const QgsFeatureRenderer *renderer
+  const LegendSymbolItemList &symbolItems, LegendRenderContext &context, QgsFeatureRenderer *renderer
 )
 {
   if ( renderer->type() == RendererType::HEATMAP )
   {
-    return renderHeatmapSymbols( layerNodes, context, static_cast<const QgsHeatmapRenderer *>( renderer ) );
+    return renderHeatmapSymbols( context, static_cast<QgsHeatmapRenderer *>( renderer ) );
   }
   else
   {
-    return renderDefaultVectorLayerSymbols( layerNodes, context, renderer );
+    return renderDefaultVectorLayerSymbols( symbolItems, context, renderer );
   }
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderHeatmapSymbols(
-  const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
-  const QgsHeatmapRenderer *renderer
+  LegendRenderContext &context, const QgsHeatmapRenderer *renderer
 )
 {
   double max = renderer->maximumValue();
@@ -222,72 +274,81 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderHeatmapSymbols(
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderDefaultVectorLayerSymbols(
-  const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
-  const QgsFeatureRenderer *renderer
+  const LegendSymbolItemList &symbolItems, LegendRenderContext &context, QgsFeatureRenderer *renderer
 )
 {
   LegendSymbolsContainer symbols;
-  symbols.reserve( layerNodes.length() );
+  symbols.reserve( symbolItems.size() );
 
-  if ( layerNodes.length() == 1 )
+#if 0
+  if ( symbolItems.size() == 1 )
   {
-    symbols.push_back( renderVectorLayerSymbol( layerNodes[0], context, renderer ) );
-    symbols[0].setHasCategory( false );
+    const auto &item = symbolItems.first();
+    LegendSymbol symbol = renderVectorLayerSymbol( item, context, renderer );
+    symbol.setHasCategory( false );
+    symbols.push_back( std::move( symbol ) );
+    return symbols;
   }
-  else
+#endif
+
+  QHash<QString, LegendSymbol::Index> ruleKeyToIndex;
+  ruleKeyToIndex.reserve( symbolItems.size() );
+
+  for ( const auto &item : symbolItems )
   {
-    auto &&hierarchy = buildLegendHierarchy( layerNodes );
+    LegendSymbol symbol = renderVectorLayerSymbol( item, context, renderer );
 
-    const LegendSymbol::Index startIndex = layerIndex;
+    double scaleMin = item.scaleMinDenom() > 0 ? item.scaleMinDenom() : -2;
+    double scaleMax = item.scaleMaxDenom() > 0 ? item.scaleMaxDenom() : 0;
+    symbol.setScaleRange( { scaleMax, scaleMin } );
 
-    for ( int i = 0; i < layerNodes.length(); ++i )
+    const QString ruleKey = item.ruleKey();
+    if ( !ruleKey.isEmpty() )
     {
-      LegendSymbol symbol = renderVectorLayerSymbol( layerNodes[i], context, renderer );
-
-      if ( i < static_cast<int>( hierarchy.size() ) )
-      {
-        const LegendHierarchyInfo &info = hierarchy[i];
-
-        if ( info.isGroup )
-        {
-          symbol.setIsGroup( true );
-        }
-
-        if ( info.parentPosition.has_value() )
-        {
-          symbol.setParentIndex( startIndex + *info.parentPosition );
-        }
-      }
-
-      symbols.push_back( std::move( symbol ) );
+      ruleKeyToIndex.insert( ruleKey, symbol.index() );
     }
+    symbols.push_back( std::move( symbol ) );
+  }
+
+  for ( size_t i = 0; i < symbols.size(); ++i )
+  {
+    const auto &item = symbolItems.at( i );
+    const QString parentKey = item.parentRuleKey();
+
+    if ( parentKey.isEmpty() )
+      continue;
+
+    const auto it = ruleKeyToIndex.constFind( parentKey );
+    if ( it == ruleKeyToIndex.constEnd() )
+      continue;
+
+    symbols[i].setParentIndex( it.value() );
+    symbols[it.value()].setIsGroup( true );
+  }
+
+  if ( symbols.size() == 1 )
+  {
+    symbols.begin()->setHasCategory( false );
   }
 
   return symbols;
 }
 
 LegendSymbol LegendRequest::renderVectorLayerSymbol(
-  QgsLayerTreeModelLegendNode *node, LegendRenderContext &context, const QgsFeatureRenderer *renderer
+  const QgsLegendSymbolItem &item, LegendRenderContext &context, QgsFeatureRenderer *renderer
 )
 {
   auto symbolRender = SymbolRender::Uncheckable;
-
-  if ( !dynamic_cast<const QgsSimpleLegendNode *>( node ) // not a diagram symbol
-       && renderer->legendSymbolItemsCheckable() )
+  if ( renderer->legendSymbolItemsCheckable() && item.isCheckable() )
   {
-    symbolRender = node->data( Qt::CheckStateRole ).toBool() ? SymbolRender::Checked
-                                                             : SymbolRender::Unchecked;
+    const bool checked = renderer->legendSymbolItemChecked( item.ruleKey() );
+    symbolRender = checked ? SymbolRender::Checked : SymbolRender::Unchecked;
   }
 
-  auto symbol = LegendSymbol::create(
-    std::make_shared<HeadlessRender::Image>( context.drawImage( node ) ),
-    node->data( Qt::DisplayRole ).toString(), symbolRender, layerIndex++, 0
+  return LegendSymbol::create(
+    std::make_shared<HeadlessRender::Image>( context.drawImage( item.symbol() ) ), item.label(),
+    symbolRender, layerIndex++, item.label().isEmpty()
   );
-
-  symbol.setRuleKey(
-    node->data( static_cast<int>( QgsLayerTreeModelLegendNode::CustomRole::RuleKey ) ).toString()
-  );
-  return symbol;
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderRasterLayerSymbols(
@@ -444,83 +505,4 @@ LegendRequest::LegendSymbolsContainer LegendRequest::renderDefaultRasterSymbols(
     symbols.push_back( renderRasterLayerSymbol( node, context, renderer, band ) );
   }
   return symbols;
-}
-
-std::vector<LegendRequest::LegendHierarchyInfo> LegendRequest::buildLegendHierarchy(
-  const LayerTreeModelNodeList &layerNodes
-)
-{
-  const int nodeCount = layerNodes.length();
-  std::vector<LegendHierarchyInfo> result( static_cast<size_t>( nodeCount ) );
-
-  if ( nodeCount == 0 )
-    return result;
-
-  std::vector<QString> ruleKeys( static_cast<size_t>( nodeCount ) );
-  std::vector<QString> parentRuleKeys( static_cast<size_t>( nodeCount ) );
-
-  for ( int i = 0; i < nodeCount; ++i )
-  {
-    auto *node = layerNodes.at( i );
-    if ( !node )
-      continue;
-
-    ruleKeys[i] = node->data( ( int ) QgsLayerTreeModelLegendNode::CustomRole::RuleKey ).toString();
-    parentRuleKeys[i]
-      = node->data( ( int ) QgsLayerTreeModelLegendNode::CustomRole::ParentRuleKey ).toString();
-  }
-
-  std::unordered_map<QString, int> ruleKeyToPosition;
-  ruleKeyToPosition.reserve( static_cast<size_t>( nodeCount ) );
-  for ( int i = 0; i < nodeCount; ++i )
-  {
-    if ( !ruleKeys[i].isEmpty() )
-      ruleKeyToPosition.emplace( ruleKeys[i], i );
-  }
-
-  for ( int i = 0; i < nodeCount; ++i )
-  {
-    if ( parentRuleKeys[i].isEmpty() )
-      continue;
-
-    auto it = ruleKeyToPosition.find( parentRuleKeys[i] );
-    if ( it == ruleKeyToPosition.end() )
-      continue;
-
-    result[i].parentPosition = it->second;
-    result[it->second].isGroup = true;
-  }
-
-  return result;
-}
-
-void LegendRequest::applyScaleRange( LegendSymbolsContainer &symbols, const QgsMapLayerPtr &qgsLayer )
-{
-  if ( auto vectorLayer = qobject_cast<const QgsVectorLayer *>( qgsLayer.get() ) )
-  {
-    auto renderer = vectorLayer->renderer();
-    if ( renderer )
-    {
-      QHash<QString, QgsLegendSymbolItem> itemByRuleKey;
-      const auto legendItems = renderer->legendSymbolItems();
-      for ( const auto &item : legendItems )
-      {
-        if ( !item.ruleKey().isEmpty() )
-        {
-          itemByRuleKey.insert( item.ruleKey(), item );
-        }
-      }
-
-      for ( auto &symbol : symbols )
-      {
-        QString ruleKey = symbol.ruleKey();
-        auto it = itemByRuleKey.find( ruleKey );
-        if ( it != itemByRuleKey.end() )
-        {
-          const auto &item = it.value();
-          symbol.setScaleRange( { item.scaleMaxDenom(), item.scaleMinDenom() } );
-        }
-      }
-    }
-  }
 }

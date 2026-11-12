@@ -35,6 +35,8 @@ class QgsFeatureRenderer;
 class QgsHeatmapRenderer;
 class QgsLayerTreeNode;
 class QgsLayerTreeModelLegendNode;
+class QgsLegendSymbolItem;
+class QgsSymbolLegendNode;
 class QgsMultiBandColorRenderer;
 class QgsPalettedRasterRenderer;
 class QgsRasterRenderer;
@@ -90,14 +92,9 @@ namespace HeadlessRender
     private:
       using LayerTreeNodeList = QList<QgsLayerTreeNode *>;
       using LayerTreeModelNodeList = QList<QgsLayerTreeModelLegendNode *>;
+      using LegendSymbolItemList = QList<QgsLegendSymbolItem>;
 
       class LegendRenderContext;
-
-      struct LegendHierarchyInfo
-      {
-          bool isGroup = false;
-          std::optional<int> parentPosition;
-      };
 
     private:
       LegendSymbolsContainer renderLayerSymbols(
@@ -105,23 +102,21 @@ namespace HeadlessRender
       );
 
       LegendSymbolsContainer renderVectorLayerSymbols(
-        const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
-        const QgsFeatureRenderer *renderer
+        const LegendSymbolItemList &symbolItems, LegendRenderContext &context,
+        QgsFeatureRenderer *renderer
       );
 
       LegendSymbolsContainer renderHeatmapSymbols(
-        const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
-        const QgsHeatmapRenderer *renderer
+        LegendRenderContext &context, const QgsHeatmapRenderer *renderer
       );
 
       LegendSymbolsContainer renderDefaultVectorLayerSymbols(
-        const LayerTreeModelNodeList &layerNodes, LegendRenderContext &context,
-        const QgsFeatureRenderer *renderer
+        const LegendSymbolItemList &symbolItems, LegendRenderContext &context,
+        QgsFeatureRenderer *renderer
       );
 
       LegendSymbol renderVectorLayerSymbol(
-        QgsLayerTreeModelLegendNode *node, LegendRenderContext &context,
-        const QgsFeatureRenderer *renderer
+        const QgsLegendSymbolItem &item, LegendRenderContext &context, QgsFeatureRenderer *renderer
       );
 
       LegendSymbolsContainer renderRasterLayerSymbols(
@@ -165,10 +160,6 @@ namespace HeadlessRender
         QgsLayerTreeModelLegendNode *node, LegendRenderContext &context,
         const QgsRasterRenderer *renderer, int rasterBand
       );
-
-      std::vector<LegendHierarchyInfo> buildLegendHierarchy( const LayerTreeModelNodeList &layerNodes );
-
-      void applyScaleRange( LegendSymbolsContainer &symbols, const QgsMapLayerPtr &layer );
 
     private:
       int mOutputDpi = 96;

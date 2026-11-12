@@ -111,13 +111,3 @@ std::optional<LegendSymbol::Index> LegendSymbol::parent() const noexcept
 {
   return mParentIndex;
 }
-
-void LegendSymbol::setRuleKey( const QString &ruleKey )
-{
-  mRuleKey = ruleKey;
-}
-
-const QString &LegendSymbol::ruleKey() const noexcept
-{
-  return mRuleKey;
-}

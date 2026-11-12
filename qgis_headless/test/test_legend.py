@@ -130,7 +130,7 @@ for id, geometry_type, style, sizes, expected, render in [
         {"file": "diagram/bar-chart.qml"},
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
-            ("", {"c": TRANSPARENT, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            (None, {"c": TRANSPARENT, "ct": TRANSPARENT, "cb": TRANSPARENT}),
             ("red", {"c": RED, "ct": TRANSPARENT, "cb": TRANSPARENT}),
             ("green", {"c": GREEN, "ct": TRANSPARENT, "cb": TRANSPARENT}),
             ("blue", {"c": BLUE, "ct": TRANSPARENT, "cb": TRANSPARENT}),
@@ -143,7 +143,7 @@ for id, geometry_type, style, sizes, expected, render in [
         {"file": "diagram/pie-chart.qml"},
         LEGEND_DEFAULT_SIZES + [24, 32, (32, 24)],
         (
-            ("", {"c": TRANSPARENT, "ct": TRANSPARENT, "cb": TRANSPARENT}),
+            (None, {"c": TRANSPARENT, "ct": TRANSPARENT, "cb": TRANSPARENT}),
             ("red", {"c": RED, "ct": TRANSPARENT, "cb": TRANSPARENT}),
             ("green", {"c": GREEN, "ct": TRANSPARENT, "cb": TRANSPARENT}),
             ("blue", {"c": BLUE, "ct": TRANSPARENT, "cb": TRANSPARENT}),
