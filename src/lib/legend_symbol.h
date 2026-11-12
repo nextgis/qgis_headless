@@ -49,7 +49,7 @@ namespace HeadlessRender
        * \param hasTitle determines whether layer has a title in a legend.
        */
       static LegendSymbol create(
-        const ImagePtr &icon, const QString &title, SymbolRender render, Index index,
+        const ImagePtr &icon, const std::string &title, SymbolRender render, Index index,
         int rasterBand, bool hasTitle = true
       );
 
@@ -65,17 +65,12 @@ namespace HeadlessRender
       /**
        * Returns title of symbol.
        */
-      QString title() const;
+      std::optional<std::string> title() const;
 
       /**
        * Returns true if the layer has a category, i.e. it is part of some group, otherwise returns false.
        */
       bool hasCategory() const;
-
-      /**
-       * Returns true if layer has a title, otherwise returns false.
-       */
-      bool hasTitle() const;
 
       /**
        * Sets whether the layer has a category or not, depending on the value of the hasCategory parameter.
@@ -120,28 +115,21 @@ namespace HeadlessRender
        */
       std::optional<Index> parent() const noexcept;
 
-      void setRuleKey( const QString &ruleKey );
-
-      const QString &ruleKey() const noexcept;
-
     private:
       LegendSymbol(
-        const ImagePtr &icon, const QString &title, SymbolRender render, Index index,
+        const ImagePtr &icon, const std::string &title, SymbolRender render, Index index,
         int rasterBand, bool hasTitle = true
       );
 
       ImagePtr mIcon;
-      QString mTitle;
+      std::optional<std::string> mTitle;
       bool mHasCategory = true;
-      bool mHasTitle = false;
       SymbolRender mRender = SymbolRender::Uncheckable;
       Index mIndex = 0;
       int mRasterBand;
       bool mIsGroup = false;
       std::optional<Index> mParentIndex;
       ScaleRange mScaleRange = { -2, 0 }; // "-2" has no scale range
-
-      QString mRuleKey;
   };
 } //namespace HeadlessRender
 

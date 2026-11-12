@@ -23,19 +23,18 @@
 using namespace HeadlessRender;
 
 LegendSymbol::LegendSymbol(
-  const ImagePtr &icon, const QString &title, const SymbolRender render, const Index index,
+  const ImagePtr &icon, const std::string &title, const SymbolRender render, const Index index,
   int rasterBand, const bool hasTitle
 )
   : mIcon( icon )
-  , mTitle( title )
-  , mHasTitle( hasTitle )
+  , mTitle( title.empty() ? std::nullopt : std::optional( title ) )
   , mRender( render )
   , mIndex( index )
   , mRasterBand( rasterBand )
 {}
 
 LegendSymbol LegendSymbol::create(
-  const ImagePtr &icon, const QString &title, const SymbolRender render, Index index,
+  const ImagePtr &icon, const std::string &title, const SymbolRender render, Index index,
   int rasterBand, const bool hasTitle
 )
 {
@@ -57,7 +56,7 @@ ImagePtr LegendSymbol::icon() const
   return mIcon;
 }
 
-QString LegendSymbol::title() const
+std::optional<std::string> LegendSymbol::title() const
 {
   return mTitle;
 }
@@ -65,11 +64,6 @@ QString LegendSymbol::title() const
 bool LegendSymbol::hasCategory() const
 {
   return mHasCategory;
-}
-
-bool LegendSymbol::hasTitle() const
-{
-  return mHasTitle;
 }
 
 void LegendSymbol::setHasCategory( const bool hasCategory )
@@ -110,14 +104,4 @@ bool LegendSymbol::isGroup() const noexcept
 std::optional<LegendSymbol::Index> LegendSymbol::parent() const noexcept
 {
   return mParentIndex;
-}
-
-void LegendSymbol::setRuleKey( const QString &ruleKey )
-{
-  mRuleKey = ruleKey;
-}
-
-const QString &LegendSymbol::ruleKey() const noexcept
-{
-  return mRuleKey;
 }

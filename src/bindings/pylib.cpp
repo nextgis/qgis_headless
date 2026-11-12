@@ -320,16 +320,7 @@ PYBIND11_MODULE( _qgis_headless, m )
           make_tuple( ( result[0] > 0 ) ? py::cast( result[0] ) : py::none(), ( result[1] > 0 ) ? py::cast( result[1] ) : py::none() );
       }
     )
-    .def(
-      "title",
-      []( const HeadlessRender::LegendSymbol &legendSymbol ) -> std::optional<py::str> {
-        const QString title = legendSymbol.title();
-        if ( !legendSymbol.hasTitle() || !legendSymbol.hasCategory() && title.isEmpty() )
-          return std::optional<py::str>();
-        else
-          return py::cast( title.toStdString() );
-      }
-    )
+    .def( "title", &HeadlessRender::LegendSymbol::title )
     .def( "index", &HeadlessRender::LegendSymbol::index )
     .def(
       "render",
