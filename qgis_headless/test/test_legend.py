@@ -230,6 +230,10 @@ def test_legend_symbols(
         image = save_img(to_pil(symbol.icon()), symbol.title() or "symbol")
         im_size = image.size
 
+        if not expected_colors:
+            assert image.getchannel("A").getbbox() is not None, "Symbol is invisible"
+            assert image.getchannel("R").getextrema()[1] == 255, "Red outline is missing"
+
         im_width, im_height = im_size
         assert im_width != 0, "zero width"
         assert im_height != 0, "zero height"
