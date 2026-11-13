@@ -165,24 +165,33 @@ const QImage &LegendRequest::LegendRenderContext::drawImage( QgsLayerTreeModelLe
 
 QImage LegendRequest::LegendRenderContext::drawImage( QgsSymbol *symbol )
 {
-#if 0
-  auto context = *itemContext.context;
-  
-  QgsRenderContext symbolContext;
-  symbolContext.setDpiTarget( qgsRenderContext.dpiTarget() );
-#endif
-
   if ( !symbol )
     return QImage();
 
-  QgsRenderContext symbolContext;
+  QImage symbolImage( image.size(), QImage::Format_ARGB32_Premultiplied );
+  symbolImage.fill( Qt::transparent );
+
+  QPainter symbolPainter( &symbolImage );
+  symbolPainter.setRenderHint( QPainter::Antialiasing );
+  symbolPainter.setRenderHint( QPainter::SmoothPixmapTransform );
+
+  // asImage() does not attach its painter to a custom render context.
+  // Use a separate pixel-based painter, not the millimeter-scaled legend painter.
+  QgsRenderContext symbolContext = QgsRenderContext::fromQPainter( &symbolPainter );
   symbolContext.setScaleFactor( qgsRenderContext.dpiTarget() / 25.4 );
   symbolContext.setRendererScale( 1.0 );
   symbolContext.setDpiTarget( qgsRenderContext.dpiTarget() );
+  symbolContext.setFlag( Qgis::RenderContextFlag::RenderSymbolPreview, true );
 
-  auto r_image = symbol->asImage( image.size(), &symbolContext );
+  const QSize symbolSize = ( legendSettings.symbolSize() * symbolContext.scaleFactor() ).toSize();
+  symbolPainter.translate(
+    ( symbolImage.width() - symbolSize.width() ) / 2.0,
+    ( symbolImage.height() - symbolSize.height() ) / 2.0
+  );
+  symbol->drawPreviewIcon( &symbolPainter, symbolSize, &symbolContext );
+  symbolPainter.end();
 
-  return r_image;
+  return symbolImage;
 }
 
 LegendRequest::LegendSymbolsContainer LegendRequest::renderLegendSymbols(

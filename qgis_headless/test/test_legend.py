@@ -61,6 +61,46 @@ def test_legend(save_img, shared_datadir, reset_svg_paths):
 
 LEGEND_DEFAULT_SIZES = [20, 40]
 
+
+@pytest.mark.parametrize("geometry_type", [Layer.GT_POINT, Layer.GT_LINESTRING, Layer.GT_POLYGON])
+@pytest.mark.parametrize("dpi", [96, 192])
+def test_vector_legend_symbol_visible(geometry_type, dpi):
+    style = Style.from_defaults(layer_type=LT_VECTOR, layer_geometry_type=geometry_type, color=RED)
+    req = MapRequest()
+    req.set_dpi(dpi)
+    req.add_layer(Layer.from_data(geometry_type, CRS.from_epsg(3857), (), ()), style)
+
+    symbols = req.legend_symbols(0, (64, 48))
+    assert len(symbols) == 1
+    image = to_pil(symbols[0].icon())
+    assert image.size == (64, 48)
+    assert image.getchannel("A").getbbox() is not None, "Vector legend symbol is invisible"
+    center_pixels = [image.getpixel((31, y)) for y in (22, 23, 24)]
+    assert any(pixel[:3] == RED[:3] and pixel[3] > 0 for pixel in center_pixels), (
+        "Vector legend symbol must be centered and retain its color"
+    )
+
+
+def test_vector_legend_symbol_dpi():
+    style = Style.from_defaults(
+        layer_type=LT_VECTOR, layer_geometry_type=Layer.GT_POINT, color=RED
+    )
+    req = MapRequest()
+    req.add_layer(Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), ()), style)
+
+    bounds = []
+    for dpi in (96, 192):
+        req.set_dpi(dpi)
+        image = to_pil(req.legend_symbols(0, (64, 64))[0].icon())
+        bbox = image.getchannel("A").getbbox()
+        assert bbox is not None, "Vector legend symbol is invisible"
+        bounds.append(bbox)
+
+    normal, high_dpi = bounds
+    assert high_dpi[2] - high_dpi[0] > normal[2] - normal[0]
+    assert high_dpi[3] - high_dpi[1] > normal[3] - normal[1]
+
+
 legend_symbols_params = []
 for id, geometry_type, style, sizes, expected, render in [
     (
