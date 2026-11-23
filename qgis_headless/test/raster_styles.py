@@ -77,3 +77,19 @@ def raster_style_xml(
         pipe.insert(renderer_index, renderer)
     _set_contrast_algorithm(renderer, algorithm)
     return root
+
+
+def large_palette_style_xml(datadir: Path) -> ET.Element:
+    root = raster_style_xml(datadir, "paletted")
+    palette = root.find("pipe/rasterrenderer/colorPalette")
+    assert palette is not None
+    for value in range(2, 4096):
+        ET.SubElement(
+            palette,
+            "paletteEntry",
+            value=str(value),
+            color="#aa4400",
+            alpha="255",
+            label=str(value),
+        )
+    return root

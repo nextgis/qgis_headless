@@ -30,7 +30,7 @@ from qgis_headless.util import (
 )
 
 from .known_issues import Issues
-from .raster_styles import raster_style_xml
+from .raster_styles import large_palette_style_xml, raster_style_xml
 
 WKB_MSC = a2b_hex("01010000005070B1A206CF42409CDCEF5014E04B40")  # POINT (37.61739 55.75062)
 EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
@@ -276,6 +276,44 @@ def test_partial_raster_style_preserves_renderer(shared_datadir, with_schema, co
     )
     for _ in range(2):
         assert render_raster(layer, partial, extent).tobytes() == expected.tobytes()
+
+
+@pytest.mark.parametrize("with_schema", [False, True])
+def test_large_palette_matches_legacy_import(shared_datadir, with_schema):
+    extent = (251440, 5977974, 1978853, 7505647)
+    root = large_palette_style_xml(shared_datadir)
+    pipe = root.find("pipe")
+    pipe.find("brightnesscontrast").set("brightness", "15")
+    pipe.find("huesaturation").set("saturation", "-20")
+    pipe.find("rasterrenderer/colorPalette/paletteEntry[@value='255']").set("alpha", "128")
+    schema = LayerSchema.raster(CRS.from_epsg(3857), ["Byte"] * 4, 64, 64) if with_schema else None
+    style = Style.from_string(ET.tostring(root, encoding="unicode"), layer_schema=schema)
+    partial = Style.from_string(
+        '<qgis><pipe><provider><resampling enabled="false"/></provider></pipe></qgis>',
+        layer_schema=schema,
+    )
+    exported = style.to_string()
+
+    # The flat layout always uses the full QGIS importer as an independent control.
+    root.remove(pipe)
+    root.extend(pipe)
+    reference = Style.from_string(ET.tostring(root, encoding="unicode"), layer_schema=schema)
+    filenames = ("cog-rgb-byte.tif", "cog-rgb-uint16.tif", "cog-gray-float32.tif")
+    for filename in (*filenames, filenames[0]):
+        path = shared_datadir / "raster" / filename
+        layer = Layer.from_gdal(path)
+        reference_layer = Layer.from_gdal(path)
+        expected = render_raster(reference_layer, reference, extent)
+        actual = render_raster(layer, style, extent)
+        assert expected.getchannel("A").getbbox() is not None
+        assert actual.tobytes() == expected.tobytes(), filename
+        # Partial styles reset missing filter settings, but keep the palette itself.
+        assert (
+            render_raster(layer, partial, extent).tobytes()
+            == render_raster(reference_layer, partial, extent).tobytes()
+        ), filename
+
+    assert style.to_string() == exported
 
 
 def test_marker_simple(save_img, shared_datadir, reset_svg_paths):

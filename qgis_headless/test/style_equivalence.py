@@ -9,13 +9,17 @@ from xml.etree import ElementTree as ET
 import qgis_headless as headless
 from qgis_headless.util import render_raster
 
-from .raster_styles import raster_style_xml
+from .raster_styles import large_palette_style_xml, raster_style_xml
 
 
 def render_style_case(
     data: Path, renderer: str, algorithm: str, with_schema: bool
 ) -> dict[str, str]:
-    root = raster_style_xml(data, renderer, algorithm)
+    root = (
+        large_palette_style_xml(data)
+        if renderer == "paletted-large"
+        else raster_style_xml(data, renderer, algorithm)
+    )
     schema = None
     if with_schema:
         schema = headless.LayerSchema.raster(
@@ -49,6 +53,7 @@ def render_cases(with_schema: bool) -> dict[str, str]:
     results = {}
     for renderer, algorithm in product(renderers, algorithms):
         results.update(render_style_case(data, renderer, algorithm, with_schema))
+    results.update(render_style_case(data, "paletted-large", "NoEnhancement", with_schema))
     return results
 
 
