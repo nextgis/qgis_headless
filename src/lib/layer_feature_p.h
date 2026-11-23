@@ -17,7 +17,8 @@ namespace HeadlessRender::detail
     feature.setGeometry( geometry );
     feature.setAttributes( attributes );
     auto *provider = layer.dataProvider();
-    if ( !provider->addFeature( feature, QgsFeatureSink::FastInsert ) )
+    // The feature is local, so the provider can update it without taking a copy.
+    if ( !provider->addFeature( feature ) )
       throw std::invalid_argument(
         QStringLiteral( "Cannot insert feature %1 into the memory provider: %2" )
           .arg( id )
