@@ -377,28 +377,34 @@ PYBIND11_MODULE( _qgis_headless, m )
   m.attr( "SF_QML" ) = HeadlessRender::StyleFormat::QML;
   m.attr( "SF_SLD" ) = HeadlessRender::StyleFormat::SLD;
 
+  py::class_<HeadlessRender::LayerSchema>( m, "LayerSchema" )
+    .def_static( "vector", &HeadlessRender::LayerSchema::vector, py::arg( "crs" ), py::arg( "geometry_type" ), py::arg( "fields" ) )
+    .def_static( "raster", &HeadlessRender::LayerSchema::raster, py::arg( "crs" ), py::arg( "band_types" ), py::arg( "width" ), py::arg( "height" ) );
+
   py::class_<HeadlessRender::Style>( m, "Style" )
     .def_static(
       "from_string", &HeadlessRender::Style::fromString, py::arg( "string" ),
       py::arg( "svg_resolver" ) = nullptr,
       py::arg( "layer_geometry_type" ) = HeadlessRender::LayerGeometryType::Unknown,
       py::arg( "layer_type" ) = HeadlessRender::DataType::Unknown,
-      py::arg( "format" ) = HeadlessRender::StyleFormat::QML
+      py::arg( "format" ) = HeadlessRender::StyleFormat::QML, py::kw_only(),
+      py::arg( "layer_schema" ) = py::none()
     )
     .def_static(
       "from_file",
       [](
         const py::object &filePath, const HeadlessRender::SvgResolverCallback &svgResolverCallback,
         HeadlessRender::LayerGeometryType layerGeometryType, HeadlessRender::DataType layerType,
-        HeadlessRender::StyleFormat format
+        HeadlessRender::StyleFormat format, const std::optional<HeadlessRender::LayerSchema> &layerSchema
       ) {
         return HeadlessRender::Style::
-          fromFile( py::str( filePath ), svgResolverCallback, layerGeometryType, layerType, format );
+          fromFile( py::str( filePath ), svgResolverCallback, layerGeometryType, layerType, format, layerSchema );
       },
       py::arg( "file_path" ), py::arg( "svg_resolver" ) = nullptr,
       py::arg( "layer_geometry_type" ) = HeadlessRender::LayerGeometryType::Unknown,
       py::arg( "layer_type" ) = HeadlessRender::DataType::Unknown,
-      py::arg( "format" ) = HeadlessRender::StyleFormat::QML
+      py::arg( "format" ) = HeadlessRender::StyleFormat::QML, py::kw_only(),
+      py::arg( "layer_schema" ) = py::none()
     )
     .def(
       "used_attributes",

@@ -24,12 +24,14 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <QString>
 #include <QColor>
 #include <QDomDocument>
 
 #include "random_color_generator.h"
 #include "types.h"
+#include "layer_schema.h"
 
 class QDomDocument;
 class QgsAbstractVectorLayerLabeling;
@@ -61,11 +63,13 @@ namespace HeadlessRender
        * \param layerGeometryType type of vector layer's geometry.
        * \param layerType type of layer: raster or vector.
        * \param format format of string, containing descripton of style.
+       * \param layerSchema optional source metadata for preparing the style.
        */
       static Style fromString(
         const std::string &string, const SvgResolverCallback &svgResolverCallback = nullptr,
         LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
-        DataType layerType = DataType::Unknown, StyleFormat format = StyleFormat::QML
+        DataType layerType = DataType::Unknown, StyleFormat format = StyleFormat::QML,
+        const std::optional<LayerSchema> &layerSchema = std::nullopt
       );
 
       /**
@@ -74,11 +78,13 @@ namespace HeadlessRender
        * \param layerGeometryType type of vector layer's geometry.
        * \param layerType type of layer: raster or vector.
        * \param format format of file, containing descripton of style.
+       * \param layerSchema optional source metadata for preparing the style.
        */
       static Style fromFile(
         const std::string &filePath, const SvgResolverCallback &svgResolverCallback = nullptr,
         LayerGeometryType layerGeometryType = LayerGeometryType::Unknown,
-        DataType layerType = DataType::Unknown, StyleFormat format = StyleFormat::QML
+        DataType layerType = DataType::Unknown, StyleFormat format = StyleFormat::QML,
+        const std::optional<LayerSchema> &layerSchema = std::nullopt
       );
 
       /**
@@ -182,11 +188,10 @@ namespace HeadlessRender
       ) const;
       UsedAttributes readUsedAttributes() const;
 
-      void applyFieldAliases( const QgsVectorLayerPtr &layer ) const;
-
       void mergeFieldSections( QDomDocument &target, const QDomDocument &source ) const;
 
       QDomDocument mData;
+      std::optional<LayerSchema> mSchema;
 
       bool mDefault = false;
       DefaultStyleParams mDefaultStyleParams;

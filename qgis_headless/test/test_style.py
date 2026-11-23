@@ -6,16 +6,64 @@ from lxml import etree
 from pytest import param
 
 from qgis_headless import (
+    CRS,
     LT_RASTER,
     LT_UNKNOWN,
     LT_VECTOR,
     SF_QML,
     SF_SLD,
+    InvalidCRSError,
     Layer,
+    LayerSchema,
     Style,
     StyleTypeMismatch,
     StyleValidationError,
 )
+from qgis_headless.util import EXTENT_ONE, WKB_POINT_00, render_vector
+
+
+@pytest.mark.parametrize("factory", ["string", "file"])
+def test_schema_import(factory, tmp_path):
+    schema = LayerSchema.vector(CRS.from_epsg(3857), Layer.GT_POINT, [("value", Layer.FT_INTEGER)])
+    qml = Style.from_defaults(layer_geometry_type=Layer.GT_POINT).to_string()
+    if factory == "file":
+        path = tmp_path / "style.qml"
+        path.write_text(qml)
+        style = Style.from_file(path, layer_schema=schema)
+    else:
+        style = Style.from_string(qml, layer_schema=schema)
+    assert style.used_attributes() == set()
+    assert "renderer-v2" in style.to_string()
+
+
+def test_raster_schema_type_validation():
+    schema = LayerSchema.raster(CRS.from_epsg(3857), ["Byte"] * 3, 5077, 4822)
+    qml = Style.from_defaults(layer_geometry_type=Layer.GT_POINT).to_string()
+    with pytest.raises(StyleTypeMismatch):
+        Style.from_string(qml, layer_schema=schema)
+    with pytest.raises(StyleTypeMismatch):
+        Style.from_string("", format=SF_SLD, layer_schema=schema)
+
+
+@pytest.mark.parametrize(
+    "bands,width,height",
+    [([], 1, 1), (["invalid"], 1, 1), (["Byte"], 0, 1), (["Byte"], 1, -1)],
+)
+def test_invalid_raster_schema(bands, width, height):
+    with pytest.raises(ValueError):
+        LayerSchema.raster(CRS.from_epsg(3857), bands, width, height)
+
+
+@pytest.mark.parametrize(
+    "factory,arguments",
+    [
+        pytest.param(LayerSchema.vector, (Layer.GT_POINT, []), id="vector"),
+        pytest.param(LayerSchema.raster, (["Byte"], 64, 64), id="raster"),
+    ],
+)
+def test_layer_schema_requires_crs(factory, arguments):
+    with pytest.raises(InvalidCRSError, match="Layer schema requires a valid CRS"):
+        factory(CRS(), *arguments)
 
 
 def test_non_existent_file(shared_datadir):
@@ -131,6 +179,58 @@ def test_attributes_default():
     style = Style.from_defaults()
     attrs = style.used_attributes()
     assert attrs == set()
+
+
+@pytest.mark.parametrize(
+    "expression,expected",
+    [
+        ('"value" * 2', {"value"}),
+        ('"nested" * 2', {"value"}),
+        ('"virtual" + 1', None),
+        ('"missing"', None),
+        ("attribute($currentfeature, 'field_' || to_string(@id))", None),
+    ],
+)
+def test_schema_virtual_dependencies(expression, expected):
+    root = etree.fromstring(
+        Style.from_defaults(layer_geometry_type=Layer.GT_POINT).to_string().encode()
+    )
+    renderer = root.find("renderer-v2")
+    renderer.set("type", "RuleRenderer")
+    rules = etree.SubElement(renderer, "rules")
+    etree.SubElement(rules, "rule", filter='"virtual" > 0', symbol="0")
+    fields = root.find("expressionfields")
+    if fields is None:
+        fields = etree.SubElement(root, "expressionfields")
+    etree.SubElement(
+        fields, "field", name="nested", expression='"value" + 1', type="2", typeName="integer"
+    )
+    etree.SubElement(
+        fields, "field", name="virtual", expression=expression, type="2", typeName="integer"
+    )
+    schema = LayerSchema.vector(CRS.from_epsg(3857), Layer.GT_POINT, [("value", Layer.FT_INTEGER)])
+    style = Style.from_string(etree.tostring(root).decode(), layer_schema=schema)
+    assert style.used_attributes() == expected
+    if expected is not None:
+        layer = Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (("value", Layer.FT_INTEGER),),
+            ((1, WKB_POINT_00, (10,)),),
+        )
+        assert render_vector(layer, style, EXTENT_ONE).getchannel("A").getbbox() is not None
+
+
+def test_schema_alias_dependencies(shared_datadir):
+    schema = LayerSchema.vector(CRS.from_epsg(3857), Layer.GT_POINT, [("value", Layer.FT_INTEGER)])
+    style = Style.from_file(shared_datadir / "field-alias/alias-rule.qml", layer_schema=schema)
+    assert style.used_attributes() == {"value"}
+
+
+def test_schema_sld(shared_datadir):
+    schema = LayerSchema.vector(CRS.from_epsg(3857), Layer.GT_LINESTRING, [])
+    style = Style.from_file(shared_datadir / "contour/red.sld", format=SF_SLD, layer_schema=schema)
+    assert "renderer-v2" in style.to_string()
 
 
 @pytest.mark.parametrize(

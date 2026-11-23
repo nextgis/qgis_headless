@@ -24,6 +24,9 @@ set(LIB_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/layer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/style/style.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/style/field_dependency_resolver.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/style/layer_schema.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/style/schema_raster_provider.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/legend_symbol.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/random_color_generator.cpp
@@ -36,6 +39,8 @@ set(LIB_PRIVATE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/application_lifetime.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/layer_feature_p.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/style/field_dependency_resolver.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/style/schema_raster_provider.h
 )
 
 set(LIB_PUBLIC_HEADERS
@@ -54,11 +59,12 @@ set(LIB_PUBLIC_HEADERS
 
 set(STYLE_PUBLIC_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/style/style.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/style/layer_schema.h
 )
 
 add_library(${LIB_NAME} ${LIB_SOURCES} ${LIB_PUBLIC_HEADERS} ${STYLE_PUBLIC_HEADERS} ${LIB_PRIVATE_HEADERS})
 
-target_include_directories(${LIB_NAME} PRIVATE ${QGIS_CORE_INCLUDE_DIRS})
+target_include_directories(${LIB_NAME} PUBLIC ${QGIS_CORE_INCLUDE_DIRS})
 
 target_link_libraries(${LIB_NAME}
   Qt5::Core
