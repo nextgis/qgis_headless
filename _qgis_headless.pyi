@@ -48,7 +48,8 @@ class CRS:
 
 class Image:
     def size(self) -> tuple[int, int]: ...
-    def to_bytes(self) -> memoryview: ...
+    def to_bytes(self) -> memoryview:
+        """Return a read-only zero-copy view retaining this image's storage."""
 
 class InvalidCRSError(QgisHeadlessError):
     pass
@@ -200,8 +201,19 @@ class Layer:
 
     @staticmethod
     def from_data(
-        geometry_type: Layer.GeometryType, crs: CRS, attribute_types: tuple, features: tuple
-    ) -> Layer: ...
+        geometry_type: Layer.GeometryType,
+        crs: CRS,
+        attribute_types: tuple,
+        features: collections.abc.Iterable[tuple],
+    ) -> Layer:
+        """Consume feature records incrementally into a QGIS memory layer.
+
+        Date/time fields accept legacy component tuples or Python calendar
+        objects. Native time/datetime objects must be timezone-naive and have
+        millisecond precision. JSON fields accept JSON text or dictionaries
+        with string keys, signed 64-bit integers, floats, strings, booleans,
+        nulls, nested dictionaries and lists (at most 64 nesting levels).
+        """
     @staticmethod
     def from_gdal(uri: typing.Any) -> Layer: ...
     @staticmethod
@@ -325,7 +337,8 @@ class QgisHeadlessError(Exception):
 class RawData:
     def __init__(self) -> None: ...
     def size(self) -> int: ...
-    def to_bytes(self) -> memoryview: ...
+    def to_bytes(self) -> memoryview:
+        """Return a read-only zero-copy view retaining this object's storage."""
 
 class Style:
     @staticmethod
