@@ -19,6 +19,7 @@
 ******************************************************************************/
 
 #include "layer.h"
+#include "layer_feature_p.h"
 #include "application_lifetime.h"
 #include "crs.h"
 #include "utils.h"
@@ -90,15 +91,10 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
 
   for ( const auto &data : featureDataList )
   {
-    QgsFeature feature( fields, data.id );
-
-    QgsGeometry geom;
-    geom.fromWkb( QByteArray::fromStdString( data.wkb ) );
-
-    feature.setAttributes( QgsAttributes( data.attributes ) );
-    feature.setGeometry( geom );
-
-    qgsLayer->dataProvider()->addFeature( feature, QgsFeatureSink::FastInsert );
+    detail::addMemoryLayerFeature(
+      *qgsLayer, fields, data.id, QByteArray::fromStdString( data.wkb ),
+      QgsAttributes( data.attributes )
+    );
   }
 
   return Layer( qgsLayer );

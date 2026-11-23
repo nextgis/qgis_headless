@@ -26,20 +26,274 @@
 #include <lib.h>
 #include <exceptions.h>
 #include <utils.h>
+#include <layer_feature_p.h>
 
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
 
 // Undefining Qt macro slots for preventing collision with pybind11 declarations:
 #ifdef slots
 #undef slots
 #endif
 
+#include <datetime.h>
+#include <limits>
+#include <string_view>
+
 namespace py = pybind11;
+
+namespace
+{
+  using HeadlessRender::LayerAttributeType;
+  using AttributeTypes = QVector<QPair<QString, LayerAttributeType>>;
+
+  constexpr int MaxJsonDepth = 64;
+  constexpr int MicrosecondsPerMillisecond = 1000;
+
+  template<typename T> py::buffer_info readOnlyByteBuffer( const T &exporter )
+  {
+    return py::buffer_info(
+      const_cast<uchar *>( exporter.data() ), 1, "B", 1,
+      { static_cast<py::ssize_t>( exporter.size() ) }, { 1 }, true
+    );
+  }
+
+  py::tuple componentTuple( py::handle value, py::size_t minimumSize, const char *errorMessage )
+  {
+    auto components = value.cast<py::tuple>();
+    if ( components.size() < minimumSize )
+      throw py::value_error( errorMessage );
+    return components;
+  }
+
+  void checkJsonDepth( int depth )
+  {
+    if ( depth >= MaxJsonDepth )
+      throw py::value_error( "JSON nesting exceeds 64 levels" );
+  }
+
+  QString utf8String( py::handle value )
+  {
+    // The UTF-8 view is valid while value is alive. QString owns the decoded text.
+    const auto text = value.cast<std::string_view>();
+    if ( text.size() > static_cast<size_t>( std::numeric_limits<int>::max() ) )
+      throw py::value_error( "Text exceeds the Qt string size limit" );
+    return QString::fromUtf8( text.data(), static_cast<int>( text.size() ) );
+  }
+
+  QVariant jsonValue( py::handle value, int depth );
+
+  QVariantMap jsonObject( const py::dict &object, int depth )
+  {
+    checkJsonDepth( depth );
+    QVariantMap result;
+    for ( auto item : object )
+    {
+      if ( !py::isinstance<py::str>( item.first ) )
+        throw py::type_error( "JSON object keys must be strings" );
+      const auto key = utf8String( item.first );
+      result.insert( key, jsonValue( item.second, depth + 1 ) );
+    }
+    return result;
+  }
+
+  QVariantList jsonArray( const py::list &array, int depth )
+  {
+    checkJsonDepth( depth );
+    QVariantList result;
+    for ( auto item : array )
+      result.append( jsonValue( item, depth + 1 ) );
+    return result;
+  }
+
+  QVariant jsonValue( py::handle value, int depth )
+  {
+    if ( value.is_none() )
+      return QVariant();
+    if ( py::isinstance<py::bool_>( value ) )
+      return value.cast<bool>();
+    if ( py::isinstance<py::int_>( value ) )
+      return QVariant::fromValue( value.cast<qint64>() );
+    if ( py::isinstance<py::float_>( value ) )
+      return value.cast<double>();
+    if ( py::isinstance<py::str>( value ) )
+      return utf8String( value );
+    if ( py::isinstance<py::dict>( value ) )
+      return jsonObject( py::reinterpret_borrow<py::dict>( value ), depth );
+    if ( py::isinstance<py::list>( value ) )
+      return jsonArray( py::reinterpret_borrow<py::list>( value ), depth );
+    throw py::type_error( "Unsupported JSON value" );
+  }
+
+  QDate dateValue( py::handle value )
+  {
+    if ( PyDate_Check( value.ptr() ) && !PyDateTime_Check( value.ptr() ) )
+      return QDate(
+        PyDateTime_GET_YEAR( value.ptr() ), PyDateTime_GET_MONTH( value.ptr() ),
+        PyDateTime_GET_DAY( value.ptr() )
+      );
+
+    const auto params = componentTuple( value, 3, "Date requires year, month and day" );
+    return QDate( params[0].cast<int>(), params[1].cast<int>(), params[2].cast<int>() );
+  }
+
+  QTime timeValue( py::handle value )
+  {
+    if ( PyTime_Check( value.ptr() ) )
+    {
+      if ( !value.attr( "tzinfo" ).is_none()
+           || PyDateTime_TIME_GET_MICROSECOND( value.ptr() ) % MicrosecondsPerMillisecond )
+        throw py::value_error( "Time requires no timezone and millisecond precision" );
+      return QTime(
+        PyDateTime_TIME_GET_HOUR( value.ptr() ), PyDateTime_TIME_GET_MINUTE( value.ptr() ),
+        PyDateTime_TIME_GET_SECOND( value.ptr() ),
+        PyDateTime_TIME_GET_MICROSECOND( value.ptr() ) / MicrosecondsPerMillisecond
+      );
+    }
+
+    const auto params = componentTuple( value, 3, "Time requires hour, minute and second" );
+    return QTime( params[0].cast<int>(), params[1].cast<int>(), params[2].cast<int>() );
+  }
+
+  QDateTime dateTimeValue( py::handle value )
+  {
+    if ( PyDateTime_Check( value.ptr() ) )
+    {
+      if ( !value.attr( "tzinfo" ).is_none()
+           || PyDateTime_DATE_GET_MICROSECOND( value.ptr() ) % MicrosecondsPerMillisecond )
+        throw py::value_error( "Datetime requires no timezone and millisecond precision" );
+      return QDateTime(
+        QDate(
+          PyDateTime_GET_YEAR( value.ptr() ), PyDateTime_GET_MONTH( value.ptr() ),
+          PyDateTime_GET_DAY( value.ptr() )
+        ),
+        QTime(
+          PyDateTime_DATE_GET_HOUR( value.ptr() ), PyDateTime_DATE_GET_MINUTE( value.ptr() ),
+          PyDateTime_DATE_GET_SECOND( value.ptr() ),
+          PyDateTime_DATE_GET_MICROSECOND( value.ptr() ) / MicrosecondsPerMillisecond
+        )
+      );
+    }
+
+    const auto params = componentTuple( value, 6, "Datetime requires six calendar components" );
+    QDateTime result;
+    result.setDate( QDate( params[0].cast<int>(), params[1].cast<int>(), params[2].cast<int>() ) );
+    result.setTime( QTime( params[3].cast<int>(), params[4].cast<int>(), params[5].cast<int>() ) );
+    return result;
+  }
+
+  QVariant jsonAttribute( py::handle value )
+  {
+    if ( py::isinstance<py::dict>( value ) )
+      return jsonObject( py::reinterpret_borrow<py::dict>( value ), 0 );
+    const QString json = utf8String( value );
+    const QJsonDocument document = QJsonDocument::fromJson( json.toUtf8() );
+    if ( document.isObject() )
+      return document.object().toVariantMap();
+    // Legacy JSON text that does not represent an object is a typed null.
+    return QVariant( HeadlessRender::layerAttributeTypetoQVariantType( LayerAttributeType::JSON ) );
+  }
+
+  QVariant attributeValue( py::handle value, LayerAttributeType type )
+  {
+    if ( value.is_none() )
+      return QVariant( HeadlessRender::layerAttributeTypetoQVariantType( type ) );
+
+    switch ( type )
+    {
+      case LayerAttributeType::Integer:
+        return value.cast<int>();
+      case LayerAttributeType::Real:
+        return value.cast<double>();
+      case LayerAttributeType::String:
+        return utf8String( value );
+      case LayerAttributeType::Date:
+        return dateValue( value );
+      case LayerAttributeType::Time:
+        return timeValue( value );
+      case LayerAttributeType::DateTime:
+        return dateTimeValue( value );
+      case LayerAttributeType::Integer64:
+        return QVariant::fromValue( value.cast<qint64>() );
+      case LayerAttributeType::Boolean:
+        return value.cast<bool>();
+      case LayerAttributeType::JSON:
+        return jsonAttribute( value );
+    }
+    throw py::type_error( "Unsupported attribute type" );
+  }
+
+  QByteArray borrowFeatureWkb( py::handle value )
+  {
+    if ( !PyBytes_Check( value.ptr() ) )
+      return QByteArray::fromStdString( value.cast<std::string>() );
+    const auto size = PyBytes_GET_SIZE( value.ptr() );
+    if ( size > std::numeric_limits<int>::max() )
+      throw py::value_error( "WKB exceeds the Qt byte array size limit" );
+    return QByteArray::fromRawData( PyBytes_AS_STRING( value.ptr() ), static_cast<int>( size ) );
+  }
+
+  QgsAttributes featureAttributes( py::handle values, const AttributeTypes &attributeTypes )
+  {
+    const char *const countError = "Feature attribute count must match the number of fields";
+    QgsAttributes attributes;
+    attributes.reserve( attributeTypes.size() );
+    int index = 0;
+    for ( const auto &value : values )
+    {
+      if ( index >= attributeTypes.size() )
+        throw py::value_error( countError );
+      attributes.append( attributeValue( value, attributeTypes[index++].second ) );
+    }
+    if ( index != attributeTypes.size() )
+      throw py::value_error( countError );
+    return attributes;
+  }
+
+  void addPythonFeature(
+    QgsVectorLayer &layer, const QgsFields &fields, const AttributeTypes &attributeTypes,
+    const py::tuple &feature
+  )
+  {
+    if ( feature.size() != 3 )
+      throw py::value_error( "Feature must contain an id, WKB and attribute values" );
+
+    const qint64 id = feature[0].cast<qint64>();
+    // The feature tuple owns the bytes until native insertion finishes parsing WKB.
+    const QByteArray wkb = borrowFeatureWkb( feature[1].ptr() );
+    const QgsAttributes attributes = featureAttributes( feature[2].ptr(), attributeTypes );
+    HeadlessRender::detail::addMemoryLayerFeature( layer, fields, id, wkb, attributes );
+  }
+
+  HeadlessRender::Layer layerFromPythonData(
+    HeadlessRender::LayerGeometryType geometryType, const HeadlessRender::CRS &crs,
+    const py::tuple &fields, const py::iterable &features
+  )
+  {
+    AttributeTypes attributeTypes;
+    for ( const auto &field : fields )
+    {
+      const auto definition = componentTuple( field, 2, "Field requires a name and type" );
+      attributeTypes.append(
+        { QString::fromStdString( definition[0].cast<std::string>() ),
+          definition[1].cast<LayerAttributeType>() }
+      );
+    }
+
+    auto layer = HeadlessRender::Layer::fromData( geometryType, crs, attributeTypes, {} );
+    auto vectorLayer = std::static_pointer_cast<QgsVectorLayer>( layer.qgsMapLayer() );
+    const QgsFields layerFields = vectorLayer->fields();
+    for ( const auto &feature : features )
+      addPythonFeature( *vectorLayer, layerFields, attributeTypes, feature.cast<py::tuple>() );
+    return layer;
+  }
+} //namespace
 
 PYBIND11_MODULE( _qgis_headless, m )
 {
+  PyDateTime_IMPORT;
+  if ( !PyDateTimeAPI )
+    throw py::error_already_set();
   py::enum_<HeadlessRender::LogLevel>( m, "LogLevel" )
     .value( "DEBUG", HeadlessRender::LogLevel::Debug )
     .value( "INFO", HeadlessRender::LogLevel::Info )
@@ -110,126 +364,12 @@ PYBIND11_MODULE( _qgis_headless, m )
       []( const py::object &uri ) { return HeadlessRender::Layer::fromGdal( py::str( uri ) ); },
       py::arg( "uri" )
     )
-    .def_static(
-      "from_data",
-      []( HeadlessRender::LayerGeometryType geometryType, const HeadlessRender::CRS &crs, const py::tuple &attrTypes, const py::tuple &features ) {
-        QVector<QPair<QString, HeadlessRender::LayerAttributeType>> attributeTypes;
-        QVector<HeadlessRender::Layer::FeatureData> featureData;
+    .def_static( "from_data", layerFromPythonData, py::arg( "geometry_type" ), py::arg( "crs" ), py::arg( "attribute_types" ), py::arg( "features" ) );
 
-        for ( const auto &it : attrTypes )
-        {
-          const py::tuple &attr = it.cast<py::tuple>();
-          attributeTypes.append(
-            qMakePair( QString::fromStdString( attr[0].cast<std::string>() ), attr[1].cast<HeadlessRender::LayerAttributeType>() )
-          );
-        }
-
-        for ( const auto &it : features )
-        {
-          HeadlessRender::Layer::FeatureData feature;
-
-          const py::tuple &feat = it.cast<py::tuple>();
-
-          feature.id = feat[0].cast<qint64>();
-          feature.wkb = feat[1].cast<std::string>();
-
-
-          int idx = 0;
-          for ( const auto &attr : feat[2] )
-          {
-            HeadlessRender::LayerAttributeType attrType = attributeTypes[idx++].second;
-
-            if ( attr.is_none() )
-            {
-              feature.attributes.append(
-                QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
-              );
-              continue;
-            }
-
-            switch ( attrType )
-            {
-              case HeadlessRender::LayerAttributeType::Integer:
-                feature.attributes.append( attr.cast<int>() );
-                break;
-              case HeadlessRender::LayerAttributeType::Real:
-                feature.attributes.append( attr.cast<double>() );
-                break;
-              case HeadlessRender::LayerAttributeType::String:
-                feature.attributes.append( QString::fromStdString( attr.cast<std::string>() ) );
-                break;
-              case HeadlessRender::LayerAttributeType::Date:
-              {
-                const py::tuple &params = attr.cast<py::tuple>();
-                int y = params[0].cast<int>();
-                int m = params[1].cast<int>();
-                int d = params[2].cast<int>();
-                feature.attributes.append( QDate( y, m, d ) );
-                break;
-              }
-              case HeadlessRender::LayerAttributeType::Time:
-              {
-                const py::tuple &params = attr.cast<py::tuple>();
-                int h = params[0].cast<int>();
-                int m = params[1].cast<int>();
-                int s = params[2].cast<int>();
-                feature.attributes.append( QTime( h, m, s ) );
-                break;
-              }
-              case HeadlessRender::LayerAttributeType::DateTime:
-              {
-                const py::tuple &params = attr.cast<py::tuple>();
-
-                int year = params[0].cast<int>();
-                int month = params[1].cast<int>();
-                int day = params[2].cast<int>();
-                int hour = params[3].cast<int>();
-                int min = params[4].cast<int>();
-                int sec = params[5].cast<int>();
-
-                QDateTime datetime;
-                datetime.setDate( QDate( year, month, day ) );
-                datetime.setTime( QTime( hour, min, sec ) );
-
-                feature.attributes.append( datetime );
-                break;
-              }
-              case HeadlessRender::LayerAttributeType::Integer64:
-                feature.attributes.append( attr.cast<qint64>() );
-                break;
-              case HeadlessRender::LayerAttributeType::Boolean:
-                feature.attributes.append( attr.cast<bool>() );
-                break;
-              case HeadlessRender::LayerAttributeType::JSON:
-              {
-                const QString jsonStr = QString::fromStdString( attr.cast<std::string>() );
-                const QJsonDocument doc = QJsonDocument::fromJson( jsonStr.toUtf8() );
-                if ( doc.isObject() )
-                  feature.attributes.append( doc.object().toVariantMap() );
-                else
-                  // Only JSON objects are supported, append an empty QVariantMap for other types
-                  feature.attributes.append(
-                    QVariant( HeadlessRender::layerAttributeTypetoQVariantType( attrType ) )
-                  );
-                break;
-              }
-            }
-          }
-
-          featureData.append( feature );
-        }
-
-        return HeadlessRender::Layer::fromData( geometryType, crs, attributeTypes, featureData );
-      },
-      py::arg( "geometry_type" ), py::arg( "crs" ), py::arg( "attribute_types" ),
-      py::arg( "features" )
-    );
-
-  py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image" )
+  py::class_<HeadlessRender::Image, std::shared_ptr<HeadlessRender::Image>>( m, "Image", py::buffer_protocol() )
+    .def_buffer( readOnlyByteBuffer<HeadlessRender::Image> )
     .def( "size", &HeadlessRender::Image::sizeWidthHeight )
-    .def( "to_bytes", []( std::shared_ptr<HeadlessRender::Image> img ) {
-      return py::memoryview::from_memory( img->data(), img->size() );
-    } );
+    .def( "to_bytes", []( py::object image ) { return py::memoryview( image ); } );
 
   py::enum_<HeadlessRender::StyleFormat>( m, "StyleFormat" )
     .value( "QML", HeadlessRender::StyleFormat::QML )
@@ -342,12 +482,13 @@ PYBIND11_MODULE( _qgis_headless, m )
     .def( "parent", &HeadlessRender::LegendSymbol::parent )
     .def( "raster_band", &HeadlessRender::LegendSymbol::rasterBand );
 
-  py::class_<HeadlessRender::RawData, std::shared_ptr<HeadlessRender::RawData>>( m, "RawData" )
+  py::class_<
+    HeadlessRender::RawData,
+    std::shared_ptr<HeadlessRender::RawData>>( m, "RawData", py::buffer_protocol() )
+    .def_buffer( readOnlyByteBuffer<HeadlessRender::RawData> )
     .def( py::init<>() )
     .def( "size", &HeadlessRender::RawData::size )
-    .def( "to_bytes", []( std::shared_ptr<HeadlessRender::RawData> bytes ) {
-      return py::memoryview::from_memory( bytes->data(), bytes->size() );
-    } );
+    .def( "to_bytes", []( py::object data ) { return py::memoryview( data ); } );
 
   py::class_<HeadlessRender::Project>( m, "Project" )
     .def( py::init<>() )

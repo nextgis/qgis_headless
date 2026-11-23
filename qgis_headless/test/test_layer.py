@@ -1,3 +1,4 @@
+from datetime import UTC, date, datetime, time
 from subprocess import CalledProcessError, check_call
 from sys import executable
 from textwrap import dedent
@@ -5,7 +6,7 @@ from xml.sax.saxutils import quoteattr
 
 import pytest
 
-from qgis_headless import CRS, InvalidLayerSource, Layer
+from qgis_headless import CRS, InvalidLayerSource, Layer, Style
 from qgis_headless.test.known_issues import Issues
 from qgis_headless.util import (
     EXTENT_ONE,
@@ -51,6 +52,108 @@ def test_from_data_red_circle(gt, pt0, pt1, shared_datadir, reset_svg_paths):
     assert stat.red.max == 255, "Red marker missing"
 
 
+@pytest.mark.parametrize(
+    "field_type, value",
+    [
+        (Layer.FT_DATETIME, datetime(2020, 1, 1, microsecond=1)),
+        (Layer.FT_DATETIME, datetime(2020, 1, 1, tzinfo=UTC)),
+        (Layer.FT_TIME, time(microsecond=1)),
+        (Layer.FT_TIME, time(tzinfo=UTC)),
+    ],
+)
+def test_datetime_precision_rejected(field_type, value):
+    with pytest.raises(ValueError):
+        Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (("field", field_type),),
+            ((1, WKB_POINT_00, (value,)),),
+        )
+
+
+@pytest.mark.parametrize("values", [(), (1, 2)])
+@pytest.mark.parametrize("attribute_container", [tuple, iter], ids=["tuple", "iterator"])
+def test_from_data_attribute_count(values, attribute_container):
+    with pytest.raises(ValueError, match="attribute count"):
+        Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (("field", Layer.FT_INTEGER),),
+            ((1, WKB_POINT_00, attribute_container(values)),),
+        )
+
+
+@pytest.mark.parametrize(
+    "field_type,value,error",
+    [
+        pytest.param(Layer.FT_DATE, (2020, 1), "Date requires", id="date"),
+        pytest.param(Layer.FT_TIME, (12, 30), "Time requires", id="time"),
+        pytest.param(Layer.FT_DATETIME, (2020, 1, 1, 12, 30), "Datetime requires", id="datetime"),
+    ],
+)
+def test_from_data_incomplete_calendar_tuple(field_type, value, error):
+    with pytest.raises(ValueError, match=error):
+        Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (("field", field_type),),
+            ((1, WKB_POINT_00, (value,)),),
+        )
+
+
+def test_from_data_incomplete_field_definition():
+    with pytest.raises(ValueError, match="Field requires a name and type"):
+        Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (("field",),), ())
+
+
+@pytest.mark.parametrize("depth", [64, 65])
+@pytest.mark.parametrize("leaf", [{}, [], 42])
+def test_json_nesting_limit(depth, leaf):
+    value = leaf
+    for _ in range(depth - isinstance(leaf, (dict, list))):
+        value = {"child": value}
+
+    def create_layer():
+        return Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (("field", Layer.FT_JSON),),
+            ((1, WKB_POINT_00, (value,)),),
+        )
+
+    if depth == 64:
+        create_layer()
+    else:
+        with pytest.raises(ValueError, match="nesting"):
+            create_layer()
+
+
+def test_json_cycle_rejected():
+    value = {}
+    value["self"] = value
+    with pytest.raises(ValueError, match="nesting"):
+        Layer.from_data(
+            Layer.GT_POINT,
+            CRS.from_epsg(3857),
+            (("field", Layer.FT_JSON),),
+            ((1, WKB_POINT_00, (value,)),),
+        )
+
+
+def test_from_data_generator():
+    def features():
+        yield (1, WKB_POINT_00, ())
+
+    layer = Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), features())
+    image = render_vector(layer, Style.from_defaults(color=(255, 0, 0, 255)), EXTENT_ONE)
+    assert image.getchannel("A").getbbox() is not None
+
+
+def test_from_data_provider_rejection():
+    with pytest.raises(ValueError, match="Cannot insert feature"):
+        Layer.from_data(Layer.GT_POINT, CRS.from_epsg(3857), (), ((1, WKB_LINESTRING, ()),))
+
+
 def test_from_data_linestring(shared_datadir, reset_svg_paths):
     crs = CRS.from_epsg(3857)
     empty_tuple = ()
@@ -65,6 +168,7 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
     )
 
 
+@pytest.mark.parametrize("attribute_container", [tuple, iter], ids=["tuple", "iterator"])
 @pytest.mark.parametrize(
     "ftype, fvalue, cond",
     (
@@ -73,7 +177,43 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
         pytest.param(Layer.FT_REAL, 0.25, "field = 0.25", id="real"),
         pytest.param(Layer.FT_STRING, "", "field = ''", id="string-empty"),
         pytest.param(Layer.FT_STRING, "0" * 512, "length(field) = 512", id="string-512"),
+        pytest.param(Layer.FT_STRING, "съёмка 🌍", "field = 'съёмка 🌍'", id="string-unicode"),
+        pytest.param(
+            Layer.FT_STRING, "a\0б", "length(field) = 3 AND right(field, 1) = 'б'", id="string-nul"
+        ),
+        pytest.param(Layer.FT_STRING, "текст".encode(), "field = 'текст'", id="string-utf8-bytes"),
+        pytest.param(
+            Layer.FT_STRING,
+            bytearray("текст", "utf-8"),
+            "field = 'текст'",
+            id="string-utf8-bytearray",
+        ),
         pytest.param(Layer.FT_DATE, (1917, 11, 7), "field = to_date('1917-11-07')", id="date"),
+        pytest.param(
+            Layer.FT_DATE, date(1600, 1, 2), "field = to_date('1600-01-02')", id="native-date"
+        ),
+        pytest.param(
+            Layer.FT_DATE, date(9999, 12, 31), "year(field) = 9999", id="native-date-max"
+        ),
+        pytest.param(Layer.FT_TIME, time(16, 20), "field = to_time('16:20:00')", id="native-time"),
+        pytest.param(
+            Layer.FT_TIME,
+            time(16, 20, 0, 123000),
+            "field = to_time('16:20:00.123', 'hh:mm:ss.zzz')",
+            id="native-time-milliseconds",
+        ),
+        pytest.param(
+            Layer.FT_DATETIME,
+            datetime(1800, 1, 2, 3, 4, 5),
+            "field = to_datetime('1800-01-02 03:04:05')",
+            id="native-datetime",
+        ),
+        pytest.param(
+            Layer.FT_DATETIME,
+            datetime(2020, 1, 2, 3, 4, 5, 123000),
+            "field = to_datetime('2020-01-02 03:04:05.123', 'yyyy-MM-dd hh:mm:ss.zzz')",
+            id="native-datetime-milliseconds",
+        ),
         pytest.param(Layer.FT_TIME, (16, 20, 0), "field = to_time('16:20:00')", id="time"),
         pytest.param(
             Layer.FT_DATETIME,
@@ -97,6 +237,24 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
         ),
         pytest.param(
             Layer.FT_JSON,
+            {"foo": {"bar": [True, None, 42, "текст"]}},
+            "field['foo']['bar'][0] AND field['foo']['bar'][1] IS NULL AND field['foo']['bar'][2] = 42 AND field['foo']['bar'][3] = 'текст'",
+            id="json-native-nested",
+        ),
+        pytest.param(
+            Layer.FT_JSON,
+            {"метка 🌍": "a\0б"},
+            "length(field['метка 🌍']) = 3 AND right(field['метка 🌍'], 1) = 'б'",
+            id="json-native-unicode-key-and-nul",
+        ),
+        pytest.param(
+            Layer.FT_JSON,
+            {"value": 2**63 - 1},
+            "field['value'] = 9223372036854775807",
+            id="json-native-integer64",
+        ),
+        pytest.param(
+            Layer.FT_JSON,
             '{"foo": "bar"}',
             "field['foo'] = 'bar'",
             id="json-object-subscript",
@@ -116,7 +274,7 @@ def test_from_data_linestring(shared_datadir, reset_svg_paths):
         ),
     ),
 )
-def test_field_type(ftype, fvalue, cond, shared_datadir, reset_svg_paths):
+def test_field_type(ftype, fvalue, cond, shared_datadir, reset_svg_paths, attribute_container):
     style = (shared_datadir / "zero/placeholder.qml").read_text()
     crs = CRS.from_epsg(3857)
 
@@ -124,7 +282,7 @@ def test_field_type(ftype, fvalue, cond, shared_datadir, reset_svg_paths):
         Layer.GT_POINT,
         crs,
         (("field", ftype),),
-        ((1, WKB_POINT_00, (fvalue,)),),
+        ((1, WKB_POINT_00, attribute_container((fvalue,))),),
     )
 
     style = style.replace('"/* {{{ */ FALSE /* }}} */"', quoteattr(cond))
