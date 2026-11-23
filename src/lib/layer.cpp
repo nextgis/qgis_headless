@@ -23,7 +23,7 @@
 #include "crs.h"
 #include "utils.h"
 #include "exceptions.h"
-#include "style.h"
+#include "style/style.h"
 #include <qgsvectorlayer.h>
 #include <qgsrasterlayer.h>
 #include <qgsmemoryproviderutils.h>
