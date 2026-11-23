@@ -29,7 +29,7 @@
 
 #include "crs.h"
 #include "layer.h"
-#include "style.h"
+#include "style/style.h"
 #include "image.h"
 #include "legend_request.h"
 #include "legend_symbol.h"
