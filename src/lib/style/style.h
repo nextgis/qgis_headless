@@ -190,8 +190,11 @@ namespace HeadlessRender
 
       void mergeFieldSections( QDomDocument &target, const QDomDocument &source ) const;
 
+      struct PreparedPalette;
+      void preparePalette();
       QDomDocument mData;
       std::optional<LayerSchema> mSchema;
+      std::shared_ptr<const PreparedPalette> mPreparedPalette;
 
       bool mDefault = false;
       DefaultStyleParams mDefaultStyleParams;

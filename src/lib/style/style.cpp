@@ -24,6 +24,7 @@
 #include "field_dependency_resolver.h"
 #include "utils.h"
 
+#include <qgsapplication.h>
 #include <qgscallout.h>
 #include <qgsdiagramrenderer.h>
 #include <qgsexpressioncontext.h>
@@ -35,10 +36,14 @@
 #include <qgsmarkersymbol.h>
 #include <qgsmarkersymbollayer.h>
 #include <qgspathresolver.h>
+#include <qgspalettedrasterrenderer.h>
+#include <qgsprojectversion.h>
 #include <qgssymbollayerutils.h>
 #include <qgspallabeling.h>
 #include <qgspropertycollection.h>
 #include <qgsrasterlayer.h>
+#include <qgsrasterpipe.h>
+#include <qgsrasterrendererregistry.h>
 #include <qgsrendercontext.h>
 #include <qgsrenderer.h>
 #include <qgsrulebasedlabeling.h>
@@ -47,6 +52,7 @@
 
 #include <QFile>
 #include <QUrl>
+#include <atomic>
 
 namespace HeadlessRender
 {
@@ -98,8 +104,23 @@ const StyleCategory Style::DefaultImportCategories = QgsMapLayer::Symbology
                                                      | QgsMapLayer::CustomProperties
                                                      | QgsMapLayer::Diagrams | QgsMapLayer::Fields;
 
+struct Style::PreparedPalette
+{
+    QDomDocument remainingStyle;
+    std::unique_ptr<const QgsPalettedRasterRenderer> renderer;
+    // QDomDocument and QDomNode copies share mutable nodes, even copies from data() const.
+    mutable std::atomic<bool> sourceExposed { false };
+};
+
 namespace
 {
+  bool usesQgisPaletteFactory()
+  {
+    QgsRasterRendererRegistryEntry entry;
+    return QgsApplication::rasterRendererRegistry()->rendererData( QStringLiteral( "paletted" ), entry )
+           && entry.rendererCreateFunction == &QgsPalettedRasterRenderer::create;
+  }
+
   QString resolveSvgPath( const QString &path, const SvgResolverCallback &svgResolverCallback )
   {
     if ( !svgResolverCallback )
@@ -372,6 +393,8 @@ void Style::init( const CreateParams &params )
       mCachedTemporaryLayer.reset();
     }
   }
+  if ( type() == DataType::Raster )
+    preparePalette();
 }
 
 void Style::init( const DefaultStyleParams &params )
@@ -486,7 +509,56 @@ bool Style::validateStyle( QString &errorMessage ) const
 
 bool Style::importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const
 {
+  if ( mPreparedPalette && !mPreparedPalette->sourceExposed )
+  {
+    auto *raster = dynamic_cast<QgsRasterLayer *>( layer.get() );
+    if ( raster && raster->isValid() && raster->dataProvider() && usesQgisPaletteFactory() )
+    {
+      auto renderer = std::unique_ptr<QgsPalettedRasterRenderer>( mPreparedPalette->renderer->clone()
+      );
+      if ( raster->pipe()->set( renderer.get() ) )
+      {
+        renderer.release(); // The pipe owns the renderer after a successful insertion.
+        // QGIS still imports the provider and all layer and pipe settings, and
+        // emits the ordinary style notifications with the palette in place.
+        return importToLayer( layer, mPreparedPalette->remainingStyle, errorMessage );
+      }
+    }
+  }
   return importToLayer( layer, mData, errorMessage );
+}
+
+void Style::preparePalette()
+{
+  const auto root = mData.firstChildElement( TAGS::QGIS );
+  const QgsProjectVersion version( root.attribute( QStringLiteral( "version" ) ) );
+  // Do not bypass a legacy raster conversion or a newer QML format.
+  if ( version.majorVersion() < 3 || version > QgsProjectVersion( Qgis::version() )
+       || !root.firstChildElement( TAGS::RASTER_PROPERTIES ).isNull()
+       || !root.firstChildElement( TAGS::RASTER_RENDERER ).isNull() )
+    return;
+
+  const auto renderer = root.firstChildElement( TAGS::PIPE ).firstChildElement( TAGS::RASTER_RENDERER );
+  if ( renderer.isNull() || !renderer.nextSiblingElement( TAGS::RASTER_RENDERER ).isNull()
+       || renderer.attribute( QStringLiteral( "type" ) ) != QStringLiteral( "paletted" ) )
+    return;
+
+  // Small styles are already cheap to import. Avoid duplicating their data.
+  const auto palette = renderer.firstChildElement( QStringLiteral( "colorPalette" ) );
+  if ( palette.elementsByTagName( QStringLiteral( "paletteEntry" ) ).size() < 256
+       || !usesQgisPaletteFactory() )
+    return;
+
+  auto prepared = std::make_shared<PreparedPalette>();
+  // The palette factory reads only XML; bind the cloned renderer to the actual
+  // provider when applying the style, not to the temporary validation layer.
+  prepared->renderer.reset(
+    static_cast<QgsPalettedRasterRenderer *>( QgsPalettedRasterRenderer::create( renderer, nullptr ) )
+  );
+  prepared->remainingStyle = mData.cloneNode( true ).toDocument();
+  auto pipe = prepared->remainingStyle.firstChildElement( TAGS::QGIS ).firstChildElement( TAGS::PIPE );
+  pipe.removeChild( pipe.firstChildElement( TAGS::RASTER_RENDERER ) );
+  mPreparedPalette = std::move( prepared );
 }
 
 bool Style::importToLayer( QgsMapLayerPtr &layer, QDomDocument styleData, QString &errorMessage ) const
@@ -835,11 +907,14 @@ QString Style::exportToString( const StyleFormat format ) const
 
 const QDomDocument &Style::data() const
 {
+  if ( mPreparedPalette )
+    mPreparedPalette->sourceExposed = true;
   return mData;
 }
 
 QDomDocument &Style::data()
 {
+  static_cast<const Style &>( *this ).data();
   return mData;
 }
 
