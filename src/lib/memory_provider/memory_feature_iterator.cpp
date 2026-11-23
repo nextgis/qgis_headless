@@ -114,8 +114,7 @@ MemoryFeatureIterator::MemoryFeatureIterator(
   if ( mRequest.filterType() == Qgis::FeatureRequestFilterType::Fid )
   {
     mUsingFeatureIdList = true;
-    const QgsFeatureMap::const_iterator it = mSource->mFeatures.constFind( mRequest.filterFid() );
-    if ( it != mSource->mFeatures.constEnd() )
+    if ( mSource->mFeatures.contains( mRequest.filterFid() ) )
       mFeatureIdList.append( mRequest.filterFid() );
   }
   else if ( !mFilterRect.isNull() && mSource->mSpatialIndex )

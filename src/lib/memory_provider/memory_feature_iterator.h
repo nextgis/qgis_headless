@@ -14,6 +14,8 @@
 #ifndef QGIS_HEADLESS_MEMORY_FEATURE_ITERATOR_H
 #define QGIS_HEADLESS_MEMORY_FEATURE_ITERATOR_H
 
+#include "memory_feature_map_p.h"
+
 #include <qgscoordinatetransform.h>
 #include <qgsexpressioncontext.h>
 #include <qgsfeatureiterator.h>
@@ -26,8 +28,6 @@ namespace HeadlessRender
 {
   class MemoryProvider;
 
-  using QgsFeatureMap = QMap<QgsFeatureId, QgsFeature>;
-
   class MemoryFeatureSource final : public QgsAbstractFeatureSource
   {
     public:
@@ -39,7 +39,7 @@ namespace HeadlessRender
 
     private:
       QgsFields mFields;
-      QgsFeatureMap mFeatures;
+      detail::MemoryFeatureMap mFeatures;
       QList<QgsFeatureId> mFeatureOrder;
       std::unique_ptr< QgsSpatialIndex > mSpatialIndex;
       QString mSubsetString;
