@@ -484,131 +484,134 @@ void MemoryProvider::handlePostCloneOperations( QgsVectorDataProvider *source )
   }
 }
 
-// returns TRUE if all features were added successfully, or FALSE if any feature could not be added
+bool MemoryProvider::insertFeature( QgsFeature &feature, bool updateExtent )
+{
+  feature.setValid( true );
+  const int fieldCount = mFields.count();
+  const int attributeCount = feature.attributeCount();
+  if ( attributeCount < fieldCount )
+  {
+    QgsAttributes attributes = feature.attributes();
+    for ( int i = attributeCount; i < fieldCount; ++i )
+      attributes.append( QgsVariantUtils::createNullVariant( mFields.at( i ).type() ) );
+    feature.setAttributes( attributes );
+  }
+  else if ( attributeCount > fieldCount )
+  {
+    pushError( tr( "Feature has too many attributes (expecting %1, received %2)" )
+                 .arg( fieldCount )
+                 .arg( attributeCount ) );
+    QgsAttributes attributes = feature.attributes();
+    attributes.resize( fieldCount );
+    feature.setAttributes( attributes );
+  }
+
+  if ( feature.hasGeometry() && mWkbType == Qgis::WkbType::NoGeometry )
+  {
+    feature.clearGeometry();
+  }
+  else if ( feature.hasGeometry()
+            && QgsWkbTypes::geometryType( feature.geometry().wkbType() )
+                 != QgsWkbTypes::geometryType( mWkbType ) )
+  {
+    pushError(
+      tr( "Could not add feature with geometry type %1 to layer of type %2" )
+        .arg( QgsWkbTypes::displayString( feature.geometry().wkbType() ), QgsWkbTypes::displayString( mWkbType ) )
+    );
+    return false;
+  }
+
+  bool conversionError = false;
+  QString errorMessage;
+  for ( int i = 0; i < fieldCount; ++i )
+  {
+    QVariant attrValue = feature.attribute( i );
+    if ( QgsVariantUtils::isNull( attrValue ) )
+      continue;
+
+    if ( !mFields.at( i ).convertCompatible( attrValue, &errorMessage ) )
+    {
+      if ( !conversionError )
+      {
+        pushError(
+          tr( "Could not store attribute \"%1\": %2" ).arg( mFields.at( i ).name(), errorMessage )
+        );
+      }
+      conversionError = true;
+      continue;
+    }
+
+    // Conversion can also change the value without changing its type (e.g. rounding).
+    feature.setAttribute( i, attrValue );
+  }
+  if ( conversionError )
+    return false;
+
+  QgsFeatureId featureId = feature.id();
+  if ( featureId < 0 )
+  {
+    if ( mLastFeatureId == std::numeric_limits<QgsFeatureId>::max() )
+    {
+      pushError( tr( "Cannot allocate a feature ID: maximum ID has been reached" ) );
+      return false;
+    }
+    featureId = mLastFeatureId + 1;
+  }
+
+  if ( mFeatures.contains( featureId ) )
+  {
+    pushError( tr( "Feature with ID %1 already exists" ).arg( featureId ) );
+    return false;
+  }
+
+  feature.setId( featureId );
+  mFeatures.insert( featureId, feature );
+  mFeatureOrder.append( featureId );
+  mLastFeatureId = std::max( mLastFeatureId, featureId );
+
+  if ( feature.hasGeometry() )
+  {
+    if ( updateExtent )
+      mExtent.combineExtentWith( feature.geometry().boundingBox() );
+    if ( mSpatialIndex )
+      mSpatialIndex->addFeature( feature );
+  }
+  return true;
+}
+
+bool MemoryProvider::addFeature( QgsFeature &feature, Flags flags )
+{
+  const bool updateExtent = mFeatures.isEmpty() || !mExtent.isEmpty();
+  // FastInsert previously updated only the sink's temporary copy.
+  bool result;
+  if ( flags.testFlag( QgsFeatureSink::FastInsert ) )
+  {
+    QgsFeature copy = feature;
+    result = insertFeature( copy, updateExtent );
+  }
+  else
+  {
+    result = insertFeature( feature, updateExtent );
+  }
+  if ( result || !flags.testFlag( QgsFeatureSink::RollBackOnErrors ) )
+    clearMinMaxCache();
+  return result;
+}
+
 bool MemoryProvider::addFeatures( QgsFeatureList &flist, Flags flags )
 {
-  bool result = true;
-  // whether or not to update the layer extent on the fly as we add features
   const bool updateExtent = mFeatures.isEmpty() || !mExtent.isEmpty();
-
-  const int fieldCount = mFields.count();
-
-  // For rollback
   const auto oldExtent { mExtent };
   const auto oldLastFeatureId { mLastFeatureId };
   const auto oldOrderSize { mFeatureOrder.size() };
 
-  for ( QgsFeatureList::iterator it = flist.begin(); it != flist.end() && result; ++it )
+  bool result = true;
+  for ( auto &feature : flist )
   {
-    it->setValid( true );
-    const int attributeCount = it->attributeCount();
-    if ( attributeCount < fieldCount )
+    if ( !insertFeature( feature, updateExtent ) )
     {
-      // ensure features have the correct number of attributes by padding
-      // them with null attributes for missing values
-      QgsAttributes attributes = it->attributes();
-      for ( int i = attributeCount; i < mFields.count(); ++i )
-      {
-        attributes.append( QgsVariantUtils::createNullVariant( mFields.at( i ).type() ) );
-      }
-      it->setAttributes( attributes );
-    }
-    else if ( attributeCount > fieldCount )
-    {
-      // too many attributes
-      pushError( tr( "Feature has too many attributes (expecting %1, received %2)" )
-                   .arg( fieldCount )
-                   .arg( attributeCount ) );
-      QgsAttributes attributes = it->attributes();
-      attributes.resize( mFields.count() );
-      it->setAttributes( attributes );
-    }
-
-    if ( it->hasGeometry() && mWkbType == Qgis::WkbType::NoGeometry )
-    {
-      it->clearGeometry();
-    }
-    else if ( it->hasGeometry()
-              && QgsWkbTypes::geometryType( it->geometry().wkbType() )
-                   != QgsWkbTypes::geometryType( mWkbType ) )
-    {
-      pushError(
-        tr( "Could not add feature with geometry type %1 to layer of type %2" )
-          .arg( QgsWkbTypes::displayString( it->geometry().wkbType() ), QgsWkbTypes::displayString( mWkbType ) )
-      );
-      result = false;
-      continue;
-    }
-
-    // Check attribute conversion
-    bool conversionError { false };
-    QString errorMessage;
-    for ( int i = 0; i < mFields.count(); ++i )
-    {
-      QVariant attrValue = it->attribute( i );
-      if ( QgsVariantUtils::isNull( attrValue ) )
-        continue;
-
-      if ( !mFields.at( i ).convertCompatible( attrValue, &errorMessage ) )
-      {
-        // Push first conversion error only
-        if ( result )
-        {
-          pushError(
-            tr( "Could not store attribute \"%1\": %2" ).arg( mFields.at( i ).name(), errorMessage )
-          );
-        }
-        result = false;
-        conversionError = true;
-        continue;
-      }
-
-      // Conversion can also change the value without changing its type (e.g. rounding).
-      it->setAttribute( i, attrValue );
-    }
-
-    // Skip the feature if there is at least one conversion error
-    if ( conversionError )
-    {
-      if ( flags.testFlag( QgsFeatureSink::Flag::RollBackOnErrors ) )
-      {
-        break;
-      }
-      continue;
-    }
-
-    QgsFeatureId featureId = it->id();
-    if ( featureId < 0 )
-    {
-      if ( mLastFeatureId == std::numeric_limits<QgsFeatureId>::max() )
-      {
-        pushError( tr( "Cannot allocate a feature ID: maximum ID has been reached" ) );
-        result = false;
-        break;
-      }
-      featureId = mLastFeatureId + 1;
-    }
-
-    if ( mFeatures.contains( featureId ) )
-    {
-      pushError( tr( "Feature with ID %1 already exists" ).arg( featureId ) );
       result = false;
       break;
-    }
-
-    it->setId( featureId );
-    mFeatures.insert( featureId, *it );
-    mFeatureOrder.append( featureId );
-    mLastFeatureId = std::max( mLastFeatureId, featureId );
-
-    if ( it->hasGeometry() )
-    {
-      if ( updateExtent )
-        mExtent.combineExtentWith( it->geometry().boundingBox() );
-
-      // update spatial index
-      if ( mSpatialIndex )
-        mSpatialIndex->addFeature( *it );
     }
   }
 

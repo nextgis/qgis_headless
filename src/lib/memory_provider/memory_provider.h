@@ -56,6 +56,7 @@ namespace HeadlessRender
       Qgis::WkbType wkbType() const override;
       long long featureCount() const override;
       QgsFields fields() const override;
+      bool addFeature( QgsFeature &feature, Flags flags = Flags() ) override;
       bool addFeatures(
         QgsFeatureList &flist, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags()
       ) override;
@@ -86,6 +87,8 @@ namespace HeadlessRender
       void handlePostCloneOperations( QgsVectorDataProvider *source ) override;
 
     private:
+      bool insertFeature( QgsFeature &feature, bool updateExtent );
+
       using FeatureMap = QMap<QgsFeatureId, QgsFeature>;
 
     private:

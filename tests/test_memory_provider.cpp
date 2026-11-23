@@ -106,6 +106,23 @@ class TestMemoryProvider : public QObject
       QCOMPARE( automatic.id(), QgsFeatureId( 51 ) );
     }
 
+    void fastInsertLeavesInputUnchanged()
+    {
+      auto provider = createProvider();
+      auto feature
+        = createFeature( *provider, -1, QStringLiteral( "Point(0 0)" ), QStringLiteral( "42" ) );
+      QVERIFY( provider->addFeature( feature, QgsFeatureSink::FastInsert ) );
+      QCOMPARE( feature.id(), QgsFeatureId( -1 ) );
+      QCOMPARE( feature.attribute( 0 ).userType(), int( QMetaType::QString ) );
+
+      auto iterator = provider->getFeatures( QgsFeatureRequest( 1 ) );
+      QgsFeature stored;
+      QVERIFY( iterator.nextFeature( stored ) );
+      QCOMPARE( stored.id(), QgsFeatureId( 1 ) );
+      QCOMPARE( stored.attribute( 0 ).userType(), int( QMetaType::Int ) );
+      QCOMPARE( stored.attribute( 0 ).toInt(), 42 );
+    }
+
     void scansInInsertionOrder()
     {
       auto provider = createProvider();
