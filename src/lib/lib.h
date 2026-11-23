@@ -70,12 +70,8 @@ namespace HeadlessRender
       void prepareForRendering( const QSize &outputSize, const QgsRectangle &extent );
 
     private:
-      void applyRenderSymbols( const RenderSymbols &symbols );
-
       QgsMapSettingsPtr mSettings;
-      QgsLayerTreePtr mQgsLayerTree;
       std::vector<Layer> mLayers;
-      RenderSymbols mDefaultRenderSymbols;
   };
 
   QGIS_HEADLESS_EXPORT void init( int argc, char **argv );

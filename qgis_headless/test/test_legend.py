@@ -289,6 +289,31 @@ def test_legend_symbols_render(style_file, layer_file, extent, cases, shared_dat
                     assert getattr(stat, band).max == band_max, f"{band} color mismatch"
 
 
+def test_render_symbol_selection_is_local(shared_datadir):
+    data = shared_datadir / "categories"
+    style = Style.from_file(data / "rgb.qml")
+    layer = Layer.from_ogr(data / "rgb.geojson")
+    request = MapRequest()
+    request.set_crs(CRS.from_epsg(3857))
+    index = request.add_layer(layer, style)
+    extent, size = (-4400, -14000, 4400, 14000), (256, 256)
+
+    def render(**kwargs):
+        return bytes(request.render_image(extent, size, **kwargs).to_bytes())
+
+    initial = render()
+    first = render(symbols=((index, (0,)),))
+    second = render(symbols=((index, (1,)),))
+    assert len({initial, first, second}) == 3
+    assert render() == initial
+
+    with pytest.raises(QgisHeadlessError, match="Invalid symbol index"):
+        render(symbols=((index, (0, 999)),))
+    with pytest.raises(QgisHeadlessError, match="Invalid layer index"):
+        render(symbols=((index + 1, (0,)),))
+    assert render() == initial
+
+
 def test_legend_svg_path(save_img, shared_datadir, reset_svg_paths):
     data_path = shared_datadir / "zero/data.geojson"
     style_path = shared_datadir / "zero/marker.qml"
