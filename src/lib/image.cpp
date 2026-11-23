@@ -24,11 +24,18 @@
 #include <QByteArray>
 #include <QBuffer>
 #include <QImage>
+#include <utility>
 
 HeadlessRender::Image::Image( const QImage &qimage )
 {
   mQImage = std::make_shared<QImage>( qimage.convertToFormat( QImage::Format_RGBA8888 ) );
 }
+
+HeadlessRender::Image::Image( QImage &&qimage )
+  : mQImage(
+      std::make_shared<QImage>( std::move( qimage ).convertToFormat( QImage::Format_RGBA8888 ) )
+    )
+{}
 
 const uchar *HeadlessRender::Image::data() const
 {

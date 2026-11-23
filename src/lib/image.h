@@ -44,6 +44,12 @@ namespace HeadlessRender
       explicit Image( const QImage &qimage );
 
       /**
+       * Consumes a QImage and lets Qt reuse its storage for RGBA conversion.
+       * Painting must be complete before passing the image.
+       */
+      explicit Image( QImage &&qimage );
+
+      /**
        * Returns size of image.
        * \returns std::pair, where .first is width and .second is height.
        */

@@ -325,8 +325,6 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::
   QImage img( width, height, QImage::Format_ARGB32_Premultiplied );
   img.fill( Qt::transparent );
 
-  QPainter painter( &img );
-
   prepareForRendering( { width, height }, QgsRectangle( minx, miny, maxx, maxy ) );
 
   // An unfiltered render uses the style as-is, without enumerating legend items.
@@ -334,10 +332,13 @@ HeadlessRender::ImagePtr HeadlessRender::MapRequest::
   if ( !symbols.empty() )
     selection.apply( *mSettings, symbols );
 
-  QgsMapRendererCustomPainterJob job( *mSettings, &painter );
-  job.renderSynchronously();
+  {
+    QPainter painter( &img );
+    QgsMapRendererCustomPainterJob job( *mSettings, &painter );
+    job.renderSynchronously();
+  }
 
-  return std::make_shared<HeadlessRender::Image>( img );
+  return std::make_shared<HeadlessRender::Image>( std::move( img ) );
 }
 
 HeadlessRender::ImagePtr HeadlessRender::MapRequest::renderLegend( const Size &size /* = Size() */ )
