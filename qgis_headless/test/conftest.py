@@ -1,9 +1,33 @@
 import gc
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 import _qgis_headless
+
+
+@pytest.fixture
+def svg_http_url(tmp_path):
+    (tmp_path / "marker.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">'
+        '<rect width="32" height="32" fill="#ff0000"/></svg>'
+    )
+    # A separate interpreter can answer while the renderer holds Python's GIL.
+    server_script = Path(__file__).with_name("svg_http_server.py")
+    with subprocess.Popen(
+        [sys.executable, "-u", str(server_script)],
+        cwd=tmp_path,
+        stdout=subprocess.PIPE,
+        text=True,
+    ) as process:
+        try:
+            port = int(process.stdout.readline())
+            yield f"http://127.0.0.1:{port}/marker.svg"
+        finally:
+            process.terminate()
+            process.wait(timeout=5)
 
 
 def pytest_addoption(parser):

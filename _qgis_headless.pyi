@@ -15,6 +15,7 @@ __all__ = [
     "LT_UNKNOWN",
     "LT_VECTOR",
     "Layer",
+    "LayerSchema",
     "LayerType",
     "LegendSymbol",
     "LogLevel",
@@ -340,6 +341,21 @@ class RawData:
     def to_bytes(self) -> memoryview:
         """Return a read-only zero-copy view retaining this object's storage."""
 
+class LayerSchema:
+    @staticmethod
+    def vector(
+        crs: CRS,
+        geometry_type: Layer.GeometryType,
+        fields: collections.abc.Sequence[tuple[str, Layer.AttributeType]],
+    ) -> LayerSchema: ...
+    @staticmethod
+    def raster(
+        crs: CRS,
+        band_types: collections.abc.Sequence[str],
+        width: int,
+        height: int,
+    ) -> LayerSchema: ...
+
 class Style:
     @staticmethod
     def from_defaults(
@@ -355,6 +371,8 @@ class Style:
         layer_geometry_type: Layer.GeometryType = Layer.GeometryType.GT_UNKNOWN,
         layer_type: LayerType = LayerType.LT_UNKNOWN,
         format: StyleFormat = StyleFormat.QML,
+        *,
+        layer_schema: LayerSchema | None = None,
     ) -> Style: ...
     @staticmethod
     def from_string(
@@ -363,6 +381,8 @@ class Style:
         layer_geometry_type: Layer.GeometryType = Layer.GeometryType.GT_UNKNOWN,
         layer_type: LayerType = LayerType.LT_UNKNOWN,
         format: StyleFormat = StyleFormat.QML,
+        *,
+        layer_schema: LayerSchema | None = None,
     ) -> Style: ...
     def scale_range(self) -> tuple: ...
     def to_string(self, format: StyleFormat = StyleFormat.QML) -> str: ...

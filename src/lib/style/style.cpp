@@ -21,6 +21,7 @@
 #include "style.h"
 
 #include "exceptions.h"
+#include "field_dependency_resolver.h"
 #include "utils.h"
 
 #include <qgscallout.h>
@@ -31,9 +32,10 @@
 #include <qgsfillsymbollayer.h>
 #include <qgslinesymbol.h>
 #include <qgslinesymbollayer.h>
-#include <qgsmaplayerstylemanager.h>
 #include <qgsmarkersymbol.h>
 #include <qgsmarkersymbollayer.h>
+#include <qgspathresolver.h>
+#include <qgssymbollayerutils.h>
 #include <qgspallabeling.h>
 #include <qgspropertycollection.h>
 #include <qgsrasterlayer.h>
@@ -71,16 +73,10 @@ namespace HeadlessRender
     const QString SVGFill = "SVGFill";
   } //namespace SymbolLayerType
 
-  namespace LabelingType
-  {
-    const QString RuleBased = "rule-based";
-  }
-
   namespace ErrorString
   {
     const QString StyleMismatch = "Style type mismatch";
     const QString LayerStyleMismatch = "Layer type and style type do not match";
-    const QString AddStyleFailed = "AddStyle failed";
   } //namespace ErrorString
 
   const QStringList FIELDS_TAGS = {
@@ -165,15 +161,50 @@ namespace
     settings->setFormat( format );
     labeling->setSettings( settings.release() );
   }
+
+  QSet<QString> ruleFilterFields( const QgsRuleBasedLabeling::Rule *root )
+  {
+    QSet<QString> fields;
+    if ( !root )
+      return fields;
+
+    QList<const QgsRuleBasedLabeling::Rule *> pending { root };
+    while ( !pending.isEmpty() )
+    {
+      const auto *rule = pending.takeLast();
+      fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
+      for ( const auto *child : rule->children() )
+        pending.append( child );
+    }
+    return fields;
+  }
+
+  QSet<QString> labelingFields( const QgsAbstractVectorLayerLabeling &labeling, QgsRenderContext &context )
+  {
+    QSet<QString> fields;
+    if ( const auto *ruleBased = dynamic_cast<const QgsRuleBasedLabeling *>( &labeling ) )
+      fields = ruleFilterFields( ruleBased->rootRule() );
+    for ( const QString &providerId : labeling.subProviders() )
+      fields.unite( labeling.settings( providerId ).referencedFields( context ) );
+    return fields;
+  }
 } //namespace
 
 Style Style::fromString(
   const std::string &data, const SvgResolverCallback &svgResolverCallback /* = nullptr */,
   LayerGeometryType layerGeometryType /* = LayerGeometryType::Undefined */,
-  DataType layerType /* = DataType::Unknown */, StyleFormat format /* = StyleFormat::QML */
+  DataType layerType /* = DataType::Unknown */, StyleFormat format /* = StyleFormat::QML */,
+  const std::optional<LayerSchema> &layerSchema
 )
 {
   Style style;
+  style.mSchema = layerSchema;
+  if ( layerSchema )
+  {
+    if ( layerType != DataType::Unknown && layerType != layerSchema->type() )
+      throw StyleTypeMismatch( ErrorString::LayerStyleMismatch );
+    layerType = layerSchema->type();
+  }
   switch ( format )
   {
     case StyleFormat::QML:
@@ -202,7 +233,8 @@ Style Style::fromString(
       else
         layerOptions.fallbackWkbType = Qgis::WkbType::Point;
 
-      QgsMapLayerPtr layer = createTemporaryLayerByType( layerType, layerOptions );
+      QgsMapLayerPtr layer = layerSchema ? layerSchema->createLayer()
+                                         : createTemporaryLayerByType( layerType, layerOptions );
       QString errorMessage;
       if ( !layer->readSld( namedLayerElem, errorMessage ) )
         throw StyleValidationError( "Cannot import SLD style, error: " + errorMessage );
@@ -219,7 +251,8 @@ Style Style::fromString(
 Style Style::fromFile(
   const std::string &filePath, const SvgResolverCallback &svgResolverCallback /* = nullptr */,
   LayerGeometryType layerGeometryType /* = LayerGeometryType::Unknown */,
-  DataType layerType /* = DataType::Unknown */, StyleFormat format /* = StyleFormat::QML */
+  DataType layerType /* = DataType::Unknown */, StyleFormat format /* = StyleFormat::QML */,
+  const std::optional<LayerSchema> &layerSchema
 )
 {
   std::string data;
@@ -230,7 +263,7 @@ Style Style::fromFile(
     data = std::string( byteArray.constData(), byteArray.length() );
   }
 
-  return Style::fromString( data, svgResolverCallback, layerGeometryType, layerType, format );
+  return Style::fromString( data, svgResolverCallback, layerGeometryType, layerType, format, layerSchema );
 }
 
 Style Style::fromDefaults(
@@ -279,7 +312,8 @@ QgsVectorLayerPtr Style::createTemporaryVectorLayerWithStyle( QString &errorMess
       layerOptions.fallbackWkbType = Qgis::WkbType::Point;
     }
 
-    QgsMapLayerPtr qgsVectorLayer = createTemporaryVectorLayer( layerOptions );
+    QgsMapLayerPtr qgsVectorLayer = mSchema ? mSchema->createLayer()
+                                            : createTemporaryVectorLayer( layerOptions );
     if ( !importToLayer( qgsVectorLayer, styleData, errorMessage ) )
       return nullptr;
 
@@ -292,7 +326,7 @@ QgsRasterLayerPtr Style::createTemporaryRasterLayerWithStyle( QString &errorMess
 {
   if ( !mCachedTemporaryLayer )
   {
-    QgsMapLayerPtr qgsRasterLayer = createTemporaryRasterLayer();
+    QgsMapLayerPtr qgsRasterLayer = mSchema ? mSchema->createLayer() : createTemporaryRasterLayer();
 
     QDomDocument styleData = mData;
     if ( !importToLayer( qgsRasterLayer, styleData, errorMessage ) )
@@ -315,6 +349,9 @@ void Style::init( const CreateParams &params )
 {
   mData.setContent( params.data );
 
+  if ( mSchema && mSchema->type() != type() )
+    throw StyleTypeMismatch( ErrorString::LayerStyleMismatch );
+
   if ( !validateGeometryType( params.layerGeometry ) )
     throw StyleTypeMismatch( ErrorString::StyleMismatch );
 
@@ -329,8 +366,11 @@ void Style::init( const CreateParams &params )
   {
     const QDomDocument originalData = mData;
     mData = resolveSvgPaths( params.callback );
-    mergeFieldSections( mData, originalData );
-    mCachedTemporaryLayer.reset();
+    if ( !mSchema )
+    {
+      mergeFieldSections( mData, originalData );
+      mCachedTemporaryLayer.reset();
+    }
   }
 }
 
@@ -446,63 +486,16 @@ bool Style::validateStyle( QString &errorMessage ) const
 
 bool Style::importToLayer( QgsMapLayerPtr &layer, QString &errorMessage ) const
 {
-  if ( mCachedTemporaryLayer && mCachedTemporaryLayer->type() == layer->type()
-       && !mCachedTemporaryLayer->styleManager()->styles().empty() )
-  {
-    const QString currentStyleName = mCachedTemporaryLayer->styleManager()->currentStyle();
-    const QgsMapLayerStyle currentStyle = mCachedTemporaryLayer->styleManager()->style(
-      currentStyleName
-    );
-    const QString styleName = "StyleName_"
-                              + QString::number( layer->styleManager()->styles().size() );
-
-    layer->styleManager()->addStyle( styleName, currentStyle );
-    bool result = layer->styleManager()->setCurrentStyle( styleName );
-    if ( result )
-    {
-      if ( auto vectorLayer = std::dynamic_pointer_cast<QgsVectorLayer>( layer ) )
-      {
-        applyFieldAliases( vectorLayer );
-      }
-    }
-    else
-    {
-      errorMessage = ErrorString::AddStyleFailed;
-    }
-
-    return result;
-  }
-  else
-  {
-    return importToLayer( layer, mData, errorMessage );
-  }
+  return importToLayer( layer, mData, errorMessage );
 }
 
 bool Style::importToLayer( QgsMapLayerPtr &layer, QDomDocument styleData, QString &errorMessage ) const
 {
+  // QGIS may modify legacy/provider-dependent nodes while importing a style.
+  // Keep the reusable document independent of each destination layer.
+  styleData = styleData.cloneNode( true ).toDocument();
   return layer
     ->importNamedStyle( styleData, errorMessage, static_cast<QgsMapLayer::StyleCategory>( Style::DefaultImportCategories ) );
-}
-
-void Style::applyFieldAliases( const QgsVectorLayerPtr &layer ) const
-{
-  const QDomElement aliases = mData.firstChildElement( TAGS::QGIS )
-                                .firstChildElement( QStringLiteral( "aliases" ) );
-  if ( aliases.isNull() )
-  {
-    return;
-  }
-
-  const QDomNodeList nodes = aliases.elementsByTagName( QStringLiteral( "alias" ) );
-  for ( int i = 0; i < nodes.size(); ++i )
-  {
-    const QDomElement a = nodes.at( i ).toElement();
-    const int idx = layer->fields().indexOf( a.attribute( QStringLiteral( "field" ) ) );
-    if ( idx >= 0 )
-    {
-      layer->setFieldAlias( idx, a.attribute( QStringLiteral( "name" ) ) );
-    }
-  }
 }
 
 void Style::mergeFieldSections( QDomDocument &target, const QDomDocument &source ) const
@@ -542,6 +535,7 @@ UsedAttributes Style::readUsedAttributes() const
   QHash<QString, QString> aliasToField;
   QSet<QString> realFieldNames;
 
+  if ( !mSchema )
   {
     const QDomElement root = mData.firstChildElement( TAGS::QGIS );
 
@@ -618,53 +612,33 @@ UsedAttributes Style::readUsedAttributes() const
   }
 
   QgsRenderContext renderContext;
+  renderContext.setExpressionContext( qgsVectorLayer->createExpressionContext() );
 
-  QgsAbstractVectorLayerLabeling *labeling = qgsVectorLayer->labeling();
-  if ( labeling )
+  if ( const auto *labeling = qgsVectorLayer->labeling() )
   {
-    QSet<QString> fields;
-
-    if ( labeling->type() == LabelingType::RuleBased )
-    {
-      QgsRuleBasedLabeling *ruleBasedLabeling = dynamic_cast<QgsRuleBasedLabeling *>( labeling );
-      if ( ruleBasedLabeling && ruleBasedLabeling->rootRule() )
-      {
-        for ( const QgsRuleBasedLabeling::Rule *rule : ruleBasedLabeling->rootRule()->children() )
-        {
-          fields.unite( QgsExpression( rule->filterExpression() ).referencedColumns() );
-        }
-      }
-    }
-
-    for ( const QString &providerId : labeling->subProviders() )
-    {
-      fields.unite( labeling->settings( providerId ).referencedFields( renderContext ) );
-    }
-
-    for ( const QString &field : fields )
-    {
+    for ( const QString &field : labelingFields( *labeling, renderContext ) )
       usedAttributes.insert( normalize( field ).toStdString() );
-    }
   }
 
   auto &&renderer = qgsVectorLayer->renderer();
-  for ( const QString &attribute : renderer->usedAttributes( renderContext ) )
+  if ( renderer )
   {
-    if ( attribute == QgsFeatureRequest::ALL_ATTRIBUTES )
+    for ( const QString &attribute : renderer->usedAttributes( renderContext ) )
     {
-      return std::make_pair( false, usedAttributes );
-    }
-    usedAttributes.insert( normalize( attribute ).toStdString() );
-  }
-
-  if ( renderer->orderByEnabled() )
-  {
-    for ( auto &&attribute : renderer->orderBy().usedAttributes() )
-    {
+      if ( attribute == QgsFeatureRequest::ALL_ATTRIBUTES )
+        return std::make_pair( false, usedAttributes );
       usedAttributes.insert( normalize( attribute ).toStdString() );
     }
+
+    if ( renderer->orderByEnabled() )
+    {
+      for ( auto &&attribute : renderer->orderBy().usedAttributes() )
+        usedAttributes.insert( normalize( attribute ).toStdString() );
+    }
   }
 
+  if ( mSchema )
+    return FieldDependencyResolver::resolvePhysicalFields( *qgsVectorLayer, usedAttributes );
   return std::make_pair( true, std::move( usedAttributes ) );
 }
 
@@ -695,6 +669,30 @@ QDomDocument Style::resolveSvgPaths( const SvgResolverCallback &svgResolverCallb
 
   if ( !errorMessage.isEmpty() )
     throw QgisHeadlessError( errorMessage );
+
+  // QGIS exports SVG search-path files as names. Resolve them while the files
+  // still exist so subsequent imports use the same absolute SVG cache keys.
+  const auto layers = exportedStyle.elementsByTagName( QStringLiteral( "layer" ) );
+  for ( int i = 0; i < layers.size(); ++i )
+  {
+    const auto layer = layers.at( i ).toElement();
+    const QString layerClass = layer.attribute( QStringLiteral( "class" ) );
+    if ( layerClass != SymbolLayerType::SvgMarker && layerClass != SymbolLayerType::SVGFill )
+      continue;
+    const QString key = layerClass == SymbolLayerType::SvgMarker ? QStringLiteral( "name" )
+                                                                 : QStringLiteral( "svgFile" );
+    const auto options = layer.firstChildElement( QStringLiteral( "Option" ) ).childNodes();
+    for ( int j = 0; j < options.size(); ++j )
+    {
+      auto option = options.at( j ).toElement();
+      if ( option.attribute( QStringLiteral( "name" ) ) == key )
+        option.setAttribute(
+          QStringLiteral( "value" ),
+          QgsSymbolLayerUtils::
+            svgSymbolNameToPath( option.attribute( QStringLiteral( "value" ) ), QgsPathResolver() )
+        );
+    }
+  }
 
   QDomElement myRoot = mData.firstChildElement( TAGS::QGIS );
   if ( myRoot.isNull() || myRoot.firstChildElement( TAGS::LAYER_GEOMETRY_TYPE ).text().isEmpty() )

@@ -4,6 +4,7 @@ import time
 from binascii import a2b_hex
 from itertools import product
 from tempfile import NamedTemporaryFile
+from xml.etree import ElementTree as ET
 
 import pytest
 from pytest import approx
@@ -11,6 +12,7 @@ from pytest import approx
 from qgis_headless import (
     CRS,
     Layer,
+    LayerSchema,
     MapRequest,
     Style,
     StyleFormat,
@@ -28,6 +30,7 @@ from qgis_headless.util import (
 )
 
 from .known_issues import Issues
+from .raster_styles import raster_style_xml
 
 WKB_MSC = a2b_hex("01010000005070B1A206CF42409CDCEF5014E04B40")  # POINT (37.61739 55.75062)
 EPSG_4326_WKT = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
@@ -117,6 +120,162 @@ def test_rule_based_labeling(save_img, shared_datadir, reset_svg_paths):
     stat = image_stat(img)
     assert stat.green.max == 255, "Green labels aren't visible"
     assert stat.blue.max == 255, "Blue labels aren't visible"
+
+
+@pytest.mark.parametrize("style_name", ["rgb", "rbl", "opacity"])
+def test_cached_style_reuse(style_name, shared_datadir):
+    data = shared_datadir / "contour/data.geojson"
+    style = Style.from_file(shared_datadir / f"contour/{style_name}.qml")
+    plain = Style.from_file(shared_datadir / "contour/red.qml")
+    exported = style.to_string()
+    attributes = style.used_attributes()
+    extent = (9757454.0, 6450871.0, 9775498.0, 6465163.0)
+
+    def render(layer, current_style):
+        request = MapRequest()
+        request.set_crs(CRS.from_epsg(3857))
+        request.set_dpi(96)
+        request.add_layer(layer, current_style)
+        return to_pil(request.render_image(extent, (256, 256))).tobytes()
+
+    expected = render(Layer.from_ogr(data), style)
+    expected_plain = render(Layer.from_ogr(data), plain)
+    assert expected != expected_plain
+    layer = Layer.from_ogr(data)
+    for _ in range(3):
+        assert render(layer, style) == expected
+        # Replacing a cached style must clear its labeling and opacity state.
+        assert render(layer, plain) == expected_plain
+        assert render(Layer.from_ogr(data), style) == expected
+    assert style.to_string() == exported
+    assert style.used_attributes() == attributes
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+def test_cached_raster_style_reuse(legacy, shared_datadir):
+    data = shared_datadir / "raster/rounds.tif"
+    root = ET.fromstring((shared_datadir / "raster/inverted.qml").read_text())
+    if legacy:
+        pipe = root.find("pipe")
+        root.remove(pipe)
+        root.extend(pipe)
+    style = Style.from_string(ET.tostring(root, encoding="unicode"))
+    plain = Style.from_file(shared_datadir / "raster/rounds.qml")
+    exported = style.to_string()
+    extent = (251440.0, 5977974.0, 1978853.0, 7505647.0)
+
+    def render(layer, current_style):
+        return render_raster(layer, current_style, extent).tobytes()
+
+    expected = render(Layer.from_gdal(data), style)
+    expected_plain = render(Layer.from_gdal(data), plain)
+    assert expected != expected_plain
+    layer = Layer.from_gdal(data)
+    for _ in range(3):
+        assert render(layer, style) == expected
+        assert render(layer, plain) == expected_plain
+        assert render(Layer.from_gdal(data), style) == expected
+    assert style.to_string() == exported
+
+
+@pytest.mark.parametrize(
+    "style_file,data_file,extent,render",
+    [
+        (
+            "raster/rounds_334.qml",
+            "raster/rounds.tif",
+            (251440.0, 5977974.0, 1978853.0, 7505647.0),
+            render_raster,
+        ),
+        (
+            "raster/inverted.qml",
+            "raster/rounds.tif",
+            (251440.0, 5977974.0, 1978853.0, 7505647.0),
+            render_raster,
+        ),
+        (
+            "contour/rbl.qml",
+            "contour/data.geojson",
+            (9757454.0, 6450871.0, 9775498.0, 6465163.0),
+            render_vector,
+        ),
+    ],
+)
+def test_style_xml_non_rendering_nodes(style_file, data_file, extent, render, shared_datadir):
+    qml = (shared_datadir / style_file).read_text()
+    root = ET.fromstring(qml)
+    for element in tuple(root.iter()):
+        element.insert(0, ET.Comment("Ignored by style import"))
+        element.insert(1, ET.ProcessingInstruction("style-test", "ignored"))
+    decorated = (
+        '<?xml version="1.0"?>\n<?style-test ignored?>\n'
+        '<!DOCTYPE qgis PUBLIC "http://mrcc.com/qgis.dtd" "SYSTEM">\n'
+        + ET.tostring(root, encoding="unicode")
+    )
+
+    data = shared_datadir / data_file
+    expected = render(data, Style.from_string(qml), extent, (256, 256))
+    actual = render(data, Style.from_string(decorated), extent, (256, 256))
+    assert actual.tobytes() == expected.tobytes()
+
+
+@pytest.mark.parametrize(
+    "renderer_type", ["multibandcolor", "singlebandgray", "paletted", "singlebandpseudocolor"]
+)
+@pytest.mark.parametrize(
+    "algorithm",
+    [
+        "NoEnhancement",
+        "StretchToMinimumMaximum",
+        "StretchAndClipToMinimumMaximum",
+        "ClipToMinimumMaximum",
+    ],
+)
+@pytest.mark.parametrize("with_schema", [False, True])
+def test_cog_style_provider_types(renderer_type, algorithm, shared_datadir, with_schema):
+    root = raster_style_xml(shared_datadir, renderer_type, algorithm)
+    schema = (
+        LayerSchema.raster(CRS.from_epsg(3857), ["Byte"] * 3, 5077, 4822) if with_schema else None
+    )
+    style = Style.from_string(ET.tostring(root, encoding="unicode"), layer_schema=schema)
+    # Compare equivalent XML layouts. Both may use the optimized strategy;
+    # style_equivalence.py provides the independent baseline-binary oracle.
+    pipe = root.find("pipe")
+    root.remove(pipe)
+    root.extend(pipe)
+    reference = Style.from_string(ET.tostring(root, encoding="unicode"))
+    exported = style.to_string()
+    filenames = ["cog-rgb-byte.tif", "cog-rgb-uint16.tif"]
+    if renderer_type != "multibandcolor":
+        filenames.append("cog-gray-float32.tif")
+    extent = (251440.0, 5977974.0, 1978853.0, 7505647.0)
+    for filename in filenames * 2:
+        data = shared_datadir / "raster" / filename
+        expected = render_raster(Layer.from_gdal(data), reference, extent)
+        actual = render_raster(Layer.from_gdal(data), style, extent)
+        assert expected.getchannel("A").getbbox() is not None
+        assert actual.tobytes() == expected.tobytes(), filename
+    assert style.to_string() == exported
+
+
+@pytest.mark.parametrize("with_schema", [False, True])
+@pytest.mark.parametrize("configured", [False, True])
+def test_partial_raster_style_preserves_renderer(shared_datadir, with_schema, configured):
+    extent = (251440.0, 5977974.0, 1978853.0, 7505647.0)
+    layer = Layer.from_gdal(shared_datadir / "raster/cog-gray-float32.tif")
+    initial = Style.from_defaults()
+    if configured:
+        root = raster_style_xml(shared_datadir, "singlebandgray")
+        initial = Style.from_string(ET.tostring(root, encoding="unicode"))
+    expected = render_raster(layer, initial, extent)
+    assert expected.getchannel("A").getbbox() is not None
+    schema = LayerSchema.raster(CRS.from_epsg(3857), ["Float32"], 64, 64) if with_schema else None
+    partial = Style.from_string(
+        '<qgis><pipe><provider><resampling enabled="false"/></provider></pipe></qgis>',
+        layer_schema=schema,
+    )
+    for _ in range(2):
+        assert render_raster(layer, partial, extent).tobytes() == expected.tobytes()
 
 
 def test_marker_simple(save_img, shared_datadir, reset_svg_paths):
@@ -226,26 +385,39 @@ def test_svg_resolver(shared_datadir, reset_svg_paths):
     assert image_stat(img).blue.max == 255, "Blue marker is missing"
 
 
-def test_marker_url(save_img, shared_datadir, reset_svg_paths, capfd):
+@pytest.mark.timeout(15)
+def test_marker_url(save_img, shared_datadir, reset_svg_paths, capfd, svg_http_url):
     data = shared_datadir / "zero/data.geojson"
     style = (shared_datadir / "zero/marker-url.qml").read_text()
+    root = ET.fromstring(style)
+    root.find(".//prop[@k='name']").set("v", svg_http_url)
+    style = ET.tostring(root, encoding="unicode")
 
     img = save_img(render_vector(data, style, EXTENT_ONE, 256))
 
-    assert capfd.readouterr().out.strip() == "", "QGIS stdout output was captured"
-    assert capfd.readouterr().err.strip() == "", "QGIS stderr output was captured"
+    captured = capfd.readouterr()
+    assert captured.out.strip() == "", "QGIS stdout output was captured"
+    assert captured.err.strip() == "", "QGIS stderr output was captured"
 
     stat = image_stat(img)
     assert stat.red.max == 255 and stat.green.max == stat.blue.max == 0, "Red marker is missing"
 
 
-def test_svg_cache(shared_datadir, reset_svg_paths):
+@pytest.mark.parametrize("path_mode", ["absolute", "relative", "search_path"])
+def test_svg_cache(shared_datadir, reset_svg_paths, monkeypatch, path_mode):
     data = shared_datadir / "zero/data.geojson"
     style = (shared_datadir / "zero/marker.qml").read_text()
     marker = (shared_datadir / "marker-blue" / "marker.svg").resolve()
 
     layer = Layer.from_ogr(data)
-    style = Style.from_string(style, svg_resolver=lambda _: str(marker))
+    if path_mode == "absolute":
+        style = Style.from_string(style, svg_resolver=lambda _: str(marker))
+    elif path_mode == "relative":
+        monkeypatch.chdir(shared_datadir)
+        style = Style.from_string(style, svg_resolver=lambda _: "marker-blue/marker.svg")
+    else:
+        set_svg_paths([str(marker.parent)])
+        style = Style.from_string(style)
 
     req = MapRequest()
     req.set_crs(CRS.from_epsg(3857))
