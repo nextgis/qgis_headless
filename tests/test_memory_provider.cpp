@@ -141,6 +141,28 @@ class TestMemoryProvider : public QObject
       QCOMPARE( featureIds( snapshot->getFeatures( QgsFeatureRequest() ) ), original );
     }
 
+    void looksUpPackedFeatureIds()
+    {
+      auto provider = createProvider();
+      const QgsFeatureId low = ( QgsFeatureId( 1 ) << 32 ) | 2;
+      const QgsFeatureId high = ( QgsFeatureId( 2 ) << 32 ) | 4;
+      auto first = createFeature( *provider, high, QStringLiteral( "Point(0 0)" ), 17 );
+      auto second = createFeature( *provider, low, QStringLiteral( "Point(10 10)" ), 29 );
+      QVERIFY( provider->addFeature( first ) );
+      QVERIFY( provider->addFeature( second ) );
+
+      const QList<QgsFeatureId> ordered { high, low };
+      QCOMPARE( featureIds( provider->getFeatures( QgsFeatureRequest() ) ), ordered );
+      auto iterator = provider->getFeatures( QgsFeatureRequest( low ) );
+      QgsFeature stored;
+      QVERIFY( iterator.nextFeature( stored ) );
+      QCOMPARE( stored.id(), low );
+      QCOMPARE( stored.attribute( 0 ).toInt(), 29 );
+
+      QVERIFY( provider->createSpatialIndex() );
+      QCOMPARE( featureIds( provider->getFeatures( spatialRequest() ) ), QList<QgsFeatureId> { high } );
+    }
+
     void reportsDuplicateIds_data()
     {
       preservesFeatureIds_data();

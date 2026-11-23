@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 #include <QIcon>
 #include <QRegularExpression>
@@ -640,7 +641,7 @@ bool MemoryProvider::deleteFeatures( const QgsFeatureIds &id )
 {
   for ( QgsFeatureIds::const_iterator it = id.begin(); it != id.end(); ++it )
   {
-    const QgsFeatureMap::iterator fit = mFeatures.find( *it );
+    const auto fit = mFeatures.find( *it );
 
     // check whether such feature exists
     if ( fit == mFeatures.end() )
@@ -707,9 +708,8 @@ bool MemoryProvider::addAttributes( const QList<QgsField> &attributes )
     mFields.append( field );
     fieldWasAdded = true;
 
-    for ( QgsFeatureMap::iterator fit = mFeatures.begin(); fit != mFeatures.end(); ++fit )
+    for ( QgsFeature &f : mFeatures )
     {
-      QgsFeature &f = fit.value();
       QgsAttributes attr = f.attributes();
       attr.append( QVariant() );
       f.setAttributes( attr );
@@ -753,9 +753,8 @@ bool MemoryProvider::deleteAttributes( const QgsAttributeIds &attributes )
     const int idx = *it;
     mFields.remove( idx );
 
-    for ( QgsFeatureMap::iterator fit = mFeatures.begin(); fit != mFeatures.end(); ++fit )
+    for ( QgsFeature &f : mFeatures )
     {
-      QgsFeature &f = fit.value();
       QgsAttributes attr = f.attributes();
       attr.remove( idx );
       f.setAttributes( attr );
@@ -774,7 +773,7 @@ bool MemoryProvider::changeAttributeValues( const QgsChangedAttributesMap &attr_
   QString errorMessage;
   for ( QgsChangedAttributesMap::const_iterator it = attr_map.begin(); it != attr_map.end(); ++it )
   {
-    const QgsFeatureMap::iterator fit = mFeatures.find( it.key() );
+    const auto fit = mFeatures.find( it.key() );
     if ( fit == mFeatures.end() )
       continue;
 
@@ -831,7 +830,7 @@ bool MemoryProvider::changeGeometryValues( const QgsGeometryMap &geometry_map )
 {
   for ( QgsGeometryMap::const_iterator it = geometry_map.begin(); it != geometry_map.end(); ++it )
   {
-    const QgsFeatureMap::iterator fit = mFeatures.find( it.key() );
+    const auto fit = mFeatures.find( it.key() );
     if ( fit == mFeatures.end() )
       continue;
 
@@ -906,10 +905,13 @@ bool MemoryProvider::createSpatialIndex()
   {
     mSpatialIndex = std::make_unique<QgsSpatialIndex>();
 
-    // add existing features to index
-    for ( QgsFeatureMap::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it )
+    // Index traversal can depend on insertion order. Keep the previous FID order.
+    auto orderedIds = mFeatureOrder;
+    std::sort( orderedIds.begin(), orderedIds.end() );
+    for ( const auto fid : std::as_const( orderedIds ) )
     {
-      mSpatialIndex->addFeature( *it );
+      QgsFeature feature = mFeatures.constFind( fid ).value();
+      mSpatialIndex->addFeature( feature );
     }
   }
   return true;

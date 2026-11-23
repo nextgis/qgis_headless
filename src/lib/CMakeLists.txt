@@ -43,6 +43,7 @@ set(LIB_PRIVATE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/layer_feature_p.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_iterator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_feature_map_p.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_metadata.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_provider/memory_provider_utils.h

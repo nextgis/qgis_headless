@@ -14,6 +14,8 @@
 #ifndef QGIS_HEADLESS_MEMORY_PROVIDER_H
 #define QGIS_HEADLESS_MEMORY_PROVIDER_H
 
+#include "memory_feature_map_p.h"
+
 #include <qgscoordinatereferencesystem.h>
 #include <qgsfields.h>
 #include <qgsvectordataprovider.h>
@@ -89,8 +91,6 @@ namespace HeadlessRender
     private:
       bool insertFeature( QgsFeature &feature, bool updateExtent );
 
-      using FeatureMap = QMap<QgsFeatureId, QgsFeature>;
-
     private:
       // Coordinate reference system
       QgsCoordinateReferenceSystem mCrs;
@@ -101,7 +101,7 @@ namespace HeadlessRender
       mutable QgsRectangle mExtent;
 
       // features
-      FeatureMap mFeatures;
+      detail::MemoryFeatureMap mFeatures;
       // Full scans retain insertion order regardless of the supplied FID.
       QList<QgsFeatureId> mFeatureOrder;
       // High-water mark for successful insertions; automatic IDs start at one.
