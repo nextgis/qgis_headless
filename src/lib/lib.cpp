@@ -49,11 +49,21 @@
 #include <QSizeF>
 #include <QPrinter>
 #include <QJsonArray>
+#include <atomic>
 #include <cstdlib>
 
 namespace
 {
   QApplication *app = nullptr;
+  std::atomic_bool applicationThreadExited { false };
+
+  struct ApplicationThreadLifetime
+  {
+      ~ApplicationThreadLifetime()
+      {
+        applicationThreadExited = true;
+      }
+  };
   HeadlessRender::LogLevel appLogLevel = HeadlessRender::LogLevel::Debug;
 
   const auto SymbolRenderingNotAdjustableError = QStringLiteral( "Symbol rendering is not adjustable" );
@@ -114,6 +124,10 @@ namespace
 
 void HeadlessRender::init( int argc, char **argv )
 {
+  // Register before QGIS creates thread-local objects. With embedded Python,
+  // atexit callbacks may run after their destructors have already completed.
+  thread_local ApplicationThreadLifetime applicationThreadLifetime;
+
   qInstallMessageHandler( messageHandler );
 
   QByteArray platform( "offscreen" );
@@ -135,8 +149,14 @@ void HeadlessRender::init( int argc, char **argv )
 
 void HeadlessRender::deinit()
 {
+  // uWSGI finalizes Python from exit(), after C++ thread-local destruction.
+  // QGIS cleanup is no longer safe then; the OS will reclaim process resources.
+  if ( !app || applicationThreadExited )
+    return;
+
   QgsApplication::exitQgis();
   delete app;
+  app = nullptr;
 }
 
 void HeadlessRender::setSvgPaths( const std::vector<std::string> &paths )

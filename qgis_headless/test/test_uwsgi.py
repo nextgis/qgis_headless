@@ -1,30 +1,24 @@
-import re
+import os
 import shutil
+import signal
 import socket
 import time
 from pathlib import Path
-from signal import SIGTERM
 from subprocess import Popen
-from tempfile import TemporaryFile
 
 import pytest
 from requests import get
 
-from .known_issues import Issues
-
 WSGI_APP = Path(__file__).parent / "wsgi_app.py"
 
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="uWSGI requires POSIX")
 
-@pytest.mark.timeout(10)
+
+@pytest.mark.timeout(30)
 @pytest.mark.parametrize(
-    "mode",
-    [
-        "dry_run",
-        pytest.param("no_request", marks=Issues.UWSGI_SEGFAULT_NO_STRICT),
-        pytest.param("do_request", marks=Issues.UWSGI_SEGFAULT),
-    ],
+    "mode", ["dry_run", "no_request", "do_request", "late_init", "explicit_deinit"]
 )
-def test_segfault(mode):
+def test_segfault(mode, tmp_path):
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         addr, port = sock.getsockname()
@@ -32,38 +26,64 @@ def test_segfault(mode):
     uwsgi_path = shutil.which("uwsgi")
     assert uwsgi_path is not None
 
-    with TemporaryFile(mode="w+") as fd:
+    # Preserve the selected Python build, without inheriting service options.
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("UWSGI_")}
+    environment.update(
+        DRY_RUN=str(mode == "dry_run"),
+        LATE_INIT=str(mode == "late_init"),
+        EXPLICIT_DEINIT=str(mode == "explicit_deinit"),
+        QGIS_TEST_PROFILE_ROOT=str(tmp_path),
+    )
+    logfile = tmp_path / "uwsgi.log"
+    with logfile.open("w+") as output:
         proc = Popen(
             [
                 uwsgi_path,
                 "--master",
                 "--lazy-apps",
+                "--processes=2",
                 "--enable-threads",
                 "--need-app",
                 "--die-on-term",
-                f"--http={addr}:{port}",
+                f"--http-socket={addr}:{port}",
                 f"--wsgi-file={WSGI_APP}",
             ],
-            env={"DRY_RUN": str(mode == "dry_run")},
-            stderr=fd,
+            env=environment,
+            stdout=output,
+            stderr=output,
+            start_new_session=True,
         )
+        try:
+            deadline = time.monotonic() + 15
+            while True:
+                stderr = logfile.read_text()
+                if stderr.count("WSGI app 0 (mountpoint='') ready") == 2:
+                    break
+                assert proc.poll() is None, stderr
+                assert time.monotonic() < deadline, stderr
+                time.sleep(0.05)
 
-        # Wait for uWSGI initialization
-        time.sleep(5)
+            if mode != "no_request":
+                resp = get(f"http://{addr}:{port}", timeout=5)
+                resp.raise_for_status()
 
-        if mode in ("dry_run", "do_request"):
-            resp = get(f"http://{addr}:{port}")
-            resp.raise_for_status()
+            proc.send_signal(signal.SIGTERM)
+            proc.wait(timeout=10)
+        finally:
+            # Also reap workers if startup, a request, or shutdown fails.
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait(timeout=5)
 
-        proc.send_signal(SIGTERM)
-        proc.wait()
-        assert proc.returncode == 0
-
-        fd.seek(0)
-        stderr = fd.read()
-        if m := re.search(
-            r"\*+ backtrace of \d+ \*+\n(.*)\n\*+ end of backtrace \*+",
-            stderr,
-            re.MULTILINE + re.DOTALL,
-        ):
-            raise RuntimeError(m.group(1))
+    stderr = logfile.read_text()
+    assert proc.returncode == 0, stderr
+    # The master can exit successfully even when both workers crash.
+    for failure in ("Segmentation Fault", "backtrace", "corrupted", "bad_alloc", "Aborted"):
+        assert failure not in stderr, stderr
+    if mode == "dry_run":
+        assert stderr.count("[qgis] deinit: skipping") == 2, stderr
+    else:
+        expected = 3 if mode == "explicit_deinit" else 2
+        assert stderr.count("[qgis] deinit: done") == expected, stderr
