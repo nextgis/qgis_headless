@@ -19,6 +19,7 @@
 ******************************************************************************/
 
 #include "layer.h"
+#include "application_lifetime.h"
 #include "crs.h"
 #include "utils.h"
 #include "exceptions.h"
@@ -48,7 +49,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
   QgsVectorLayer::LayerOptions layerOptions;
   layerOptions.loadDefaultStyle = false;
 
-  auto &&qgsVectorLayer = std::make_shared<
+  auto &&qgsVectorLayer = makeQgisResource<
     QgsVectorLayer>( QString::fromStdString( uri ), "", QStringLiteral( "ogr" ), layerOptions );
   if ( !qgsVectorLayer->isValid() )
     throw HeadlessRender::InvalidLayerSource( "Layer source is invalid" );
@@ -59,7 +60,7 @@ HeadlessRender::Layer HeadlessRender::Layer::fromOgr( const std::string &uri )
 
 HeadlessRender::Layer HeadlessRender::Layer::fromGdal( const std::string &uri )
 {
-  auto &&qgsRasterLayer = std::make_shared<QgsRasterLayer>( QString::fromStdString( uri ) );
+  auto &&qgsRasterLayer = makeQgisResource<QgsRasterLayer>( QString::fromStdString( uri ) );
   if ( !qgsRasterLayer->isValid() )
     throw HeadlessRender::InvalidLayerSource(
       "Layer source is invalid, error message: "
@@ -79,9 +80,11 @@ HeadlessRender::Layer HeadlessRender::Layer::fromData(
   for ( const QPair<QString, HeadlessRender::LayerAttributeType> &attrType : attributeTypes )
     fields.append( QgsField( attrType.first, layerAttributeTypetoQVariantType( attrType.second ) ) );
 
-  std::shared_ptr<QgsVectorLayer> qgsLayer(
+  auto application = retainApplication();
+  auto qgsLayer = ownQgisResource(
     QgsMemoryProviderUtils::
-      createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() )
+      createMemoryLayer( "layername", fields, layerGeometryTypeToQgsWkbType( geometryType ), *crs.qgsCoordinateReferenceSystem() ),
+    std::move( application )
   );
   disableVectorSimplify( qgsLayer );
 

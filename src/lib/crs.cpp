@@ -19,6 +19,7 @@
 ******************************************************************************/
 
 #include "crs.h"
+#include "application_lifetime.h"
 #include "exceptions.h"
 #include <qgscoordinatereferencesystem.h>
 #include <QString>
@@ -35,10 +36,10 @@ HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( long epsg )
   switch ( epsg )
   {
     case 3857:
-      crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_3857 );
+      crs.mCRS = makeQgisResource<QgsCoordinateReferenceSystem>( EPSG_3857 );
       break;
     case 4326:
-      crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>( EPSG_4326 );
+      crs.mCRS = makeQgisResource<QgsCoordinateReferenceSystem>( EPSG_4326 );
       break;
     default:
       throw InvalidCRSError( "Invalid epsg code" );
@@ -51,7 +52,7 @@ HeadlessRender::CRS HeadlessRender::CRS::fromEPSG( long epsg )
 HeadlessRender::CRS HeadlessRender::CRS::fromWkt( const std::string &wkt )
 {
   CRS crs;
-  crs.mCRS = std::make_shared<QgsCoordinateReferenceSystem>(
+  crs.mCRS = makeQgisResource<QgsCoordinateReferenceSystem>(
     QgsCoordinateReferenceSystem::fromWkt( QString::fromStdString( wkt ) )
   );
   if ( !crs.mCRS->isValid() )
