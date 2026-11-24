@@ -16,7 +16,8 @@ pytestmark = pytest.mark.skipif(os.name == "nt", reason="uWSGI requires POSIX")
 
 @pytest.mark.timeout(30)
 @pytest.mark.parametrize(
-    "mode", ["dry_run", "no_request", "do_request", "late_init", "explicit_deinit"]
+    "mode",
+    ["dry_run", "no_request", "do_request", "late_init", "explicit_deinit", "retain_objects"],
 )
 def test_segfault(mode, tmp_path):
     with socket.socket() as sock:
@@ -32,6 +33,7 @@ def test_segfault(mode, tmp_path):
         DRY_RUN=str(mode == "dry_run"),
         LATE_INIT=str(mode == "late_init"),
         EXPLICIT_DEINIT=str(mode == "explicit_deinit"),
+        RETAIN_OBJECTS=str(mode == "retain_objects"),
         QGIS_TEST_PROFILE_ROOT=str(tmp_path),
     )
     logfile = tmp_path / "uwsgi.log"

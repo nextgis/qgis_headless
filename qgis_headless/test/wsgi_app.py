@@ -7,6 +7,8 @@ from uwsgi import log
 DRY_RUN = environ.get("DRY_RUN", "").upper() in ("1", "YES", "TRUE")
 LATE_INIT = environ.get("LATE_INIT", "").upper() in ("1", "YES", "TRUE")
 EXPLICIT_DEINIT = environ.get("EXPLICIT_DEINIT", "").upper() in ("1", "YES", "TRUE")
+RETAIN_OBJECTS = environ.get("RETAIN_OBJECTS", "").upper() in ("1", "YES", "TRUE")
+retained_objects = []
 
 # Each worker must have its own profile and must not access the user's keyring.
 profile = Path(environ["QGIS_TEST_PROFILE_ROOT"]) / str(getpid())
@@ -57,7 +59,14 @@ def application(env, start_response):
         log("[qgis] render: begin")
         from qgis_headless.util import render_vector
 
-        render_vector(layer, style, extent)
+        if RETAIN_OBJECTS:
+            native_layer = qgis_headless.Layer.from_ogr(layer)
+            native_style = qgis_headless.Style.from_string(style)
+            image = render_vector(native_layer, native_style, extent)
+            retained_objects.extend((native_layer, native_style, image))
+            retained_objects.append(retained_objects)
+        else:
+            render_vector(layer, style, extent)
         log("[qgis] render: done")
         if EXPLICIT_DEINIT:
             deinit()

@@ -39,9 +39,13 @@ $ docker run --rm qgis_headless:resolute ./pytest-runner
 
 ### Process shutdown
 
-Call `qgis_headless.deinit()` after releasing layers, styles and other QGIS
-objects, while the application's initialization thread is still alive. Repeated
-calls to `deinit()` are harmless.
+Call `qgis_headless.deinit()` while the application's initialization thread is
+still alive. Native layers, cached style layers, CRS values and render requests
+retain the QGIS application until their destructors finish. If any remain alive,
+`deinit()` defers cleanup until the last resource is released; there is no need
+to force Python garbage collection. Repeated calls to `deinit()` are harmless.
+Do not reinitialize QGIS while resources from a previous initialization remain
+alive.
 
 Some embedded Python hosts, including uWSGI, run Python `atexit` callbacks after
 C++ thread-local destructors. At that point QGIS cleanup is unsafe, so `deinit()`

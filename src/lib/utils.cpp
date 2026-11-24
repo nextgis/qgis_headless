@@ -19,6 +19,7 @@
 ******************************************************************************/
 
 #include "utils.h"
+#include "application_lifetime.h"
 #include <qgsrasterlayer.h>
 
 Qgis::WkbType HeadlessRender::layerGeometryTypeToQgsWkbType( HeadlessRender::LayerGeometryType geometryType )
@@ -89,7 +90,7 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryVectorLayer(
   const QgsVectorLayer::LayerOptions &layerOptions
 )
 {
-  return std::make_shared<
+  return makeQgisResource<
     QgsVectorLayer>( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions );
 }
 
@@ -97,7 +98,7 @@ HeadlessRender::QgsMapLayerPtr HeadlessRender::createTemporaryRasterLayer()
 {
   QgsRasterLayer::LayerOptions layerOptions;
   layerOptions.loadDefaultStyle = false;
-  auto layer = std::make_shared<
+  auto layer = makeQgisResource<
     QgsRasterLayer>( QStringLiteral( "" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ), layerOptions );
   layer->setDataProvider( "gdal" );
   return layer;

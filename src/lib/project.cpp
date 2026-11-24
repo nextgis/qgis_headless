@@ -19,19 +19,15 @@
 ******************************************************************************/
 
 #include "project.h"
+#include "application_lifetime.h"
 
 #include <qgsproject.h>
 #include "exceptions.h"
 
-void EmptryDeleter( QgsMapLayer *ptr )
-{
-  //QgsProject itself removes layers
-  Q_UNUSED( ptr )
-}
-
 HeadlessRender::Project HeadlessRender::Project::fromFile( const std::string &filename )
 // Layers stored in QgsProject singleton, so we can't use more than one Project for now
 {
+  auto application = retainApplication();
   QgsProject *qgsProject = QgsProject::instance();
   bool res = qgsProject->read( QString::fromStdString( filename ) );
   if ( !res )
@@ -46,7 +42,8 @@ HeadlessRender::Project HeadlessRender::Project::fromFile( const std::string &fi
   for ( QgsMapLayer *layer : layers )
   {
     project.mLayers.push_back(
-      HeadlessRender::Layer( HeadlessRender::QgsMapLayerPtr( layer, EmptryDeleter ) )
+      // QgsProject owns the layer; this alias keeps the project alive as well.
+      HeadlessRender::Layer( HeadlessRender::QgsMapLayerPtr( application, layer ) )
     );
   }
 

@@ -1,4 +1,3 @@
-import gc
 from pathlib import Path
 
 import pytest
@@ -20,10 +19,6 @@ def setup():
     _qgis_headless.init([])
 
     yield
-
-    # Force garbage collection before qgis deinitialization. In case of
-    # destroying Layers and Styles after deinit() will cause segmentation fault.
-    gc.collect()
 
     _qgis_headless.deinit()
 

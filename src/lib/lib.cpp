@@ -19,6 +19,7 @@
 ******************************************************************************/
 
 #include "lib.h"
+#include "application_lifetime.h"
 
 #include "version.h"
 #include <qgsnetworkaccessmanager.h>
@@ -51,10 +52,12 @@
 #include <QJsonArray>
 #include <atomic>
 #include <cstdlib>
+#include <stdexcept>
 
 namespace
 {
-  QApplication *app = nullptr;
+  std::shared_ptr<QApplication> app;
+  std::weak_ptr<QApplication> activeApplication;
   std::atomic_bool applicationThreadExited { false };
 
   struct ApplicationThreadLifetime
@@ -128,6 +131,9 @@ void HeadlessRender::init( int argc, char **argv )
   // atexit callbacks may run after their destructors have already completed.
   thread_local ApplicationThreadLifetime applicationThreadLifetime;
 
+  if ( !activeApplication.expired() )
+    throw std::runtime_error( "QGIS is already initialized or still has live resources" );
+
   qInstallMessageHandler( messageHandler );
 
   QByteArray platform( "offscreen" );
@@ -138,7 +144,15 @@ void HeadlessRender::init( int argc, char **argv )
   if ( !qEnvironmentVariableIsSet( "QGIS_PROVIDER_FILE" ) )
     qputenv( "QGIS_PROVIDER_FILE", QByteArray( "$^" ) );
 
-  app = new QgsApplication( argc, argv, false, "", platform );
+  app = std::shared_ptr<
+    QApplication>( new QgsApplication( argc, argv, false, "", platform ), []( QApplication *application ) {
+    if ( applicationCleanupSafe() )
+    {
+      QgsApplication::exitQgis();
+      delete application;
+    }
+  } );
+  activeApplication = app;
 
   // By default, QGIS uses as many threads as there are CPU cores, but we limit
   // it to 4 threads here. This should be sufficient for the library's needs.
@@ -149,14 +163,19 @@ void HeadlessRender::init( int argc, char **argv )
 
 void HeadlessRender::deinit()
 {
-  // uWSGI finalizes Python from exit(), after C++ thread-local destruction.
-  // QGIS cleanup is no longer safe then; the OS will reclaim process resources.
-  if ( !app || applicationThreadExited )
-    return;
+  // Layers, cached styles and requests keep QGIS alive until they are released.
+  app.reset();
+}
 
-  QgsApplication::exitQgis();
-  delete app;
-  app = nullptr;
+std::shared_ptr<void> HeadlessRender::retainApplication()
+{
+  // CRS values may also be constructed before init(), e.g. during test collection.
+  return activeApplication.lock();
+}
+
+bool HeadlessRender::applicationCleanupSafe()
+{
+  return !applicationThreadExited;
 }
 
 void HeadlessRender::setSvgPaths( const std::vector<std::string> &paths )
@@ -191,8 +210,8 @@ int HeadlessRender::getQGISVersionInt()
 }
 
 HeadlessRender::MapRequest::MapRequest()
-  : mSettings( std::make_shared<QgsMapSettings>() )
-  , mQgsLayerTree( std::make_shared<QgsLayerTree>() )
+  : mSettings( makeQgisResource<QgsMapSettings>() )
+  , mQgsLayerTree( makeQgisResource<QgsLayerTree>() )
 {
   mSettings->setBackgroundColor( Qt::transparent );
   mSettings->setFlag( Qgis::MapSettingsFlag::RenderBlocking );

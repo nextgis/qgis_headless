@@ -33,6 +33,7 @@ set(LIB_SOURCES
 )
 
 set(LIB_PRIVATE_HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/application_lifetime.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils.h
 )
 
