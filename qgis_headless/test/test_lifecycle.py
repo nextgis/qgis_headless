@@ -51,6 +51,7 @@ def test_deinit(cleanup, tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.count("Cleanup completed") == 1, result.stdout + result.stderr
     assert "Exception ignored in atexit callback" not in result.stderr, result.stderr
+    assert "QThreadStorage:" not in result.stderr, result.stderr
 
 
 @pytest.mark.parametrize(
@@ -137,5 +138,6 @@ def test_resources_outlive_deinit(resource, release, tmp_path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Deinit completed" in result.stdout, result.stdout + result.stderr
+    assert "QThreadStorage:" not in result.stderr, result.stderr
     if release != "interpreter":
         assert "Resources released" in result.stdout, result.stdout + result.stderr

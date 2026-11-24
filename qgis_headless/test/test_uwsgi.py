@@ -82,7 +82,16 @@ def test_segfault(mode, tmp_path):
     stderr = logfile.read_text()
     assert proc.returncode == 0, stderr
     # The master can exit successfully even when both workers crash.
-    for failure in ("Segmentation Fault", "backtrace", "corrupted", "bad_alloc", "Aborted"):
+    for failure in (
+        "Segmentation Fault",
+        "backtrace",
+        "corrupted",
+        "bad_alloc",
+        "Aborted",
+        "QThreadStorage:",
+        "QThread: Destroyed",
+        "Timers cannot",
+    ):
         assert failure not in stderr, stderr
     if mode == "dry_run":
         assert stderr.count("[qgis] deinit: skipping") == 2, stderr
