@@ -594,6 +594,33 @@ def test_attribute_color(save_img, shared_datadir):
     assert stat.blue.max == 0, "Blue band is not expected"
 
 
+@pytest.mark.parametrize("with_schema", [False, True], ids=["without-schema", "with-schema"])
+def test_legacy_polygon_style_after_reading_attributes(shared_datadir, with_schema):
+    data = shared_datadir / "landuse"
+    extent = (4189314, 7505071, 4190452, 7506101)
+    schema = (
+        LayerSchema.vector(
+            CRS.from_epsg(4326),
+            Layer.GT_POLYGON,
+            [("LANDUSE", Layer.FT_STRING), ("OSM_ID", Layer.FT_REAL)],
+        )
+        if with_schema
+        else None
+    )
+
+    def render(*, read_attributes):
+        # This QGIS 2 style has no layerGeometryType element.
+        style = Style.from_file(data / "landuse.qml", layer_schema=schema)
+        if read_attributes:
+            assert style.used_attributes() == {"LANDUSE"}
+        return render_vector(Layer.from_ogr(data / "landuse.geojson"), style, extent)
+
+    expected = render(read_attributes=False)
+    stat = image_stat(expected)
+    assert (stat.red.max, stat.green.max, stat.blue.max) == (255, 255, 0)
+    assert render(read_attributes=True).tobytes() == expected.tobytes()
+
+
 def test_style_25d(save_img, shared_datadir):
     data = shared_datadir / "poly.geojson"
     layer = Layer.from_ogr(data)
